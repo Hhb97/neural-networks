@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>梯度下降 交互演示</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px;
+    background: #F5F4EF; color: #2C2C2A;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 500; margin: 0 0 4px; }
+  .sub { color: #5F5E5A; font-size: 14px; margin-bottom: 18px; }
+  .card {
+    background: #fff; border: 1px solid #D3D1C7; border-radius: 12px;
+    padding: 18px; margin-bottom: 16px;
+  }
+  svg { width: 100%; height: auto; display: block; }
+  .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 14px; }
+  button {
+    font-family: inherit; font-size: 14px; padding: 8px 18px;
+    border-radius: 8px; border: 1px solid #185FA5; background: #185FA5; color: #fff;
+    cursor: pointer;
+  }
+  button.ghost { background: #fff; color: #185FA5; }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  button:active { transform: translateY(1px); }
+  .slider-row { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 260px; }
+  input[type=range] { flex: 1; accent-color: #185FA5; }
+  .lr-val { font-variant-numeric: tabular-nums; min-width: 46px; text-align: right; font-weight: 500; }
+  .readout {
+    background: #F1EFE8; border-radius: 8px; padding: 14px 16px; margin-top: 14px;
+    font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 14px;
+    white-space: pre-wrap; line-height: 1.9;
+  }
+  .hl { color: #993C1D; font-weight: 500; }
+  .ok { color: #0F6E56; font-weight: 500; }
+  .bad { color: #A32D2D; font-weight: 500; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+  th, td { padding: 6px 8px; text-align: right; border-bottom: 1px solid #E5E3DB; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: #5F5E5A; font-weight: 500; }
+  .hint { font-size: 13px; color: #5F5E5A; margin-top: 10px; }
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .presets button { font-size: 13px; padding: 6px 12px; background: #fff; color: #444441; border-color: #D3D1C7; }
+  h3 { font-size: 15px; font-weight: 500; margin: 0 0 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>梯度下降：看着小球滚下山</h1>
+  <div class="sub">
+    要最小化的函数 &nbsp;<b>L(w) = (w − 3)²</b>&nbsp;，最低点在 w = 3。
+    梯度（导数）是 &nbsp;<b>L′(w) = 2(w − 3)</b>。
+  </div>
+
+  <div class="card">
+    <svg id="plot" viewBox="0 0 780 420" role="img" aria-label="损失函数抛物线与梯度下降路径"></svg>
+
+    <div class="controls">
+      <button id="stepBtn">下一步 →</button>
+      <button id="playBtn" class="ghost">自动播放</button>
+      <button id="resetBtn" class="ghost">重置</button>
+      <div class="slider-row">
+        <span style="font-size:14px">学习率 η</span>
+        <input type="range" id="lr" min="0.05" max="1.20" step="0.05" value="0.10">
+        <span class="lr-val" id="lrVal">0.10</span>
+      </div>
+    </div>
+
+    <div class="presets">
+      <span style="font-size:13px;color:#5F5E5A;align-self:center">试试这几组：</span>
+      <button data-lr="0.05" data-w="0">η=0.05 太小</button>
+      <button data-lr="0.10" data-w="0">η=0.10 正常</button>
+      <button data-lr="0.50" data-w="0">η=0.50 一步到位</button>
+      <button data-lr="0.90" data-w="0">η=0.90 来回震荡</button>
+      <button data-lr="1.10" data-w="0">η=1.10 发散</button>
+      <button data-lr="0.10" data-w="6">从右边出发</button>
+    </div>
+
+    <div class="readout" id="readout"></div>
+  </div>
+
+  <div class="card">
+    <h3>每一步的计算过程</h3>
+    <table>
+      <thead>
+        <tr><th>步</th><th>当前 w</th><th>梯度 2(w−3)</th><th>η × 梯度</th><th>新 w</th><th>损失 L</th></tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="hint">
+      观察第三列：梯度的绝对值一直在变小，所以第四列的步长自动越来越短 —— 越接近谷底，刹车越自动。
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============ 参数与状态 ============
+const TARGET = 3;                       // 函数最低点位置
+const L    = w => (w - TARGET) ** 2;    // 损失函数
+const grad = w => 2 * (w - TARGET);     // 梯度（导数）
+
+let w = 0;            // 当前位置
+let lr = 0.10;        // 学习率
+let step = 0;         // 已走步数
+let trail = [0];      // 走过的位置
+let timer = null;
+let diverged = false;
+
+// ============ 坐标映射：数据 -> 屏幕 ============
+const W_MIN = -2, W_MAX = 8, L_MAX = 25;
+const X0 = 60, X1 = 740, Y0 = 30, Y1 = 360;
+const wToX = w => X0 + (w - W_MIN) / (W_MAX - W_MIN) * (X1 - X0);
+const lToY = l => Y1 - Math.min(l, L_MAX) / L_MAX * (Y1 - Y0);
+
+const $ = id => document.getElementById(id);
+
+// ============ 绘图 ============
+function draw() {
+  const p = [];
+
+  // --- 坐标轴 ---
+  p.push(`<line x1="${X0}" y1="${Y1}" x2="${X1}" y2="${Y1}" stroke="#B4B2A9" stroke-width="1"/>`);
+  p.push(`<line x1="${X0}" y1="${Y0}" x2="${X0}" y2="${Y1}" stroke="#B4B2A9" stroke-width="1"/>`);
+  p.push(`<text x="${X1 + 6}" y="${Y1 + 5}" font-size="13" fill="#5F5E5A">w</text>`);
+  p.push(`<text x="${X0 - 34}" y="${Y0 + 4}" font-size="13" fill="#5F5E5A">L(w)</text>`);
+
+  // --- x 轴刻度 ---
+  for (let t = W_MIN; t <= W_MAX; t++) {
+    const x = wToX(t);
+    p.push(`<line x1="${x}" y1="${Y1}" x2="${x}" y2="${Y1 + 5}" stroke="#B4B2A9" stroke-width="1"/>`);
+    p.push(`<text x="${x}" y="${Y1 + 20}" font-size="12" fill="#5F5E5A" text-anchor="middle">${t}</text>`);
+  }
+
+  // --- 抛物线 ---
+  let pts = [];
+  for (let t = W_MIN; t <= W_MAX + 0.01; t += 0.05) {
+    if (L(t) <= L_MAX) pts.push(`${wToX(t).toFixed(1)},${lToY(L(t)).toFixed(1)}`);
+  }
+  p.push(`<polyline points="${pts.join(' ')}" fill="none" stroke="#7F77DD" stroke-width="2.5"/>`);
+
+  // --- 最低点标记 ---
+  const tx = wToX(TARGET);
+  p.push(`<line x1="${tx}" y1="${lToY(0)}" x2="${tx}" y2="${Y1}" stroke="#1D9E75" stroke-width="1" stroke-dasharray="4 4"/>`);
+  p.push(`<circle cx="${tx}" cy="${lToY(0)}" r="5" fill="#1D9E75"/>`);
+  p.push(`<text x="${tx}" y="${lToY(0) - 14}" font-size="13" fill="#0F6E56" text-anchor="middle" font-weight="500">目标 w=3</text>`);
+
+  // --- 走过的路径 ---
+  for (let i = 0; i < trail.length; i++) {
+    const v = trail[i];
+    if (v < W_MIN - 1 || v > W_MAX + 1 || L(v) > L_MAX) continue;
+    const x = wToX(v), y = lToY(L(v));
+    const last = (i === trail.length - 1);
+    if (!last) {
+      p.push(`<circle cx="${x}" cy="${y}" r="4" fill="#EF9F27" opacity="${0.25 + 0.5 * i / trail.length}"/>`);
+    }
+    if (i > 0) {
+      const pv = trail[i - 1];
+      if (pv >= W_MIN - 1 && pv <= W_MAX + 1 && L(pv) <= L_MAX) {
+        p.push(`<line x1="${wToX(pv)}" y1="${lToY(L(pv))}" x2="${x}" y2="${y}" stroke="#EF9F27" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.7"/>`);
+      }
+    }
+  }
+
+  // --- 当前点的切线（梯度的可视化）---
+  const inRange = w >= W_MIN - 1 && w <= W_MAX + 1 && L(w) <= L_MAX;
+  if (inRange) {
+    const g = grad(w);
+    const d = 1.3;                                   // 切线在数据坐标里左右各画多长
+    const x1 = wToX(w - d), y1 = lToY(L(w) - g * d);
+    const x2 = wToX(w + d), y2 = lToY(L(w) + g * d);
+    p.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#D85A30" stroke-width="2"/>`);
+    p.push(`<text x="${x2 + 4}" y="${y2 + 4}" font-size="12" fill="#993C1D">切线，斜率 = 梯度 = ${g.toFixed(2)}</text>`);
+
+    // --- 小球 ---
+    const cx = wToX(w), cy = lToY(L(w));
+    p.push(`<circle cx="${cx}" cy="${cy}" r="9" fill="#E24B4A" stroke="#fff" stroke-width="2"/>`);
+    p.push(`<text x="${cx}" y="${cy - 18}" font-size="13" fill="#A32D2D" text-anchor="middle" font-weight="500">w=${w.toFixed(3)}</text>`);
+
+    // --- 下一步的箭头 ---
+    if (!diverged) {
+      const wNext = w - lr * grad(w);
+      const ax1 = cx, ax2 = wToX(Math.max(W_MIN - 0.8, Math.min(W_MAX + 0.8, wNext)));
+      if (Math.abs(ax2 - ax1) > 3) {
+        p.push(`<line x1="${ax1}" y1="${Y1 - 12}" x2="${ax2}" y2="${Y1 - 12}" stroke="#185FA5" stroke-width="2"/>`);
+        const dir = ax2 > ax1 ? 1 : -1;
+        p.push(`<path d="M${ax2} ${Y1 - 12} L${ax2 - 7 * dir} ${Y1 - 16} L${ax2 - 7 * dir} ${Y1 - 8} Z" fill="#185FA5"/>`);
+        p.push(`<text x="${(ax1 + ax2) / 2}" y="${Y1 - 20}" font-size="12" fill="#185FA5" text-anchor="middle">下一步往这边</text>`);
+      }
+    }
+  } else {
+    p.push(`<text x="400" y="200" font-size="18" fill="#A32D2D" text-anchor="middle" font-weight="500">小球已经飞出画面 —— 发散了</text>`);
+  }
+
+  $('plot').innerHTML = p.join('');
+}
+
+// ============ 文字说明 ============
+function updateReadout() {
+  const g = grad(w);
+  const delta = lr * g;
+  const wNext = w - delta;
+  const dirWord = g < 0 ? '梯度是负的 → 该往右走（w 增大）'
+                : g > 0 ? '梯度是正的 → 该往左走（w 减小）'
+                        : '梯度是 0 → 到底了，不用动';
+
+  let txt =
+`当前位置   w = ${w.toFixed(4)}
+当前损失   L = (${w.toFixed(3)} − 3)² = ${L(w).toFixed(4)}
+当前梯度   L′ = 2 × (${w.toFixed(3)} − 3) = <span class="hl">${g.toFixed(4)}</span>
+           ${dirWord}
+
+更新计算   w_新 = w − η × 梯度
+                = ${w.toFixed(4)} − ${lr.toFixed(2)} × (${g.toFixed(4)})
+                = <span class="ok">${wNext.toFixed(4)}</span>
+           这一步移动了 ${Math.abs(delta).toFixed(4)}`;
+
+  if (diverged) {
+    txt += `\n\n<span class="bad">⚠ 发散了！η = ${lr.toFixed(2)} 太大，每一步都跨过谷底而且越跨越远。
+   把学习率调小再重置试试。</span>`;
+  } else if (Math.abs(g) < 1e-4) {
+    txt += `\n\n<span class="ok">✓ 梯度已经接近 0，收敛完成，找到了最低点 w = 3。</span>`;
+  }
+  $('readout').innerHTML = txt;
+}
+
+// ============ 表格 ============
+const rows = [];
+function addRow(s, wOld, g, delta, wNew) {
+  rows.push(`<tr>
+    <td>${s}</td>
+    <td>${wOld.toFixed(4)}</td>
+    <td>${g.toFixed(4)}</td>
+    <td>${delta.toFixed(4)}</td>
+    <td>${wNew.toFixed(4)}</td>
+    <td>${L(wNew).toFixed(4)}</td>
+  </tr>`);
+  $('tbody').innerHTML = rows.slice(-14).join('');
+}
+
+// ============ 走一步 ============
+function doStep() {
+  if (diverged) return;
+  const g = grad(w);
+  const delta = lr * g;
+  const wOld = w;
+  w = w - delta;
+  step++;
+  trail.push(w);
+  if (trail.length > 30) trail.shift();
+  addRow(step, wOld, g, delta, w);
+  if (Math.abs(w) > 60) { diverged = true; stopPlay(); }
+  draw(); updateReadout();
+}
+
+function reset(newW) {
+  stopPlay();
+  w = (newW !== undefined) ? newW : 0;
+  step = 0; trail = [w]; diverged = false;
+  rows.length = 0; $('tbody').innerHTML = '';
+  draw(); updateReadout();
+}
+
+function stopPlay() {
+  if (timer) { clearInterval(timer); timer = null; $('playBtn').textContent = '自动播放'; }
+}
+
+// ============ 事件绑定 ============
+$('stepBtn').onclick = doStep;
+$('resetBtn').onclick = () => reset(0);
+$('playBtn').onclick = () => {
+  if (timer) { stopPlay(); return; }
+  $('playBtn').textContent = '暂停';
+  timer = setInterval(() => {
+    doStep();
+    if (diverged || (Math.abs(grad(w)) < 1e-4)) stopPlay();
+  }, 450);
+};
+$('lr').oninput = e => {
+  lr = parseFloat(e.target.value);
+  $('lrVal').textContent = lr.toFixed(2);
+  draw(); updateReadout();
+};
+document.querySelectorAll('.presets button').forEach(b => {
+  b.onclick = () => {
+    lr = parseFloat(b.dataset.lr);
+    $('lr').value = lr;
+    $('lrVal').textContent = lr.toFixed(2);
+    reset(parseFloat(b.dataset.w));
+  };
+});
+
+// ============ 启动 ============
+draw();
+updateReadout();
+</script>
+</body>
+</html>

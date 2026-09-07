@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>线性回归 vs 两层网络 · 同一套流程对照</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; padding:20px; background:#F5F4EF; color:#2C2C2A;
+         font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; line-height:1.6; }
+  .wrap { max-width:1080px; margin:0 auto; }
+  h1 { font-size:22px; font-weight:500; margin:0 0 4px; }
+  h3 { font-size:15px; font-weight:500; margin:0 0 10px; }
+  .sub { color:#5F5E5A; font-size:14px; margin-bottom:18px; }
+  .card { background:#fff; border:1px solid #D3D1C7; border-radius:12px; padding:18px; margin-bottom:16px; }
+  .row { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:16px; }
+  .row > .card { flex:1; min-width:400px; margin-bottom:0; }
+  svg { display:block; width:100%; height:auto; }
+  .controls { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  button { font-family:inherit; font-size:14px; padding:8px 16px; border-radius:8px;
+           border:1px solid #185FA5; background:#185FA5; color:#fff; cursor:pointer; }
+  button.ghost { background:#fff; color:#185FA5; }
+  button:active { transform:translateY(1px); }
+  .slider-row { display:flex; align-items:center; gap:10px; flex:1; min-width:220px; }
+  input[type=range] { flex:1; accent-color:#185FA5; }
+  .lr-val { font-variant-numeric:tabular-nums; min-width:42px; text-align:right; font-weight:500; }
+  .phase-bar { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
+  .ph { flex:1; min-width:120px; padding:8px 10px; border-radius:8px; font-size:13px;
+        background:#F1EFE8; color:#888780; border:1px solid #E5E3DB; text-align:center; }
+  .ph.done { background:#E1F5EE; color:#0F6E56; border-color:#9FE1CB; }
+  .ph.now  { background:#185FA5; color:#fff; border-color:#185FA5; font-weight:500; }
+  .tag { display:inline-block; font-size:12px; padding:2px 9px; border-radius:20px; margin-left:8px; font-weight:400; }
+  .tag-l { background:#F1EFE8; color:#444441; }
+  .tag-r { background:#EEEDFE; color:#3C3489; }
+  .readout { background:#F1EFE8; border-radius:8px; padding:12px 14px;
+             font-family:ui-monospace,"SF Mono",Consolas,monospace; font-size:12px;
+             white-space:pre; line-height:1.75; overflow-x:auto; max-height:460px; overflow-y:auto; }
+  .fwd{color:#185FA5;font-weight:500} .bwd{color:#993C1D;font-weight:500}
+  .ok{color:#0F6E56;font-weight:500} .bad{color:#A32D2D;font-weight:500} .dim{color:#888780}
+  table { width:100%; border-collapse:collapse; font-size:13px; font-variant-numeric:tabular-nums; }
+  th,td { padding:5px 8px; text-align:right; border-bottom:1px solid #E5E3DB; }
+  th:first-child, td:first-child { text-align:left; }
+  th { color:#5F5E5A; font-weight:500; }
+  .hint { font-size:13px; color:#5F5E5A; margin-top:10px; }
+  .samp { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
+  .samp button { font-size:13px; padding:6px 12px; background:#fff; color:#444441; border-color:#D3D1C7; }
+  .samp button.active { background:#185FA5; color:#fff; border-color:#185FA5; }
+  .chain { background:#F1EFE8; border-radius:8px; padding:14px 16px; margin-bottom:12px;
+           font-family:ui-monospace,Consolas,monospace; font-size:12.5px; overflow-x:auto; white-space:pre; line-height:1.9; }
+  .link { display:inline-block; padding:1px 6px; border-radius:5px; margin:0 1px; }
+  .l-loss { background:#FCEBEB; color:#791F1F; }
+  .l-act  { background:#FAEEDA; color:#633806; }
+  .l-w    { background:#EEEDFE; color:#3C3489; }
+  .l-in   { background:#E1F5EE; color:#085041; }
+  .derive { background:#FAEEDA; border-left:3px solid #BA7517; padding:12px 16px; margin-top:14px; font-size:13px; color:#412402; }
+  .derive code { font-family:ui-monospace,Consolas,monospace; background:rgba(0,0,0,.05); padding:1px 4px; border-radius:3px; }
+  .verdict { font-size:13px; padding:8px 12px; border-radius:8px; margin-top:10px; }
+  .v-ok { background:#E1F5EE; color:#085041; }
+  .v-no { background:#FCEBEB; color:#791F1F; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>同一套流程，两个模型：链条长了多少？</h1>
+  <div class="sub">
+    左边是<b>线性回归</b>（1 层，无激活），右边是<b>两层网络</b>（隐藏层 + sigmoid）。
+    喂同样的数据、走同样的四步、共用同一个学习率 —— 唯一的区别就是<b>反向传播的链条长度</b>。
+    任务是异或 XOR：<code>(0,0)→0　(0,1)→1　(1,0)→1　(1,1)→0</code>
+  </div>
+
+  <div class="card">
+    <div class="phase-bar" id="phaseBar">
+      <div class="ph" data-p="0">① 前向传播</div>
+      <div class="ph" data-p="1">② 算损失</div>
+      <div class="ph" data-p="2">③ 反向传播</div>
+      <div class="ph" data-p="3">④ 更新参数</div>
+    </div>
+    <div class="controls">
+      <button id="nextBtn">下一阶段 →</button>
+      <button id="stepBtn" class="ghost">完整走一轮</button>
+      <button id="playBtn" class="ghost">自动训练</button>
+      <button id="resetBtn" class="ghost">重置</button>
+      <div class="slider-row">
+        <span style="font-size:14px">学习率 η</span>
+        <input type="range" id="lr" min="0.1" max="1.2" step="0.1" value="1.0">
+        <span class="lr-val" id="lrVal">1.0</span>
+      </div>
+      <span style="font-size:13px;color:#5F5E5A">迭代 <b id="iterN">0</b> 次</span>
+    </div>
+    <div class="samp" style="margin-top:12px;margin-bottom:0">
+      <span style="font-size:13px;color:#5F5E5A">展开哪条样本：</span>
+      <button data-s="0">#1 (0,0)→0</button>
+      <button data-s="1" class="active">#2 (0,1)→1</button>
+      <button data-s="2">#3 (1,0)→1</button>
+      <button data-s="3">#4 (1,1)→0</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>核心对照：链式法则要乘几节</h3>
+    <div class="chain" id="chainBox"></div>
+    <div class="hint">
+      同样是求"第一个权重的梯度"，左边乘 3 项就到头了，右边要乘 5 项。
+      <b>每多一层，链条就多两节</b>（一节权重、一节激活）。层数一多，人就写不出来了，只能交给反向传播自动算。
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <h3>线性回归 <span class="tag tag-l">1 层 · 无激活</span></h3>
+      <svg id="netL" viewBox="0 0 460 250" role="img" aria-label="线性回归结构与当前数值"></svg>
+      <div class="readout" id="roL"></div>
+      <div class="verdict" id="vL"></div>
+    </div>
+    <div class="card">
+      <h3>两层网络 <span class="tag tag-r">2 层 · sigmoid</span></h3>
+      <svg id="netR" viewBox="0 0 460 250" role="img" aria-label="两层网络结构与当前数值"></svg>
+      <div class="readout" id="roR"></div>
+      <div class="verdict" id="vR"></div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <h3>损失对比</h3>
+      <svg id="chart" viewBox="0 0 440 300" role="img" aria-label="两个模型的损失下降对比"></svg>
+      <div class="hint">
+        <span style="color:#888780">■</span> 线性回归　
+        <span style="color:#7F77DD">■</span> 两层网络。
+        线性回归会停在 0.125 —— 那是一条直线在异或上能做到的极限。
+      </div>
+    </div>
+    <div class="card">
+      <h3>四条样本的预测</h3>
+      <table>
+        <thead><tr><th>x₁</th><th>x₂</th><th>正确 y</th><th>线性回归 ŷ</th><th>两层网络 ŷ</th></tr></thead>
+        <tbody id="sampleBody"></tbody>
+      </table>
+      <div class="hint">
+        线性回归四条全预测成 0.5（干脆放弃，取个中间值），两层网络能分出 0/1/1/0。
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="derive">
+      <b>为什么线性回归的链条只有 3 节？</b><br>
+      因为它的"激活函数"是恒等函数 <code>a = z</code>，导数恒等于 <b>1</b>，乘上去等于没乘。
+      而 sigmoid 的导数是 <code>a(1−a)</code>，最大只有 0.25 —— 右边每穿一层就要乘一次这个小数，
+      所以你会看到 <code>δ₁</code> 比 <code>δ₂</code> 小一个数量级。这就是<b>梯度消失</b>的来源，
+      也是后来 ReLU（导数为 1）和残差连接被发明出来的原因。
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ==================== 公共 ====================
+const S = z => 1 / (1 + Math.exp(-z));
+const DATA = [
+  { x:[0,0], y:0 }, { x:[0,1], y:1 }, { x:[1,0], y:1 }, { x:[1,1], y:0 },
+];
+const INIT_L = { w:[0.5,-0.3], b:0.2 };
+const INIT_R = { W1:[[0.8,-0.7],[-0.9,0.6]], b1:[-0.3,0.4], W2:[1.0,-1.0], b2:0.2 };
+
+let Lm, Rm, lr = 1.0, iter = 0, phase = 0, focus = 1, timer = null;
+let histL = [], histR = [];
+const $ = id => document.getElementById(id);
+const f = (v,d=4) => v.toFixed(d);
+const par = v => v < 0 ? '(' + f(v) + ')' : f(v);
+
+// ==================== 线性回归 ====================
+function fwdL(d) {
+  const z = d.x[0]*Lm.w[0] + d.x[1]*Lm.w[1] + Lm.b;
+  const yh = z;                       // 恒等激活
+  return { z, yh, L: 0.5*(yh-d.y)**2 };
+}
+function bwdL(d, fw) {
+  const dLdy = fw.yh - d.y;           // 规则①
+  const dadz = 1;                     // 恒等函数导数 = 1
+  const delta = dLdy * dadz;          // δ
+  return { dLdy, dadz, delta,
+           dw:[delta*d.x[0], delta*d.x[1]], db: delta };
+}
+function gradsL() {
+  const n = DATA.length, g = { w:[0,0], b:0, L:0 };
+  for (const d of DATA) {
+    const fw = fwdL(d), bw = bwdL(d, fw);
+    g.L += fw.L/n; g.w[0]+=bw.dw[0]/n; g.w[1]+=bw.dw[1]/n; g.b += bw.db/n;
+  }
+  return g;
+}
+
+// ==================== 两层网络 ====================
+function fwdR(d) {
+  const z1 = [0,1].map(j => d.x[0]*Rm.W1[0][j] + d.x[1]*Rm.W1[1][j] + Rm.b1[j]);
+  const a1 = z1.map(S);
+  const z2 = a1[0]*Rm.W2[0] + a1[1]*Rm.W2[1] + Rm.b2;
+  const yh = S(z2);
+  return { z1, a1, z2, yh, L: 0.5*(yh-d.y)**2 };
+}
+function bwdR(d, fw) {
+  const dLdy = fw.yh - d.y;
+  const sp2 = fw.yh*(1-fw.yh);
+  const d2 = dLdy*sp2;
+  const through = [d2*Rm.W2[0], d2*Rm.W2[1]];
+  const sp1 = fw.a1.map(a => a*(1-a));
+  const d1 = [through[0]*sp1[0], through[1]*sp1[1]];
+  return { dLdy, sp2, d2, through, sp1, d1,
+           dW2:[d2*fw.a1[0], d2*fw.a1[1]], db2:d2,
+           dW1:[[d1[0]*d.x[0], d1[1]*d.x[0]],[d1[0]*d.x[1], d1[1]*d.x[1]]],
+           db1:[d1[0], d1[1]] };
+}
+function gradsR() {
+  const n = DATA.length;
+  const g = { W1:[[0,0],[0,0]], b1:[0,0], W2:[0,0], b2:0, L:0 };
+  for (const d of DATA) {
+    const fw = fwdR(d), bw = bwdR(d, fw);
+    g.L += fw.L/n;
+    for (let i=0;i<2;i++) for (let j=0;j<2;j++) g.W1[i][j] += bw.dW1[i][j]/n;
+    for (let j=0;j<2;j++) { g.b1[j]+=bw.db1[j]/n; g.W2[j]+=bw.dW2[j]/n; }
+    g.b2 += bw.db2/n;
+  }
+  return g;
+}
+
+// ==================== 图 ====================
+const box = (x,y,w,h,fill,stroke,lines) => {
+  let s = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="9" fill="${fill}" stroke="${stroke}" stroke-width="1.4"/>`;
+  lines.forEach((L,k) => { if (!L[0]) return;
+    s += `<text x="${x+w/2}" y="${y+19+k*17}" font-size="${L[2]||12}" fill="${L[1]}" text-anchor="middle" font-weight="${L[3]||400}">${L[0]}</text>`; });
+  return s;
+};
+const MK = `<defs><marker id="a2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.6" stroke-linecap="round"/></marker></defs>`;
+const G=['#F1EFE8','#B4B2A9'], P=['#EEEDFE','#7F77DD'], C=['#FAECE7','#D85A30'];
+const ew = v => `stroke="${v>=0?'#7F77DD':'#B4B2A9'}" stroke-width="${Math.min(4,0.8+Math.abs(v)*1.4)}" opacity="0.75"`;
+
+function drawL() {
+  const d = DATA[focus], fw = fwdL(d), bw = bwdL(d, fw);
+  const sf = phase>=1, sb = phase>=3;
+  const p = [MK];
+  // 连线
+  [[0,62],[1,152]].forEach(([i,y]) => {
+    p.push(`<line x1="95" y1="${y+28}" x2="215" y2="133" ${ew(Lm.w[i])}/>`);
+    p.push(`<text x="${140+i*30}" y="${y+28+(i?-22:26)}" font-size="11" fill="#534AB7" text-anchor="middle">${f(Lm.w[i],3)}</text>`);
+  });
+  p.push(`<line x1="305" y1="133" x2="345" y2="133" stroke="#B4B2A9" stroke-width="1.4" marker-end="url(#a2)"/>`);
+  // 节点
+  p.push(`<text x="55" y="42" font-size="11.5" fill="#888780" text-anchor="middle">输入</text>`);
+  p.push(`<text x="260" y="42" font-size="11.5" fill="#888780" text-anchor="middle">输出（无激活）</text>`);
+  p.push(`<text x="390" y="42" font-size="11.5" fill="#888780" text-anchor="middle">损失</text>`);
+  [0,1].forEach(i => p.push(box(25, 62+i*90, 70, 56, G[0], G[1],
+    [[`x${i?'₂':'₁'}`,'#444441',13,500],[`${d.x[i]}`,'#2C2C2A',15,500]])));
+  p.push(box(215, 105, 90, 56, P[0], P[1], [
+    ['ŷ = z','#3C3489',12.5,500],
+    [sf ? f(fw.yh) : '?', sf?'#185FA5':'#B4B2A9', 14, 500],
+    [sb ? `δ = ${f(bw.delta,4)}` : '', '#993C1D', 11.5, 500]]));
+  p.push(`<text x="260" y="178" font-size="11" fill="#5F5E5A" text-anchor="middle">b = ${f(Lm.b,3)}</text>`);
+  p.push(box(345, 105, 90, 56, C[0], C[1], [
+    ['L','#712B13',13,500],
+    [phase>=2 ? f(fw.L,4) : '?', phase>=2?'#993C1D':'#B4B2A9', 14, 500],
+    [phase>=2 ? `y = ${d.y}` : '', '#993C1D', 11]]));
+  // 方向
+  if (phase>=1 && phase<3) {
+    p.push(`<line x1="40" y1="222" x2="420" y2="222" stroke="#185FA5" stroke-width="2" marker-end="url(#a2)"/>`);
+    p.push(`<text x="230" y="242" font-size="11.5" fill="#185FA5" text-anchor="middle" font-weight="500">前向 →</text>`);
+  } else if (sb) {
+    p.push(`<line x1="420" y1="222" x2="40" y2="222" stroke="#D85A30" stroke-width="2" marker-end="url(#a2)"/>`);
+    p.push(`<text x="230" y="242" font-size="11.5" fill="#993C1D" text-anchor="middle" font-weight="500">← 反向（只需回传 1 层）</text>`);
+  }
+  $('netL').innerHTML = p.join('');
+}
+
+function drawR() {
+  const d = DATA[focus], fw = fwdR(d), bw = bwdR(d, fw);
+  const sf = phase>=1, sb = phase>=3;
+  const p = [MK];
+  const IN=[[85,90],[85,180]], HD=[[135,90],[135,180]], HR=[[215,90],[215,180]], OUT=[275,133];
+  for (let i=0;i<2;i++) for (let j=0;j<2;j++) {
+    p.push(`<line x1="${IN[i][0]}" y1="${IN[i][1]}" x2="${HD[j][0]}" y2="${HD[j][1]}" ${ew(Rm.W1[i][j])}/>`);
+  }
+  for (let j=0;j<2;j++) p.push(`<line x1="${HR[j][0]}" y1="${HR[j][1]}" x2="${OUT[0]}" y2="${OUT[1]}" ${ew(Rm.W2[j])}/>`);
+  p.push(`<line x1="345" y1="133" x2="378" y2="133" stroke="#B4B2A9" stroke-width="1.4" marker-end="url(#a2)"/>`);
+
+  p.push(`<text x="55" y="42" font-size="11.5" fill="#888780" text-anchor="middle">输入</text>`);
+  p.push(`<text x="175" y="42" font-size="11.5" fill="#888780" text-anchor="middle">隐藏 · sigmoid</text>`);
+  p.push(`<text x="310" y="42" font-size="11.5" fill="#888780" text-anchor="middle">输出</text>`);
+  p.push(`<text x="410" y="42" font-size="11.5" fill="#888780" text-anchor="middle">损失</text>`);
+  [0,1].forEach(i => p.push(box(25, 62+i*90, 60, 56, G[0], G[1],
+    [[`x${i?'₂':'₁'}`,'#444441',13,500],[`${d.x[i]}`,'#2C2C2A',15,500]])));
+  [0,1].forEach(j => {
+    p.push(box(135, 62+j*90, 80, 56, P[0], P[1], [
+      [`h${j?'₂':'₁'}`,'#3C3489',12.5,500],
+      [sf ? f(fw.a1[j],3) : '?', sf?'#185FA5':'#B4B2A9', 13, 500],
+      [sb ? `δ=${f(bw.d1[j],4)}` : '', '#993C1D', 10.5, 500]]));
+  });
+  p.push(box(275, 105, 70, 56, P[0], P[1], [
+    ['ŷ','#3C3489',12.5,500],
+    [sf ? f(fw.yh,3) : '?', sf?'#185FA5':'#B4B2A9', 13, 500],
+    [sb ? `δ=${f(bw.d2,4)}` : '', '#993C1D', 10.5, 500]]));
+  p.push(box(378, 105, 60, 56, C[0], C[1], [
+    ['L','#712B13',13,500],
+    [phase>=2 ? f(fw.L,4) : '?', phase>=2?'#993C1D':'#B4B2A9', 13, 500],
+    [phase>=2 ? `y=${d.y}` : '', '#993C1D', 10.5]]));
+
+  if (phase>=1 && phase<3) {
+    p.push(`<line x1="40" y1="222" x2="420" y2="222" stroke="#185FA5" stroke-width="2" marker-end="url(#a2)"/>`);
+    p.push(`<text x="230" y="242" font-size="11.5" fill="#185FA5" text-anchor="middle" font-weight="500">前向 →</text>`);
+  } else if (sb) {
+    p.push(`<line x1="420" y1="222" x2="40" y2="222" stroke="#D85A30" stroke-width="2" marker-end="url(#a2)"/>`);
+    p.push(`<text x="230" y="242" font-size="11.5" fill="#993C1D" text-anchor="middle" font-weight="500">← 反向（要回传 2 层，δ 逐层缩水）</text>`);
+  }
+  $('netR').innerHTML = p.join('');
+}
+
+// ==================== 链条对照 ====================
+function drawChain() {
+  const d = DATA[focus];
+  const fl = fwdL(d), bl = bwdL(d, fl);
+  const fr = fwdR(d), br = bwdR(d, fr);
+  const L = s => `<span class="link l-loss">${s}</span>`;
+  const A = s => `<span class="link l-act">${s}</span>`;
+  const W = s => `<span class="link l-w">${s}</span>`;
+  const I = s => `<span class="link l-in">${s}</span>`;
+  const out = [];
+  out.push(`<b>线性回归</b>　求 ∂L/∂w₁　—— 只有 <b>3</b> 节`);
+  out.push(`  ∂L/∂w₁ = ${L('(ŷ−y)')} × ${A('1')} × ${I('x₁')}`);
+  if (phase >= 3) {
+    out.push(`         = ${L(par(bl.dLdy))} × ${A('1')} × ${I(String(d.x[0]))}  =  <span class="bwd">${f(bl.dw[0],6)}</span>`);
+    out.push(`         <span class="dim">恒等激活的导数是 1，乘了等于没乘</span>`);
+  } else {
+    out.push(`         <span class="dim">（走到第 ③ 步会填上实际数字）</span>`);
+  }
+  out.push('');
+  out.push(`<b>两层网络</b>　求 ∂L/∂w(x₁→h₁)　—— 有 <b>5</b> 节`);
+  out.push(`  ∂L/∂w = ${L('(ŷ−y)')} × ${A('ŷ(1−ŷ)')} × ${W('w(h₁→ŷ)')} × ${A('a₁(1−a₁)')} × ${I('x₁')}`);
+  if (phase >= 3) {
+    out.push(`        = ${L(par(br.dLdy))} × ${A(f(br.sp2))} × ${W(par(Rm.W2[0]))} × ${A(f(br.sp1[0]))} × ${I(String(d.x[0]))}`);
+    out.push(`        =  <span class="bwd">${f(br.dW1[0][0],6)}</span>`);
+    out.push(`        <span class="dim">中间两节 ${f(br.sp2)} 和 ${f(br.sp1[0])} 都小于 0.25 —— 每穿一层就缩水一次</span>`);
+  } else {
+    out.push(`         <span class="dim">（走到第 ③ 步会填上实际数字）</span>`);
+  }
+  out.push('');
+  out.push(`<span class="dim">颜色：</span>${L('损失对预测')} ${A('激活函数导数')} ${W('权重')} ${I('该层输入')}`);
+  $('chainBox').innerHTML = out.join('\n');
+}
+
+// ==================== 详细过程 ====================
+function readoutL() {
+  const d = DATA[focus], fw = fwdL(d), bw = bwdL(d, fw), g = gradsL();
+  const o = [];
+  o.push(`样本 #${focus+1}:  x=(${d.x[0]}, ${d.x[1]})   正确答案 y=${d.y}`);
+  o.push('');
+  if (phase < 1) { o.push('<span class="dim">点「下一阶段」开始 ……</span>'); $('roL').innerHTML=o.join('\n'); return; }
+  o.push('<span class="fwd">━━ ① 前向：一步就到输出 ━━</span>');
+  o.push(`  z = x₁×w₁ + x₂×w₂ + b`);
+  o.push(`    = ${d.x[0]}×${par(Lm.w[0])} + ${d.x[1]}×${par(Lm.w[1])} + ${par(Lm.b)}`);
+  o.push(`    = <span class="fwd">${f(fw.z)}</span>`);
+  o.push(`  ŷ = z = <span class="fwd">${f(fw.yh)}</span>   <span class="dim">← 没有激活函数</span>`);
+  o.push('');
+  if (phase < 2) { o.push('<span class="dim">下一步：算损失 ……</span>'); $('roL').innerHTML=o.join('\n'); return; }
+  o.push('<span class="bad">━━ ② 损失 ━━</span>');
+  o.push(`  L = ½(${f(fw.yh)} − ${d.y})² = <span class="bad">${f(fw.L,6)}</span>`);
+  o.push('');
+  if (phase < 3) { o.push('<span class="dim">下一步：反向传播 ……</span>'); $('roL').innerHTML=o.join('\n'); return; }
+  o.push('<span class="bwd">━━ ③ 反向：只有一层要回传 ━━</span>');
+  o.push(`  ∂L/∂ŷ = ŷ − y = ${f(fw.yh)} − ${d.y} = ${f(bw.dLdy)}`);
+  o.push(`  ∂ŷ/∂z = 1                    <span class="dim">← 恒等函数</span>`);
+  o.push(`  δ = ${par(bw.dLdy)} × 1 = <span class="bwd">${f(bw.delta,6)}</span>`);
+  o.push(`  <span class="dim">δ 直接等于误差 e，一点都没衰减</span>`);
+  o.push('');
+  o.push(`  ∂L/∂w₁ = δ × x₁ = ${par(bw.delta)} × ${d.x[0]} = <span class="bwd">${f(bw.dw[0],6)}</span>`);
+  o.push(`  ∂L/∂w₂ = δ × x₂ = ${par(bw.delta)} × ${d.x[1]} = <span class="bwd">${f(bw.dw[1],6)}</span>`);
+  o.push(`  ∂L/∂b  = δ      = <span class="bwd">${f(bw.db,6)}</span>`);
+  o.push('');
+  o.push('<span class="ok">━━ ④ 更新（batch 平均梯度）━━</span>');
+  o.push(`  w₁ ← ${f(Lm.w[0])} − ${f(lr,1)}×${par(g.w[0])} = <span class="ok">${f(Lm.w[0]-lr*g.w[0])}</span>`);
+  o.push(`  w₂ ← ${f(Lm.w[1])} − ${f(lr,1)}×${par(g.w[1])} = <span class="ok">${f(Lm.w[1]-lr*g.w[1])}</span>`);
+  o.push(`  b  ← ${f(Lm.b)} − ${f(lr,1)}×${par(g.b)} = <span class="ok">${f(Lm.b-lr*g.b)}</span>`);
+  $('roL').innerHTML = o.join('\n');
+}
+
+function readoutR() {
+  const d = DATA[focus], fw = fwdR(d), bw = bwdR(d, fw), g = gradsR();
+  const o = [];
+  o.push(`样本 #${focus+1}:  x=(${d.x[0]}, ${d.x[1]})   正确答案 y=${d.y}`);
+  o.push('');
+  if (phase < 1) { o.push('<span class="dim">点「下一阶段」开始 ……</span>'); $('roR').innerHTML=o.join('\n'); return; }
+  o.push('<span class="fwd">━━ ① 前向：要走两层 ━━</span>');
+  for (let j=0;j<2;j++) {
+    const s = j?'₂':'₁';
+    o.push(`  z${s} = ${d.x[0]}×${par(Rm.W1[0][j])} + ${d.x[1]}×${par(Rm.W1[1][j])} + ${par(Rm.b1[j])} = <span class="fwd">${f(fw.z1[j])}</span>`);
+    o.push(`  a${s} = σ(${f(fw.z1[j])}) = <span class="fwd">${f(fw.a1[j])}</span>`);
+  }
+  o.push(`  z₂ = ${f(fw.a1[0])}×${par(Rm.W2[0])} + ${f(fw.a1[1])}×${par(Rm.W2[1])} + ${par(Rm.b2)} = <span class="fwd">${f(fw.z2)}</span>`);
+  o.push(`  ŷ  = σ(${f(fw.z2)}) = <span class="fwd">${f(fw.yh)}</span>`);
+  o.push('');
+  if (phase < 2) { o.push('<span class="dim">下一步：算损失 ……</span>'); $('roR').innerHTML=o.join('\n'); return; }
+  o.push('<span class="bad">━━ ② 损失 ━━</span>');
+  o.push(`  L = ½(${f(fw.yh)} − ${d.y})² = <span class="bad">${f(fw.L,6)}</span>`);
+  o.push('');
+  if (phase < 3) { o.push('<span class="dim">下一步：反向传播 ……</span>'); $('roR').innerHTML=o.join('\n'); return; }
+  o.push('<span class="bwd">━━ ③ 反向：要逐层回传 ━━</span>');
+  o.push(`  【输出层】`);
+  o.push(`  ∂L/∂ŷ = ${f(bw.dLdy)}`);
+  o.push(`  σ′(z₂) = ŷ(1−ŷ) = ${f(fw.yh)}×${f(1-fw.yh)} = ${f(bw.sp2)}   <span class="dim">← 这里就开始缩水</span>`);
+  o.push(`  δ₂ = ${par(bw.dLdy)} × ${f(bw.sp2)} = <span class="bwd">${f(bw.d2,6)}</span>`);
+  o.push(`  ∂L/∂w(h₁→ŷ) = δ₂ × a₁ = <span class="bwd">${f(bw.dW2[0],6)}</span>`);
+  o.push('');
+  o.push(`  【隐藏层】梯度穿两道门`);
+  for (let j=0;j<2;j++) {
+    const s = j?'₂':'₁';
+    o.push(`  h${s}: ① 穿权重 δ₂×w = ${par(bw.d2)}×${par(Rm.W2[j])} = ${f(bw.through[j],6)}`);
+    o.push(`      ② 穿激活 ×a${s}(1−a${s}) = ×${f(bw.sp1[j])}`);
+    o.push(`      δ${s} = <span class="bwd">${f(bw.d1[j],6)}</span>`);
+  }
+  o.push(`  ∂L/∂w(x₁→h₁) = δ₁ × x₁ = <span class="bwd">${f(bw.dW1[0][0],6)}</span>`);
+  o.push('');
+  const r = Math.abs(bw.d2) > 1e-12 ? Math.abs(bw.d1[0]/bw.d2)*100 : 0;
+  o.push(`  <span class="dim">衰减：|δ₁| 只剩 |δ₂| 的 ${r.toFixed(1)}%</span>`);
+  o.push('');
+  o.push('<span class="ok">━━ ④ 更新（batch 平均梯度，9 个参数）━━</span>');
+  o.push(`  w(x₁→h₁) ← ${f(Rm.W1[0][0])} − ${f(lr,1)}×${par(g.W1[0][0])} = <span class="ok">${f(Rm.W1[0][0]-lr*g.W1[0][0])}</span>`);
+  o.push(`  w(h₁→ŷ)  ← ${f(Rm.W2[0])} − ${f(lr,1)}×${par(g.W2[0])} = <span class="ok">${f(Rm.W2[0]-lr*g.W2[0])}</span>`);
+  o.push(`  <span class="dim">其余 7 个同理</span>`);
+  $('roR').innerHTML = o.join('\n');
+}
+
+// ==================== 图表与表格 ====================
+function drawChart() {
+  const W=440,H=300,P=52;
+  const n = Math.max(histL.length, histR.length);
+  const all = histL.concat(histR).filter(isFinite);
+  const lmax = all.length ? Math.max(...all, 0.001) : 0.2;
+  const toX = i => P + (n<=1?0:i/(n-1))*(W-P-16);
+  const toY = l => (H-38) - Math.min(l,lmax)/lmax*(H-38-18);
+  const p=[];
+  p.push(`<line x1="${P}" y1="18" x2="${P}" y2="${H-38}" stroke="#B4B2A9"/>`);
+  p.push(`<line x1="${P}" y1="${H-38}" x2="${W-16}" y2="${H-38}" stroke="#B4B2A9"/>`);
+  for (let k=0;k<=4;k++) { const v=lmax*k/4, y=toY(v);
+    p.push(`<line x1="${P}" y1="${y}" x2="${W-16}" y2="${y}" stroke="#E5E3DB"/>`);
+    p.push(`<text x="${P-6}" y="${y+4}" font-size="11" fill="#5F5E5A" text-anchor="end">${v.toFixed(3)}</text>`); }
+  const line=(h,c)=> h.length>1 ? `<polyline points="${h.map((l,i)=>`${toX(i).toFixed(1)},${toY(l).toFixed(1)}`).join(' ')}" fill="none" stroke="${c}" stroke-width="2.5"/>` : '';
+  p.push(line(histL,'#888780'));
+  p.push(line(histR,'#7F77DD'));
+  p.push(`<text x="${W-16}" y="30" font-size="12" fill="#5F5E5A" text-anchor="end">线性 L = ${histL.length?f(histL[histL.length-1],5):'—'}</text>`);
+  p.push(`<text x="${W-16}" y="48" font-size="12" fill="#534AB7" text-anchor="end">网络 L = ${histR.length?f(histR[histR.length-1],5):'—'}</text>`);
+  p.push(`<text x="${(W+P)/2}" y="${H-8}" font-size="12" fill="#5F5E5A" text-anchor="middle">迭代次数</text>`);
+  $('chart').innerHTML = p.join('');
+}
+function drawTable() {
+  $('sampleBody').innerHTML = DATA.map(d => {
+    const a = fwdL(d).yh, b = fwdR(d).yh;
+    const col = v => Math.abs(v-d.y)<0.1 ? '#0F6E56' : Math.abs(v-d.y)<0.3 ? '#854F0B' : '#A32D2D';
+    return `<tr><td>${d.x[0]}</td><td>${d.x[1]}</td><td>${d.y}</td>
+      <td style="color:${col(a)};font-weight:500">${f(a,3)}</td>
+      <td style="color:${col(b)};font-weight:500">${f(b,3)}</td></tr>`;
+  }).join('');
+}
+function drawVerdict() {
+  const gl = gradsL(), gr = gradsR();
+  $('vL').className = 'verdict ' + (gl.L < 0.02 ? 'v-ok' : 'v-no');
+  $('vL').innerHTML = gl.L > 0.12
+    ? `损失卡在 <b>${f(gl.L,4)}</b> —— 一条直线画不出异或的边界，这是它的数学上限，再训一百万次也一样。`
+    : `当前损失 <b>${f(gl.L,4)}</b>`;
+  $('vR').className = 'verdict ' + (gr.L < 0.02 ? 'v-ok' : 'v-no');
+  $('vR').innerHTML = gr.L < 0.02
+    ? `损失降到 <b>${f(gr.L,5)}</b> —— 隐藏层把问题掰弯了，异或学会了。`
+    : `当前损失 <b>${f(gr.L,4)}</b>，继续训练还在下降。`;
+}
+
+// ==================== 控制 ====================
+function applyUpdate() {
+  const gl = gradsL(), gr = gradsR();
+  Lm.w[0]-=lr*gl.w[0]; Lm.w[1]-=lr*gl.w[1]; Lm.b-=lr*gl.b;
+  for (let i=0;i<2;i++) for (let j=0;j<2;j++) Rm.W1[i][j]-=lr*gr.W1[i][j];
+  for (let j=0;j<2;j++) { Rm.b1[j]-=lr*gr.b1[j]; Rm.W2[j]-=lr*gr.W2[j]; }
+  Rm.b2-=lr*gr.b2;
+  iter++;
+  histL.push(gradsL().L); histR.push(gradsR().L);
+  if (histL.length>300) { histL.shift(); histR.shift(); }
+}
+function render() {
+  $('iterN').textContent = iter;
+  document.querySelectorAll('.ph').forEach(el => { const p=+el.dataset.p;
+    el.className = 'ph' + (p<phase?' done':p===phase?' now':''); });
+  drawChain(); drawL(); drawR(); readoutL(); readoutR(); drawChart(); drawTable(); drawVerdict();
+}
+function reset() {
+  stopPlay();
+  Lm = { w: INIT_L.w.slice(), b: INIT_L.b };
+  Rm = { W1: INIT_R.W1.map(r=>r.slice()), b1: INIT_R.b1.slice(), W2: INIT_R.W2.slice(), b2: INIT_R.b2 };
+  iter=0; phase=0; histL=[gradsL().L]; histR=[gradsR().L];
+  render();
+}
+function stopPlay() { if (timer) { clearInterval(timer); timer=null; $('playBtn').textContent='自动训练'; } }
+
+$('nextBtn').onclick = () => { if (phase<3) phase++; else { applyUpdate(); phase=0; } render(); };
+$('stepBtn').onclick = () => { applyUpdate(); phase=0; render(); };
+$('resetBtn').onclick = reset;
+$('playBtn').onclick = () => {
+  if (timer) { stopPlay(); return; }
+  $('playBtn').textContent='暂停'; phase=0;
+  timer = setInterval(() => {
+    for (let k=0;k<40;k++) applyUpdate();
+    render();
+    if (gradsR().L < 1e-5 || iter > 60000) stopPlay();
+  }, 60);
+};
+$('lr').oninput = e => { lr=parseFloat(e.target.value); $('lrVal').textContent=f(lr,1); render(); };
+document.querySelectorAll('.samp button').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('.samp button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active'); focus=+b.dataset.s; render();
+  };
+});
+
+reset();
+</script>
+</body>
+</html>

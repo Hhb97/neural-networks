@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>线性回归 vs 神经网络 · 分步计算过程</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body {
+            background: #eef2f7;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 32px;
+            padding: 24px 28px 32px;
+            box-shadow: 0 20px 40px rgba(0,10,30,0.12);
+        }
+        h1 {
+            font-weight: 600;
+            font-size: 1.8rem;
+            color: #0b1a2a;
+            margin: 0 0 4px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .subtitle {
+            color: #3d5066;
+            font-size: 0.95rem;
+            margin: 0 0 16px 0;
+            border-left: 4px solid #2563eb;
+            padding-left: 16px;
+            opacity: 0.8;
+        }
+        .canvas-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+        .canvas-box {
+            flex: 1 1 300px;
+            background: #f8faff;
+            border-radius: 24px;
+            padding: 14px 14px 8px;
+            border: 1px solid #e4ebf5;
+        }
+        .canvas-box h2 {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin: 0 0 8px 0;
+            display: flex;
+            justify-content: space-between;
+            color: #1a2c42;
+        }
+        canvas {
+            width: 100%;
+            aspect-ratio: 1/1;
+            border-radius: 16px;
+            background: #ffffff;
+            border: 1px solid #dce4ef;
+            display: block;
+        }
+        .control-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px 24px;
+            background: #f1f6fd;
+            padding: 12px 24px;
+            border-radius: 60px;
+            margin: 8px 0 14px;
+        }
+        .step-badge {
+            background: #1a2c42;
+            color: white;
+            padding: 4px 20px;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        button {
+            background: white;
+            border: 1px solid #ccd8e8;
+            padding: 6px 22px;
+            border-radius: 40px;
+            font-weight: 500;
+            color: #1a2c42;
+            cursor: pointer;
+            transition: 0.15s;
+            font-size: 0.9rem;
+        }
+        button:hover { background: #1a2c42; color: white; border-color: #1a2c42; }
+        input[type="range"] {
+            width: 130px;
+            height: 4px;
+            -webkit-appearance: none;
+            background: #bcc9dd;
+            border-radius: 10px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #1a2c42;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .log-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 10px;
+            background: #f3f7fe;
+            border-radius: 24px;
+            padding: 16px 20px;
+            border: 1px solid #e0e9f5;
+        }
+        .log-box {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 12px 16px;
+            box-shadow: inset 0 1px 4px rgba(0,0,0,0.02);
+            border: 1px solid #e6eefa;
+            max-height: 190px;
+            overflow-y: auto;
+            font-size: 0.82rem;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+            line-height: 1.6;
+            color: #1a2c42;
+        }
+        .log-box .title {
+            font-weight: 600;
+            font-family: 'Segoe UI', sans-serif;
+            margin-bottom: 4px;
+            color: #2563eb;
+            font-size: 0.85rem;
+        }
+        .log-box .highlight { color: #b45309; font-weight: 500; }
+        .log-box .math { color: #0b5e7c; }
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px 24px;
+            font-size: 0.78rem;
+            color: #1f3349;
+            padding: 6px 0 0;
+        }
+        .legend span::before { content: "●"; margin-right: 6px; display: inline-block; }
+        .lg-true::before { color: #dc2626; }
+        .lg-pred::before { color: #2563eb; }
+        .lg-data::before { color: #0d9488; }
+        @media (max-width: 700px) {
+            .container { padding: 16px; }
+            .log-panel { grid-template-columns: 1fr; }
+            .control-bar { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1><span>📐 梯度下降 · 计算过程</span><span style="font-size:0.7rem; background:#dce5f2; padding:2px 16px; border-radius:40px;">每步数学展开</span></h1>
+    <div class="subtitle">线性回归（无激活） vs 两层网络（ReLU激活参数）— 下方日志显示每步梯度与更新</div>
+
+    <div class="canvas-grid">
+        <div class="canvas-box">
+            <h2><span>📉 线性回归</span><span style="font-weight:400;font-size:0.75rem;">y = w·x + b</span></h2>
+            <canvas id="canvasLinear" width="400" height="400"></canvas>
+        </div>
+        <div class="canvas-box">
+            <h2><span>🧠 两层网络 (ReLU)</span><span style="font-weight:400;font-size:0.75rem;">激活参数 α</span></h2>
+            <canvas id="canvasNN" width="400" height="400"></canvas>
+        </div>
+    </div>
+
+    <div class="control-bar">
+        <span class="step-badge" id="stepDisplay">步骤 0 / 40</span>
+        <button id="resetBtn">⟲ 重置</button>
+        <button id="playBtn">▶ 播放</button>
+        <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:0.85rem;">步数</span>
+            <input type="range" id="stepSlider" min="0" max="40" value="0" step="1">
+        </div>
+        <span id="lossDisplay" style="font-size:0.85rem; background:#e4ebf5; padding:2px 16px; border-radius:40px;">Loss: —</span>
+    </div>
+
+    <!-- 计算日志面板 -->
+    <div class="log-panel">
+        <div class="log-box" id="logLinear">
+            <div class="title">🔹 线性回归 计算过程</div>
+            <div id="logLinearContent">等待开始…</div>
+        </div>
+        <div class="log-box" id="logNN">
+            <div class="title">🔸 神经网络 (ReLU) 计算过程</div>
+            <div id="logNNContent">等待开始…</div>
+        </div>
+    </div>
+    <div class="legend">
+        <span class="lg-true">真实曲线 (sin)</span>
+        <span class="lg-pred">模型预测</span>
+        <span class="lg-data">训练样本</span>
+        <span style="opacity:0.6;">| 每步显示梯度计算 & 参数更新</span>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- 数据 ----------
+        const N = 30;
+        const xData = new Float32Array(N);
+        const yData = new Float32Array(N);
+        for (let i = 0; i < N; i++) {
+            const x = (i / (N - 1)) * 2 * Math.PI;
+            xData[i] = x;
+            yData[i] = Math.sin(x) + (Math.random() - 0.5) * 0.25;
+        }
+        const xMin = 0, xMax = 2 * Math.PI, yMin = -1.3, yMax = 1.3;
+        function normX(x) { return (x - xMin) / (xMax - xMin); }
+        function normY(y) { return (y - yMin) / (yMax - yMin); }
+        function denormY(ny) { return ny * (yMax - yMin) + yMin; }
+        const trainX = new Float32Array(N);
+        const trainY = new Float32Array(N);
+        for (let i = 0; i < N; i++) { trainX[i] = normX(xData[i]); trainY[i] = normY(yData[i]); }
+
+        // ---------- 模型参数 ----------
+        let lr_w = 0.5, lr_b = 0.0;
+        const H = 8;
+        let W1 = new Float32Array(H), b1 = new Float32Array(H), W2 = new Float32Array(H), b2 = 0.0;
+        function initNN() {
+            for (let i = 0; i < H; i++) {
+                W1[i] = (Math.random() - 0.5) * 0.8;
+                b1[i] = (Math.random() - 0.5) * 0.3;
+                W2[i] = (Math.random() - 0.5) * 0.8;
+            }
+            b2 = (Math.random() - 0.5) * 0.3;
+        }
+        initNN();
+
+        // 历史存储 (每步参数 + 详细计算日志)
+        let historyLR = [];
+        let historyNN = [];
+        let logLR = [];
+        let logNN = [];
+        const MAX_STEP = 40;
+
+        // ---------- 前向与损失 ----------
+        function forwardLR(x, w, b) { return w * x + b; }
+        function forwardNN(x, W1, b1, W2, b2) {
+            let h = new Float32Array(H);
+            for (let i = 0; i < H; i++) {
+                let z = W1[i] * x + b1[i];
+                h[i] = Math.max(0, z);
+            }
+            let out = b2;
+            for (let i = 0; i < H; i++) out += W2[i] * h[i];
+            return out;
+        }
+        function computeLossLR(w, b) {
+            let loss = 0;
+            for (let i = 0; i < N; i++) {
+                const pred = forwardLR(trainX[i], w, b);
+                const diff = pred - trainY[i];
+                loss += diff * diff;
+            }
+            return loss / N;
+        }
+        function computeLossNN(W1, b1, W2, b2) {
+            let loss = 0;
+            for (let i = 0; i < N; i++) {
+                const pred = forwardNN(trainX[i], W1, b1, W2, b2);
+                const diff = pred - trainY[i];
+                loss += diff * diff;
+            }
+            return loss / N;
+        }
+
+        // ---------- 梯度下降 + 生成详细日志 ----------
+        function stepLRwithLog(w, b, lr = 0.5) {
+            let dw = 0, db = 0;
+            // 计算梯度
+            for (let i = 0; i < N; i++) {
+                const x = trainX[i], y = trainY[i];
+                const pred = forwardLR(x, w, b);
+                const diff = pred - y;
+                dw += diff * x;
+                db += diff;
+            }
+            dw = (2 * dw) / N;
+            db = (2 * db) / N;
+            const newW = w - lr * dw;
+            const newB = b - lr * db;
+
+            // 生成日志
+            const log = `∇w = ${dw.toFixed(4)}  ∇b = ${db.toFixed(4)}\n` +
+                        `w ← ${w.toFixed(4)} - ${lr}×${dw.toFixed(4)} = ${newW.toFixed(4)}\n` +
+                        `b ← ${b.toFixed(4)} - ${lr}×${db.toFixed(4)} = ${newB.toFixed(4)}`;
+            return { w: newW, b: newB, log };
+        }
+
+        function stepNNwithLog(W1, b1, W2, b2, lr = 0.25) {
+            let dW1 = new Float32Array(H).fill(0);
+            let db1 = new Float32Array(H).fill(0);
+            let dW2 = new Float32Array(H).fill(0);
+            let db2 = 0;
+            // 存储每个样本的隐藏层输出用于日志 (取第一个样本做示例)
+            let sampleIdx = 0; 
+            let sampleX = trainX[sampleIdx], sampleY = trainY[sampleIdx];
+            let sampleZ = new Float32Array(H), sampleH = new Float32Array(H);
+            for (let j = 0; j < H; j++) {
+                sampleZ[j] = W1[j] * sampleX + b1[j];
+                sampleH[j] = Math.max(0, sampleZ[j]);
+            }
+            let sampleOut = b2;
+            for (let j = 0; j < H; j++) sampleOut += W2[j] * sampleH[j];
+            const sampleDiff = sampleOut - sampleY;
+
+            // 计算全梯度
+            for (let i = 0; i < N; i++) {
+                const x = trainX[i], y = trainY[i];
+                let z = new Float32Array(H), h = new Float32Array(H);
+                for (let j = 0; j < H; j++) {
+                    z[j] = W1[j] * x + b1[j];
+                    h[j] = Math.max(0, z[j]);
+                }
+                let out = b2;
+                for (let j = 0; j < H; j++) out += W2[j] * h[j];
+                const diff = out - y;
+                db2 += diff;
+                for (let j = 0; j < H; j++) {
+                    dW2[j] += diff * h[j];
+                }
+                for (let j = 0; j < H; j++) {
+                    const grad = (z[j] > 0) ? diff * W2[j] : 0;
+                    dW1[j] += grad * x;
+                    db1[j] += grad;
+                }
+            }
+            for (let j = 0; j < H; j++) {
+                dW1[j] = (2 * dW1[j]) / N;
+                db1[j] = (2 * db1[j]) / N;
+                dW2[j] = (2 * dW2[j]) / N;
+            }
+            db2 = (2 * db2) / N;
+
+            const newW1 = new Float32Array(H), newb1 = new Float32Array(H), newW2 = new Float32Array(H);
+            for (let j = 0; j < H; j++) {
+                newW1[j] = W1[j] - lr * dW1[j];
+                newb1[j] = b1[j] - lr * db1[j];
+                newW2[j] = W2[j] - lr * dW2[j];
+            }
+            const newb2 = b2 - lr * db2;
+
+            // 生成日志 (显示部分梯度)
+            let log = `样本(x=${sampleX.toFixed(3)}, y=${sampleY.toFixed(3)}) 前向:\n`;
+            log += `  z1~z8 = [${sampleZ.map(v=>v.toFixed(3)).join(', ')}]\n`;
+            log += `  ReLU → h = [${sampleH.map(v=>v.toFixed(3)).join(', ')}]\n`;
+            log += `  输出 = ${sampleOut.toFixed(4)}  diff = ${sampleDiff.toFixed(4)}\n`;
+            log += `梯度 (dW2[0..2]) = [${dW2.slice(0,3).map(v=>v.toFixed(4)).join(', ')} ...]\n`;
+            log += `更新 W1[0] ← ${W1[0].toFixed(4)} - ${lr}×${dW1[0].toFixed(4)} = ${newW1[0].toFixed(4)}`;
+            return { W1: newW1, b1: newb1, W2: newW2, b2: newb2, log };
+        }
+
+        // ---------- 构建历史 ----------
+        function buildHistory() {
+            historyLR = []; historyNN = []; logLR = []; logNN = [];
+            let w = lr_w, b = lr_b;
+            let W1c = new Float32Array(W1), b1c = new Float32Array(b1), W2c = new Float32Array(W2), b2c = b2;
+
+            for (let step = 0; step <= MAX_STEP; step++) {
+                historyLR.push({ w, b });
+                historyNN.push({ W1: new Float32Array(W1c), b1: new Float32Array(b1c), 
+                                W2: new Float32Array(W2c), b2: b2c });
+                // 存储日志 (当前步)
+                if (step === 0) {
+                    logLR.push("初始参数: w=0.5000, b=0.0000");
+                    logNN.push("初始参数: 随机初始化 W1, W2");
+                } else {
+                    // 从上一步更新
+                    const prevLR = historyLR[step-1];
+                    const resLR = stepLRwithLog(prevLR.w, prevLR.b, 0.5);
+                    logLR.push(resLR.log);
+                    // 更新NN
+                    const prevNN = historyNN[step-1];
+                    const resNN = stepNNwithLog(prevNN.W1, prevNN.b1, prevNN.W2, prevNN.b2, 0.25);
+                    logNN.push(resNN.log);
+                }
+
+                if (step < MAX_STEP) {
+                    const resLR = stepLRwithLog(w, b, 0.5);
+                    w = resLR.w; b = resLR.b;
+                    const resNN = stepNNwithLog(W1c, b1c, W2c, b2c, 0.25);
+                    W1c = resNN.W1; b1c = resNN.b1; W2c = resNN.W2; b2c = resNN.b2;
+                }
+            }
+        }
+        buildHistory();
+
+        // ---------- 绘制 ----------
+        const canvasLR = document.getElementById('canvasLinear');
+        const canvasNN = document.getElementById('canvasNN');
+        const ctxLR = canvasLR.getContext('2d');
+        const ctxNN = canvasNN.getContext('2d');
+        const stepDisplay = document.getElementById('stepDisplay');
+        const stepSlider = document.getElementById('stepSlider');
+        const lossDisplay = document.getElementById('lossDisplay');
+        const logLinearContent = document.getElementById('logLinearContent');
+        const logNNContent = document.getElementById('logNNContent');
+
+        function draw(step) {
+            const s = Math.min(step, MAX_STEP);
+            stepDisplay.innerText = `步骤 ${s} / ${MAX_STEP}`;
+            stepSlider.value = s;
+
+            const lrState = historyLR[s];
+            const nnState = historyNN[s];
+            const lossLR = computeLossLR(lrState.w, lrState.b);
+            const lossNN = computeLossNN(nnState.W1, nnState.b1, nnState.W2, nnState.b2);
+            lossDisplay.innerHTML = `Loss: 线性 ${lossLR.toFixed(4)}  NN ${lossNN.toFixed(4)}`;
+
+            // 更新日志
+            if (s === 0) {
+                logLinearContent.textContent = "初始状态: w=0.5000, b=0.0000\n点击播放开始梯度下降";
+                logNNContent.textContent = "初始状态: 随机初始化权重\n点击播放开始梯度下降";
+            } else {
+                logLinearContent.textContent = logLR[s-1] || "计算中…";
+                logNNContent.textContent = logNN[s-1] || "计算中…";
+            }
+
+            drawCanvas(ctxLR, canvasLR, 'linear', lrState, s);
+            drawCanvas(ctxNN, canvasNN, 'nn', nnState, s);
+        }
+
+        function drawCanvas(ctx, canvas, type, state, step) {
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+            // 网格
+            ctx.strokeStyle = "#e7edf5"; ctx.lineWidth = 0.5;
+            for (let i = 0; i <= 10; i++) {
+                const x = (i/10)*w, y = (i/10)*h;
+                ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+            }
+            function toCanvasX(nx) { return nx * w; }
+            function toCanvasY(ny) { return (1 - ny) * h; }
+
+            // 真实曲线
+            ctx.beginPath(); ctx.strokeStyle = "#dc2626"; ctx.lineWidth = 2; ctx.setLineDash([4,4]);
+            for (let px = 0; px <= w; px+=1) {
+                const nx = px/w, x = nx*(xMax-xMin)+xMin, yTrue = Math.sin(x), ny = normY(yTrue);
+                const cx = toCanvasX(nx), cy = toCanvasY(ny);
+                px===0 ? ctx.moveTo(cx,cy) : ctx.lineTo(cx,cy);
+            }
+            ctx.stroke(); ctx.setLineDash([]);
+
+            // 样本
+            for (let i = 0; i < N; i++) {
+                const cx = toCanvasX(trainX[i]), cy = toCanvasY(trainY[i]);
+                ctx.beginPath(); ctx.arc(cx, cy, 4, 0, 2*Math.PI);
+                ctx.fillStyle = "#0d9488"; ctx.shadowBlur = 6; ctx.shadowColor = "rgba(0,0,0,0.05)"; ctx.fill();
+                ctx.shadowBlur = 0; ctx.strokeStyle = "#0b6b5e"; ctx.lineWidth=1; ctx.stroke();
+            }
+
+            // 预测
+            ctx.beginPath(); ctx.strokeStyle = "#2563eb"; ctx.lineWidth = 3;
+            for (let px = 0; px <= w; px+=1) {
+                const nx = px/w;
+                let pred;
+                if (type === 'linear') pred = forwardLR(nx, state.w, state.b);
+                else pred = forwardNN(nx, state.W1, state.b1, state.W2, state.b2);
+                const clamped = Math.max(0, Math.min(1, pred));
+                const cx = toCanvasX(nx), cy = toCanvasY(clamped);
+                px===0 ? ctx.moveTo(cx,cy) : ctx.lineTo(cx,cy);
+            }
+            ctx.stroke();
+
+            const loss = type==='linear' ? computeLossLR(state.w, state.b) : computeLossNN(state.W1, state.b1, state.W2, state.b2);
+            ctx.fillStyle = "#1f2a3f"; ctx.font = "13px monospace"; ctx.fillText(`Loss: ${loss.toFixed(4)}`, w-130, h-12);
+        }
+
+        // ---------- 控制 ----------
+        let playing = false, timer = null;
+        function togglePlay() {
+            playing = !playing;
+            document.getElementById('playBtn').innerText = playing ? '⏸ 暂停' : '▶ 播放';
+            if (playing) {
+                if (currentStep >= MAX_STEP) {
+                    // 重置
+                    lr_w = 0.5; lr_b = 0.0; initNN(); buildHistory(); setStep(0);
+                }
+                timer = setInterval(() => {
+                    let next = currentStep + 1;
+                    if (next > MAX_STEP) { clearInterval(timer); playing = false; document.getElementById('playBtn').innerText = '▶ 播放'; return; }
+                    setStep(next);
+                }, 350);
+            } else {
+                if (timer) clearInterval(timer); timer = null;
+            }
+        }
+
+        let currentStep = 0;
+        function setStep(val) {
+            const s = Math.min(MAX_STEP, Math.max(0, parseInt(val) || 0));
+            currentStep = s; draw(s);
+        }
+
+        document.getElementById('resetBtn').addEventListener('click', function() {
+            if (playing) togglePlay();
+            lr_w = 0.5; lr_b = 0.0; initNN(); buildHistory(); setStep(0);
+        });
+        document.getElementById('playBtn').addEventListener('click', togglePlay);
+        stepSlider.addEventListener('input', function(e) {
+            if (playing) togglePlay();
+            setStep(e.target.value);
+        });
+        setStep(0);
+    })();
+</script>
+</body>
+</html>

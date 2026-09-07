@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>梯度下降对比 — 直接法 vs 两层神经网络</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Crimson+Pro:wght@400;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08080d;--s1:#0e0e16;--s2:#13131e;--s3:#1a1a28;--bd:#252538;
+  --amber:#e8a849;--amber-g:#e8a84940;--amber-d:#9a7030;
+  --teal:#40d8d0;--teal-g:#40d8d040;--teal-d:#208880;
+  --txt:#e4e0d8;--dim:#706878;--mut:#504858;
+  --red:#e86060;--grn:#50c870;
+}
+body{background:var(--bg);color:var(--txt);font-family:'Crimson Pro',Georgia,serif;font-size:15px;line-height:1.5;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");opacity:.35;pointer-events:none;z-index:9999}
+.ct{max-width:1200px;margin:0 auto;padding:28px 20px 40px}
+header{text-align:center;margin-bottom:22px}
+header h1{font-family:'Cormorant Garamond',Georgia,serif;font-size:2.3em;font-weight:700;letter-spacing:.02em}
+header .sub{font-family:'DM Mono',monospace;font-size:.8em;color:var(--dim);letter-spacing:.12em;margin-top:4px}
+.desc{text-align:center;max-width:660px;margin:0 auto 20px;color:var(--dim);font-size:.92em}
+.fbar{text-align:center;margin-bottom:22px;display:flex;justify-content:center;gap:30px;flex-wrap:wrap}
+.fm{font-family:'DM Mono',monospace;font-size:.82em;padding:7px 16px;border-radius:6px;border:1px solid var(--bd);background:var(--s1)}
+.fm.a{border-color:var(--amber-d);color:var(--amber)}.fm.t{border-color:var(--teal-d);color:var(--teal)}
+.pnl{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.panel{background:var(--s1);border:1px solid var(--bd);border-radius:10px;overflow:hidden}
+.ph{padding:13px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--bd)}
+.panel.a{border-top:3px solid var(--amber)}.panel.t{border-top:3px solid var(--teal)}
+.pt{font-family:'DM Mono',monospace;font-size:.9em;font-weight:500}
+.panel.a .pt{color:var(--amber)}.panel.t .pt{color:var(--teal)}
+.pb{font-family:'DM Mono',monospace;font-size:.72em;padding:3px 10px;border-radius:20px;background:var(--s2);color:var(--dim)}
+.nnd{padding:12px 18px;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--s2);border-bottom:1px solid var(--bd);font-family:'DM Mono',monospace;font-size:.7em}
+.nnl{display:flex;flex-direction:column;gap:5px;align-items:center}
+.nnlb{color:var(--mut);font-size:.85em;margin-bottom:2px}
+.nnnd{width:52px;height:26px;border:1px solid var(--teal-d);border-radius:4px;display:flex;align-items:center;justify-content:center;color:var(--teal);background:var(--s1);font-size:.9em}
+.nna{color:var(--mut);font-size:1.1em;display:flex;align-items:center}
+.pc{padding:8px 10px}
+.pc canvas{width:100%;border-radius:6px;background:var(--s2)}
+.pp{padding:9px 18px;font-family:'DM Mono',monospace;font-size:.74em;display:flex;flex-wrap:wrap;gap:8px 14px;border-top:1px solid var(--bd);background:var(--s1)}
+.pm{display:flex;align-items:center;gap:3px}
+.pn{color:var(--dim)}
+.pv{color:var(--txt);font-weight:500;min-width:48px;transition:color .3s,text-shadow .3s}
+.pv.ch{color:var(--amber);text-shadow:0 0 8px var(--amber-g)}
+.panel.t .pv.ch{color:var(--teal);text-shadow:0 0 8px var(--teal-g)}
+.ld{padding:7px 18px;font-family:'DM Mono',monospace;font-size:.76em;display:flex;justify-content:space-between;border-top:1px solid var(--bd)}
+.ll{color:var(--dim)}.lv{font-weight:500}
+.panel.a .lv{color:var(--amber)}.panel.t .lv{color:var(--teal)}
+.lc{height:230px;overflow-y:auto;border-top:1px solid var(--bd);background:var(--s2)}
+.lc::-webkit-scrollbar{width:4px}.lc::-webkit-scrollbar-track{background:transparent}.lc::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px}
+.lg{padding:8px 12px;font-family:'DM Mono',monospace;font-size:.7em;line-height:1.75}
+.le{color:var(--dim);margin-top:7px;display:flex;align-items:center;gap:8px}.le:first-child{margin-top:0}
+.lel{flex:1;height:1px;background:var(--bd)}
+.ldt{padding-left:6px;color:var(--dim);white-space:pre-wrap}
+.lh{color:var(--txt)}.ln{color:var(--amber)}.panel.t .ln{color:var(--teal)}
+.lgr{color:var(--red)}.lup{color:var(--grn)}
+.ctr{display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;background:var(--s1);border:1px solid var(--bd);border-radius:10px;margin-bottom:18px;flex-wrap:wrap}
+.btn{font-family:'DM Mono',monospace;font-size:.8em;padding:8px 18px;border:1px solid var(--bd);border-radius:6px;background:var(--s2);color:var(--txt);cursor:pointer;transition:all .2s;letter-spacing:.04em}
+.btn:hover{background:var(--s3);border-color:var(--mut)}
+.btn.pri{background:var(--amber-d);border-color:var(--amber)}.btn.pri:hover{background:var(--amber);color:var(--bg)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.ci{font-family:'DM Mono',monospace;font-size:.75em;color:var(--dim);display:flex;align-items:center;gap:14px}
+.sc{display:flex;align-items:center;gap:5px}.sc label{color:var(--mut);font-size:.88em}
+.sc input[type=range]{width:80px;accent-color:var(--amber)}
+.ls{background:var(--s1);border:1px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:18px}
+.lsh{padding:11px 18px;font-family:'DM Mono',monospace;font-size:.82em;color:var(--dim);border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center}
+.llg{display:flex;gap:18px;font-size:.88em}
+.li{display:flex;align-items:center;gap:5px}
+.ld2{width:8px;height:8px;border-radius:50%}.ld2.a{background:var(--amber)}.ld2.t{background:var(--teal)}
+.lcc{padding:8px 10px}.lcc canvas{width:100%;height:160px}
+.cvg{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.82em;background:#50c87018;color:var(--grn);border:1px solid #50c87030}
+.ins{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:18px 22px;margin-top:4px}
+.ins h3{font-family:'DM Mono',monospace;font-size:.85em;color:var(--dim);margin-bottom:10px;letter-spacing:.06em}
+.ins ul{list-style:none;padding:0}.ins li{padding:4px 0;font-size:.88em;color:var(--dim);padding-left:16px;position:relative}
+.ins li::before{content:'›';position:absolute;left:0;color:var(--amber)}
+.ins strong{color:var(--txt)}
+@media(max-width:820px){.pnl{grid-template-columns:1fr}.lc{height:180px}}
+</style>
+</head>
+<body>
+<div class="ct">
+  <header>
+    <h1>梯度下降 对比实验</h1>
+    <p class="sub">DIRECT GRADIENT DESCENT vs TWO-LAYER NEURAL NETWORK</p>
+  </header>
+  <p class="desc">同样学习 <strong>y = 2x + 1</strong> 的 4 个样本，对比直接求导梯度下降与两层神经网络反向传播的计算差异和收敛过程。</p>
+  <div class="fbar">
+    <div class="fm a">直接法: ŷ = wx + b</div>
+    <div class="fm t">神经网络: ŷ = v₁·ReLU(w₁x+b₁) + v₂·ReLU(w₂x+b₂) + c</div>
+  </div>
+
+  <div class="pnl">
+    <!-- Direct Panel -->
+    <div class="panel a">
+      <div class="ph">
+        <span class="pt">◆ 直接法 y = wx + b</span>
+        <span class="pb" id="bd">2 个参数</span>
+      </div>
+      <div class="pc"><canvas id="cp" width="1040" height="680"></canvas></div>
+      <div class="pp" id="ppd">
+        <div class="pm"><span class="pn">w</span><span class="pv" id="dw">0.500</span></div>
+        <div class="pm"><span class="pn">b</span><span class="pv" id="db">0.500</span></div>
+      </div>
+      <div class="ld"><span class="ll">Loss (MSE)</span><span class="lv" id="dls">—</span></div>
+      <div class="lc" id="dlc"><div class="lg" id="dlg"><div class="ldt" style="color:var(--mut)">点击 ▶ 运行 或 ⏭ 单步 开始…</div></div></div>
+    </div>
+    <!-- NN Panel -->
+    <div class="panel t">
+      <div class="ph">
+        <span class="pt">◆ 两层神经网络</span>
+        <span class="pb" id="bn">7 个参数</span>
+      </div>
+      <div class="nnd">
+        <div class="nnl"><div class="nnlb">输入</div><div class="nnnd">x</div></div>
+        <div class="nna">→</div>
+        <div class="nnl"><div class="nnlb">隐藏层 (ReLU)</div><div class="nnnd">h₁</div><div class="nnnd">h₂</div></div>
+        <div class="nna">→</div>
+        <div class="nnl"><div class="nnlb">输出</div><div class="nnnd">ŷ</div></div>
+      </div>
+      <div class="pc"><canvas id="cn" width="1040" height="680"></canvas></div>
+      <div class="pp" id="ppn">
+        <div class="pm"><span class="pn">w₁</span><span class="pv" id="nw1">0.300</span></div>
+        <div class="pm"><span class="pn">b₁</span><span class="pv" id="nb1">0.200</span></div>
+        <div class="pm"><span class="pn">w₂</span><span class="pv" id="nw2">0.500</span></div>
+        <div class="pm"><span class="pn">b₂</span><span class="pv" id="nb2">-0.100</span></div>
+        <div class="pm"><span class="pn">v₁</span><span class="pv" id="nv1">0.400</span></div>
+        <div class="pm"><span class="pn">v₂</span><span class="pv" id="nv2">0.300</span></div>
+        <div class="pm"><span class="pn">c</span><span class="pv" id="nc">0.100</span></div>
+      </div>
+      <div class="ld"><span class="ll">Loss (MSE)</span><span class="lv" id="nls">—</span></div>
+      <div class="lc" id="nlc"><div class="lg" id="nlg"><div class="ldt" style="color:var(--mut)">点击 ▶ 运行 或 ⏭ 单步 开始…</div></div></div>
+    </div>
+  </div>
+
+  <div class="ctr">
+    <button class="btn pri" id="bauto" onclick="toggleAuto()">▶ 运行</button>
+    <button class="btn" id="bstep" onclick="doStep()">⏭ 单步</button>
+    <button class="btn" onclick="doReset()">↺ 重置</button>
+    <div class="ci">
+      <span>Epoch: <strong id="epd">0</strong> / 200</span>
+      <div class="sc"><label>速度</label><input type="range" id="spd" min="40" max="1500" value="350" oninput="updSpd()"></div>
+    </div>
+  </div>
+
+  <div class="ls">
+    <div class="lsh"><span>Loss 曲线对比 (对数刻度)</span>
+      <div class="llg"><div class="li"><div class="ld2 a"></div>直接法</div><div class="li"><div class="ld2 t"></div>神经网络</div></div>
+    </div>
+    <div class="lcc"><canvas id="cl" width="1600" height="320"></canvas></div>
+  </div>
+
+  <div class="ins">
+    <h3>核心观察</h3>
+    <ul>
+      <li><strong>直接法</strong>只需算 ∂L/∂w 和 ∂L/∂b 两个梯度，信号一步到位，对线性问题天然高效。</li>
+      <li><strong>神经网络</strong>需通过链式法则从输出层逐层回传（∂L/∂ŷ → ∂L/∂h → ∂L/∂z → ∂L/∂w），信号每过一层 ReLU 都可能衰减甚至截断。</li>
+      <li>对于 y=wx+b 这种线性问题，直接法参数少、路径短、收敛快；神经网络的优势在于拟合<strong>非线性</strong>关系。</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════
+const S = [{x:1,y:3},{x:2,y:5},{x:3,y:7},{x:4,y:9}];
+const LR = 0.02, MAX = 200, THR = 0.01;
+const f = (n,d=3) => n.toFixed(d);
+const R = x => Math.max(0, x);
+
+// ═══════════════════════════════════════
+// DIRECT MODEL
+// ═══════════════════════════════════════
+let dW, dB, dL = [];
+function initD(){ dW=0.5; dB=0.5; dL=[]; }
+
+function stepD(){
+  let loss=0, ga=0, gb=0, oW=dW, oB=dB, det=[];
+  for(const{s:x,y}of S){
+    const p=dW*x+dB, e=p-y; loss+=e*e; ga+=2*e*x; gb+=2*e;
+    det.push({x,y,p,e});
+  }
+  loss/=4; ga/=4; gb/=4;
+  dW-=LR*ga; dB-=LR*gb; dL.push(loss);
+  return{loss,dw:ga,db:gb,oW,oB,nW:dW,nB:dB,det};
+}
+
+// ═══════════════════════════════════════
+// NN MODEL
+// ═══════════════════════════════════════
+let w1,b1,w2,b2,v1,v2,cv, nL=[];
+function initN(){ w1=.3;b1=.2;w2=.5;b2=-.1;v1=.4;v2=.3;cv=.1; nL=[]; }
+
+function stepN(){
+  const oP={w1,b1,w2,b2,v1,v2,c:cv};
+  let loss=0, g={w1:0,b1:0,w2:0,b2:0,v1:0,v2:0,c:0}, det=[];
+  for(const{s:x,y}of S){
+    const z1=w1*x+b1, h1=R(z1), z2=w2*x+b2, h2=R(z2);
+    const pred=v1*h1+v2*h2+cv, err=pred-y; loss+=err*err;
+    const dy=2*err, gv1=dy*h1, gv2=dy*h2, gc=dy;
+    const dh1=dy*v1, dh2=dy*v2;
+    const r1=z1>0?1:0, r2=z2>0?1:0;
+    const dz1=dh1*r1, dz2=dh2*r2;
+    const gw1=dz1*x, gb1v=dz1, gw2=dz2*x, gb2v=dz2;
+    g.w1+=gw1;g.b1+=gb1v;g.w2+=gw2;g.b2+=gb2v;g.v1+=gv1;g.v2+=gv2;g.c+=gc;
+    det.push({x,y,z1,h1,z2,h2,pred,err,dy,dh1,dh2,r1,r2,dz1,dz2,gw1,gb1:gb1v,gw2,gb2:gb2v,gv1,gv2,gc});
+  }
+  loss/=4; for(const k in g) g[k]/=4;
+  w1-=LR*g.w1;b1-=LR*g.b1;w2-=LR*g.w2;b2-=LR*g.b2;
+  v1-=LR*g.v1;v2-=LR*g.v2;cv-=LR*g.c;
+  nL.push(loss);
+  const nP={w1,b1,w2,b2,v1,v2,c:cv};
+  return{loss,g,oP,nP,det};
+}
+
+// ═══════════════════════════════════════
+// PLOTTING
+// ═══════════════════════════════════════
+const PW=520,PH=340,M={t:20,r:15,b:30,l:44};
+const pw=PW-M.l-M.r, ph=PH-M.t-M.b;
+const XR=[0,5],YR=[-1,12];
+const xM=x=>M.l+((x-XR[0])/(XR[1]-XR[0]))*pw;
+const yM=y=>M.t+ph-((y-YR[0])/(YR[1]-YR[0]))*ph;
+
+function mkC(c,w,h){
+  const d=devicePixelRatio||1;
+  c.width=w*d;c.height=h*d;
+  c.style.width='100%';c.style.aspectRatio=`${w}/${h}`;
+  const x=c.getContext('2d');x.scale(d,d);return x;
+}
+
+function drawBase(ctx){
+  ctx.fillStyle='#0b0b13';ctx.fillRect(0,0,PW,PH);
+  ctx.strokeStyle='#181828';ctx.lineWidth=.5;
+  for(let x=0;x<=5;x++){ctx.beginPath();ctx.moveTo(xM(x),M.t);ctx.lineTo(xM(x),M.t+ph);ctx.stroke();}
+  for(let y=0;y<=10;y+=2){ctx.beginPath();ctx.moveTo(M.l,yM(y));ctx.lineTo(M.l+pw,yM(y));ctx.stroke();}
+  ctx.strokeStyle='#2a2a40';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(M.l,yM(0));ctx.lineTo(M.l+pw,yM(0));ctx.stroke();
+  ctx.beginPath();ctx.moveTo(xM(0),M.t);ctx.lineTo(xM(0),M.t+ph);ctx.stroke();
+  ctx.fillStyle='#484860';ctx.font='10px "DM Mono",monospace';ctx.textAlign='center';
+  for(let x=0;x<=5;x++) ctx.fillText(x,xM(x),yM(0)+15);
+  ctx.textAlign='right';
+  for(let y=0;y<=10;y+=2) ctx.fillText(y,M.l-6,yM(y)+4);
+  // target line
+  ctx.strokeStyle='#50c87025';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);
+  ctx.beginPath();ctx.moveTo(xM(0),yM(1));ctx.lineTo(xM(5),yM(11));ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#50c87030';ctx.font='10px "DM Mono",monospace';ctx.textAlign='right';
+  ctx.fillText('y=2x+1',xM(4.9),yM(10.9)-4);
+  // data points
+  for(const s of S){
+    const cx=xM(s.x),cy=yM(s.y);
+    ctx.fillStyle='#e4e0d818';ctx.beginPath();ctx.arc(cx,cy,10,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#e4e0d8';ctx.beginPath();ctx.arc(cx,cy,3.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#707080';ctx.font='10px "DM Mono",monospace';ctx.textAlign='left';
+    ctx.fillText(`(${s.x},${s.y})`,cx+7,cy-7);
+  }
+}
+
+function drawDirect(ctx){
+  ctx.strokeStyle='#e8a849';ctx.lineWidth=2.5;ctx.shadowColor='#e8a84950';ctx.shadowBlur=10;
+  ctx.beginPath();ctx.moveTo(xM(0),yM(dB));ctx.lineTo(xM(5),yM(dW*5+dB));ctx.stroke();ctx.shadowBlur=0;
+  ctx.fillStyle='#e8a849';ctx.font='12px "DM Mono",monospace';ctx.textAlign='left';
+  ctx.fillText(`y = ${f(dW,2)}x + ${f(dB,2)}`,M.l+8,M.t+16);
+}
+
+function drawNN(ctx){
+  ctx.strokeStyle='#40d8d0';ctx.lineWidth=2.5;ctx.shadowColor='#40d8d050';ctx.shadowBlur=10;
+  ctx.beginPath();
+  for(let i=0;i<=80;i++){
+    const x=XR[0]+(XR[1]-XR[0])*i/80;
+    const z1v=w1*x+b1,h1v=R(z1v),z2v=w2*x+b2,h2v=R(z2v);
+    const y=v1*h1v+v2*h2v+cv;
+    i===0?ctx.moveTo(xM(x),yM(y)):ctx.lineTo(xM(x),yM(y));
+  }
+  ctx.stroke();ctx.shadowBlur=0;
+  ctx.fillStyle='#40d8d0';ctx.font='10px "DM Mono",monospace';ctx.textAlign='left';
+  ctx.fillText('NN 输出曲线',M.l+8,M.t+16);
+}
+
+let cxD,cxN;
+function initPlots(){
+  cxD=mkC(document.getElementById('cp'),PW,PH);
+  cxN=mkC(document.getElementById('cn'),PW,PH);
+  renderPlots();
+}
+function renderPlots(){
+  cxD.clearRect(0,0,PW,PH);drawBase(cxD);drawDirect(cxD);
+  cxN.clearRect(0,0,PW,PH);drawBase(cxN);drawNN(cxN);
+}
+
+// ═══════════════════════════════════════
+// LOSS CHART
+// ═══════════════════════════════════════
+let cxL;const LW=800,LH=160,LM={t:15,r:15,b:25,l:50};
+function initLoss(){cxL=mkC(document.getElementById('cl'),LW,LH);renderLoss();}
+function renderLoss(){
+  const w=LW,h=LH;
+  cxL.clearRect(0,0,w,h);
+  cxL.fillStyle='#0b0b13';cxL.fillRect(0,0,w,h);
+  if(!dL.length&&!nL.length){
+    cxL.fillStyle='#484860';cxL.font='12px "DM Mono",monospace';cxL.textAlign='center';
+    cxL.fillText('运行后显示 Loss 曲线',w/2,h/2);return;
+  }
+  const lpw=w-LM.l-LM.r, lph=h-LM.t-LM.b;
+  let mxL=0;for(const l of dL)mxL=Math.max(mxL,l);for(const l of nL)mxL=Math.max(mxL,l);
+  const logMin=-2,logMax=Math.max(Math.ceil(Math.log10(mxL+.1)),1);
+  const maxEp=Math.max(dL.length,nL.length,1);
+  const ly=l=>{const v=Math.log10(Math.max(l,.001)),t=Math.max(0,Math.min(1,(v-logMin)/(logMax-logMin)));return LM.t+lph-t*lph};
+  const ex=e=>LM.l+(e/maxEp)*lpw;
+  // grid
+  cxL.strokeStyle='#161628';cxL.lineWidth=.5;
+  for(let v=logMin;v<=logMax;v++){
+    const y=LM.t+lph-((v-logMin)/(logMax-logMin))*lph;
+    cxL.beginPath();cxL.moveTo(LM.l,y);cxL.lineTo(LM.l+lpw,y);cxL.stroke();
+    cxL.fillStyle='#404058';cxL.font='9px "DM Mono",monospace';cxL.textAlign='right';
+    const val=Math.pow(10,v);cxL.fillText(val<.1?val.toFixed(2):val.toFixed(0),LM.l-5,y+3);
+  }
+  cxL.strokeStyle='#2a2a40';cxL.lineWidth=1;
+  cxL.beginPath();cxL.moveTo(LM.l,LM.t);cxL.lineTo(LM.l,LM.t+lph);cxL.lineTo(LM.l+lpw,LM.t+lph);cxL.stroke();
+  // threshold
+  const thY=ly(THR);
+  cxL.strokeStyle='#50c87030';cxL.lineWidth=1;cxL.setLineDash([4,4]);
+  cxL.beginPath();cxL.moveTo(LM.l,thY);cxL.lineTo(LM.l+lpw,thY);cxL.stroke();cxL.setLineDash([]);
+  cxL.fillStyle='#50c87050';cxL.font='9px "DM Mono",monospace';cxL.textAlign='left';
+  cxL.fillText(`converge ${THR}`,LM.l+4,thY-4);
+  // curves
+  const dr=(d,c)=>{if(d.length<1)return;cxL.strokeStyle=c;cxL.lineWidth=2;cxL.shadowColor=c+'50';cxL.shadowBlur=6;cxL.beginPath();
+    for(let i=0;i<d.length;i++){i===0?cxL.moveTo(ex(i),ly(d[i])):cxL.lineTo(ex(i),ly(d[i]));}cxL.stroke();cxL.shadowBlur=0;};
+  dr(dL,'#e8a849');dr(nL,'#40d8d0');
+  // end dots
+  if(dL.length){cxL.fillStyle='#e8a849';cxL.beginPath();cxL.arc(ex(dL.length-1),ly(dL[dL.length-1]),3,0,Math.PI*2);cxL.fill();}
+  if(nL.length){cxL.fillStyle='#40d8d0';cxL.beginPath();cxL.arc(ex(nL.length-1),ly(nL[nL.length-1]),3,0,Math.PI*2);cxL.fill();}
+}
+
+// ═══════════════════════════════════════
+// LOGS
+// ═══════════════════════════════════════
+function addDL(ep,r){
+  const el=document.getElementById('dlg'),bx=document.getElementById('dlc');
+  if(ep===1)el.innerHTML='';
+  let h=`<div class="le"><span>Epoch ${ep}</span><span class="lel"></span><span>Loss: ${f(r.loss,4)}</span></div>`;
+  for(const s of r.det)
+    h+=`<div class="ldt">x=<span class="lh">${s.x}</span>: ŷ = <span class="ln">${f(r.oW)}</span>·${s.x} + <span class="ln">${f(r.oB)}</span> = <span class="ln">${f(s.p,4)}</span>, err = <span class="lgr">${f(s.e,4)}</span></div>`;
+  h+=`<div class="ldt">∂L/∂w = <span class="lgr">${f(r.dw,4)}</span>  ∂L/∂b = <span class="lgr">${f(r.db,4)}</span></div>`;
+  h+=`<div class="ldt">w ← <span class="lup">${f(r.nW,4)}</span>  b ← <span class="lup">${f(r.nB,4)}</span></div>`;
+  el.insertAdjacentHTML('beforeend',h);bx.scrollTop=bx.scrollHeight;
+}
+
+function addNL(ep,r){
+  const el=document.getElementById('nlg'),bx=document.getElementById('nlc');
+  if(ep===1)el.innerHTML='';
+  let h=`<div class="le"><span>Epoch ${ep}</span><span class="lel"></span><span>Loss: ${f(r.loss,4)}</span></div>`;
+  const s0=r.det[0],o=r.oP;
+  h+=`<div class="ldt">── 样本 x=${s0.x} 详细链式法则 ──</div>`;
+  h+=`<div class="ldt"> 前向传播:</div>`;
+  h+=`<div class="ldt">  z₁ = <span class="ln">${f(o.w1)}</span>×${s0.x}+<span class="ln">${f(o.b1)}</span>=<span class="ln">${f(s0.z1)}</span> → h₁=ReLU=<span class="ln">${f(s0.h1)}</span></div>`;
+  h+=`<div class="ldt">  z₂ = <span class="ln">${f(o.w2)}</span>×${s0.x}+<span class="ln">${f(o.b2)}</span>=<span class="ln">${f(s0.z2)}</span> → h₂=ReLU=<span class="ln">${f(s0.h2)}</span></div>`;
+  h+=`<div class="ldt">  ŷ = <span class="ln">${f(o.v1)}</span>×<span class="ln">${f(s0.h1)}</span>+<span class="ln">${f(o.v2)}</span>×<span class="ln">${f(s0.h2)}</span>+<span class="ln">${f(o.c)}</span>=<span class="ln">${f(s0.pred)}</span></div>`;
+  h+=`<div class="ldt">  err = <span class="lgr">${f(s0.err)}</span></div>`;
+  h+=`<div class="ldt"> 反向传播 (链式法则):</div>`;
+  h+=`<div class="ldt">  ∂L/∂ŷ = 2×err = <span class="lgr">${f(s0.dy)}</span></div>`;
+  h+=`<div class="ldt">  ┌→ ∂L/∂v₁ = <span class="lgr">${f(s0.dy)}</span>×h₁=<span class="lgr">${f(s0.gv1)}</span></div>`;
+  h+=`<div class="ldt">  ├→ ∂L/∂h₁ = <span class="lgr">${f(s0.dy)}</span>×v₁=<span class="lgr">${f(s0.dh1)}</span> → ReLU'(${f(s0.z1)})=${s0.r1} → ∂L/∂z₁=<span class="lgr">${f(s0.dz1)}</span></div>`;
+  h+=`<div class="ldt">  │    └→ ∂L/∂w₁=<span class="lgr">${f(s0.gw1)}</span>, ∂L/∂b₁=<span class="lgr">${f(s0.gb1)}</span></div>`;
+  h+=`<div class="ldt">  └→ ∂L/∂h₂ = <span class="lgr">${f(s0.dy)}</span>×v₂=<span class="lgr">${f(s0.dh2)}</span> → ReLU'(${f(s0.z2)})=${s0.r2} → ∂L/∂z₂=<span class="lgr">${f(s0.dz2)}</span></div>`;
+  h+=`<div class="ldt">       └→ ∂L/∂w₂=<span class="lgr">${f(s0.gw2)}</span>, ∂L/∂b₂=<span class="lgr">${f(s0.gb2)}</span></div>`;
+  for(let i=1;i<r.det.length;i++){
+    const s=r.det[i];
+    h+=`<div class="ldt">x=${s.x}: h₁=<span class="ln">${f(s.h1)}</span> h₂=<span class="ln">${f(s.h2)}</span> ŷ=<span class="ln">${f(s.pred)}</span> err=<span class="lgr">${f(s.err)}</span></div>`;
+  }
+  const n=r.nP;
+  h+=`<div class="ldt">── 平均梯度更新 ──</div>`;
+  h+=`<div class="ldt">w₁←<span class="lup">${f(n.w1)}</span> b₁←<span class="lup">${f(n.b1)}</span> w₂←<span class="lup">${f(n.w2)}</span> b₂←<span class="lup">${f(n.b2)}</span></div>`;
+  h+=`<div class="ldt">v₁←<span class="lup">${f(n.v1)}</span> v₂←<span class="lup">${f(n.v2)}</span> c←<span class="lup">${f(n.c)}</span></div>`;
+  el.insertAdjacentHTML('beforeend',h);bx.scrollTop=bx.scrollHeight;
+}
+
+function updPV(map){
+  for(const[k,v]of Object.entries(map)){
+    const el=document.getElementById(k);if(!el)continue;
+    const val=f(v);
+    if(el.textContent!==val){el.textContent=val;el.classList.add('ch');setTimeout(()=>el.classList.remove('ch'),400);}
+  }
+}
+
+// ═══════════════════════════════════════
+// CONTROLLER
+// ═══════════════════════════════════════
+let epoch=0,autoT=null,spd=350,cvgD=false,cvgN=false;
+
+function doStep(){
+  if(epoch>=MAX){stopAuto();return;}
+  epoch++;
+  const dr=stepD(), nr=stepN();
+  document.getElementById('epd').textContent=epoch;
+  document.getElementById('dls').textContent=f(dr.loss,6);
+  document.getElementById('nls').textContent=f(nr.loss,6);
+  updPV({dw:dW,db:dB,nw1:w1,nb1:b1,nw2:w2,nb2:b2,nv1:v1,nv2:v2,nc:cv});
+  addDL(epoch,dr);addNL(epoch,nr);
+  if(!cvgD&&dr.loss<THR){cvgD=true;document.getElementById('bd').innerHTML=`<span class="cvg">✓ ${epoch} ep</span>`;}
+  if(!cvgN&&nr.loss<THR){cvgN=true;document.getElementById('bn').innerHTML=`<span class="cvg">✓ ${epoch} ep</span>`;}
+  renderPlots();renderLoss();
+}
+
+function toggleAuto(){autoT?stopAuto():startAuto();}
+function startAuto(){
+  document.getElementById('bauto').textContent='⏸ 暂停';
+  document.getElementById('bstep').disabled=true;
+  autoT=setInterval(()=>{doStep();if(epoch>=MAX)stopAuto();},spd);
+}
+function stopAuto(){
+  document.getElementById('bauto').textContent='▶ 运行';
+  document.getElementById('bstep').disabled=false;
+  clearInterval(autoT);autoT=null;
+}
+function updSpd(){
+  spd=1540-parseInt(document.getElementById('spd').value);
+  if(autoT){stopAuto();startAuto();}
+}
+function doReset(){
+  stopAuto();epoch=0;cvgD=false;cvgN=false;
+  initD();initN();
+  document.getElementById('epd').textContent='0';
+  document.getElementById('bd').textContent='2 个参数';
+  document.getElementById('bn').textContent='7 个参数';
+  document.getElementById('dls').textContent='—';
+  document.getElementById('nls').textContent='—';
+  document.getElementById('dlg').innerHTML='<div class="ldt" style="color:var(--mut)">点击 ▶ 运行 或 ⏭ 单步 开始…</div>';
+  document.getElementById('nlg').innerHTML='<div class="ldt" style="color:var(--mut)">点击 ▶ 运行 或 ⏭ 单步 开始…</div>';
+  updPV({dw:dW,db:dB,nw1:w1,nb1:b1,nw2:w2,nb2:b2,nv1:v1,nv2:v2,nc:cv});
+  renderPlots();renderLoss();
+}
+
+// INIT
+initD();initN();initPlots();initLoss();
+</script>
+</body>
+</html>

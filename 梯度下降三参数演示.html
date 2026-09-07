@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>梯度下降 · 三个参数</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px;
+    background: #F5F4EF; color: #2C2C2A;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 500; margin: 0 0 4px; }
+  h3 { font-size: 15px; font-weight: 500; margin: 0 0 10px; }
+  .sub { color: #5F5E5A; font-size: 14px; margin-bottom: 18px; }
+  .card {
+    background: #fff; border: 1px solid #D3D1C7; border-radius: 12px;
+    padding: 18px; margin-bottom: 16px;
+  }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .row > .card { flex: 1; min-width: 300px; margin-bottom: 0; }
+  .row { margin-bottom: 16px; }
+  canvas, svg { display: block; width: 100%; height: auto; }
+  .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  button {
+    font-family: inherit; font-size: 14px; padding: 8px 18px;
+    border-radius: 8px; border: 1px solid #185FA5; background: #185FA5; color: #fff; cursor: pointer;
+  }
+  button.ghost { background: #fff; color: #185FA5; }
+  button:active { transform: translateY(1px); }
+  .slider-row { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 240px; }
+  input[type=range] { flex: 1; accent-color: #185FA5; }
+  .lr-val { font-variant-numeric: tabular-nums; min-width: 48px; text-align: right; font-weight: 500; }
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
+  .presets button { font-size: 13px; padding: 6px 12px; background: #fff; color: #444441; border-color: #D3D1C7; }
+  .readout {
+    background: #F1EFE8; border-radius: 8px; padding: 14px 16px;
+    font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 12.5px;
+    white-space: pre; line-height: 1.8; overflow-x: auto;
+  }
+  .derive {
+    background: #FAEEDA; border-left: 3px solid #BA7517; border-radius: 0;
+    padding: 12px 16px; margin-top: 14px; font-size: 13px; color: #412402;
+  }
+  .derive code { font-family: ui-monospace, Consolas, monospace; background: rgba(0,0,0,.05); padding: 1px 4px; border-radius: 3px; }
+  .hl  { color: #993C1D; font-weight: 500; }
+  .ok  { color: #0F6E56; font-weight: 500; }
+  .bad { color: #A32D2D; font-weight: 500; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+  th, td { padding: 6px 8px; text-align: right; border-bottom: 1px solid #E5E3DB; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: #5F5E5A; font-weight: 500; }
+  .hint { font-size: 13px; color: #5F5E5A; margin-top: 10px; }
+  .data-tbl td, .data-tbl th { text-align: center; }
+  .legend { font-size: 12px; color: #5F5E5A; margin-top: 8px; }
+  .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>梯度下降 · 三个参数一起动</h1>
+  <div class="sub">
+    真实任务：用<b>面积 x₁</b> 和 <b>房龄 x₂</b> 预测<b>房价 y</b>。模型 &nbsp;<b>ŷ = w₁·x₁ + w₂·x₂ + b</b>，三个参数要同时训练。
+    真实规律是 <b>y = 2x₁ − 1x₂ + 1</b>（模型不知道，要自己找出来）。
+  </div>
+
+  <div class="card">
+    <h3>训练数据（4 条）</h3>
+    <table class="data-tbl">
+      <thead><tr><th>样本</th><th>x₁ 面积</th><th>x₂ 房龄</th><th>y 真实价</th><th>ŷ 当前预测</th><th>误差 e = ŷ − y</th></tr></thead>
+      <tbody id="dataBody"></tbody>
+    </table>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <h3>参数空间轨迹（俯视这个"碗"）</h3>
+      <canvas id="contour" width="420" height="340"></canvas>
+      <div class="legend">
+        横轴 w₁，纵轴 w₂（b 固定为当前值）。颜色越深损失越小。
+        <span class="sw" style="background:#1D9E75"></span>目标点
+        <span class="sw" style="background:#E24B4A"></span>当前位置
+        <span class="sw" style="background:#EF9F27"></span>走过的路
+      </div>
+    </div>
+    <div class="card">
+      <h3>损失随迭代下降</h3>
+      <svg id="lossChart" viewBox="0 0 420 340" role="img" aria-label="损失随迭代次数下降的曲线"></svg>
+      <div class="legend">横轴迭代次数，纵轴损失 L。理想形状是快速下降后趋平。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>三个参数各自的进度</h3>
+    <svg id="params" viewBox="0 0 900 250" role="img" aria-label="三个参数当前值、目标值与本步移动方向"></svg>
+    <div class="hint">
+      每个参数有自己的梯度、自己的步长，彼此独立更新 —— 但它们的梯度都来自<b>同一个损失</b>，所以路径会互相牵制。
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="controls">
+      <button id="stepBtn">下一步 →</button>
+      <button id="playBtn" class="ghost">自动播放</button>
+      <button id="resetBtn" class="ghost">重置</button>
+      <div class="slider-row">
+        <span style="font-size:14px">学习率 η</span>
+        <input type="range" id="lr" min="0.01" max="0.40" step="0.01" value="0.10">
+        <span class="lr-val" id="lrVal">0.10</span>
+      </div>
+    </div>
+    <div class="presets">
+      <span style="font-size:13px;color:#5F5E5A;align-self:center">试试：</span>
+      <button data-lr="0.02">η=0.02 太慢</button>
+      <button data-lr="0.10">η=0.10 正常</button>
+      <button data-lr="0.20">η=0.20 偏快</button>
+      <button data-lr="0.28">η=0.28 开始震荡</button>
+      <button data-lr="0.36">η=0.36 会发散吗</button>
+    </div>
+    <div class="derive">
+      <b>这三个偏导公式是怎么来的？</b><br>
+      损失 <code>L = (1/2n)·Σ(ŷᵢ − yᵢ)²</code>，记误差 <code>eᵢ = ŷᵢ − yᵢ</code>。<br>
+      对 w₁ 求偏导，先用链式法则剥外层平方：<code>∂L/∂w₁ = (1/2n)·Σ 2eᵢ · ∂eᵢ/∂w₁</code>
+      —— 平方掉下来的 2 和分母的 2 正好约掉（这就是损失里写 1/2n 的原因）。<br>
+      再看内层：<code>eᵢ = w₁x₁ᵢ + w₂x₂ᵢ + b − yᵢ</code>，对 w₁ 求导时其余项都是常数，所以
+      <code>∂eᵢ/∂w₁ = x₁ᵢ</code>、<code>∂eᵢ/∂w₂ = x₂ᵢ</code>、<code>∂eᵢ/∂b = 1</code>。<br>
+      代回去就得到下面用的三条式子：
+      <code>∂L/∂w₁ = (1/n)Σeᵢx₁ᵢ</code>、<code>∂L/∂w₂ = (1/n)Σeᵢx₂ᵢ</code>、<code>∂L/∂b = (1/n)Σeᵢ</code>。
+    </div>
+    <div class="readout" id="readout" style="margin-top:14px"></div>
+  </div>
+
+  <div class="card">
+    <h3>每一步的完整计算</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>步</th>
+          <th>w₁</th><th>∂L/∂w₁</th>
+          <th>w₂</th><th>∂L/∂w₂</th>
+          <th>b</th><th>∂L/∂b</th>
+          <th>损失 L</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="hint">
+      注意三列梯度：它们<b>大小不同</b>，所以同一个学习率下，三个参数移动的快慢完全不一样。
+      这就是后来 Adam 这类"自适应学习率"优化器要解决的问题。
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ================== 数据与模型 ==================
+// 真实规律：y = 2·x1 - 1·x2 + 1
+const DATA = [
+  { x1: 1, x2: 1, y: 2 },
+  { x1: 2, x2: 1, y: 4 },
+  { x1: 1, x2: 3, y: 0 },
+  { x1: 3, x2: 2, y: 5 },
+];
+const TARGET = { w1: 2, w2: -1, b: 1 };   // 正确答案，只用来在图上画标记
+
+// 损失：L = (1/2n) Σ (ŷ - y)²
+function loss(w1, w2, b) {
+  let s = 0;
+  for (const d of DATA) { const e = w1 * d.x1 + w2 * d.x2 + b - d.y; s += e * e; }
+  return s / (2 * DATA.length);
+}
+// 梯度：∂L/∂w1 = mean(e·x1)，∂L/∂w2 = mean(e·x2)，∂L/∂b = mean(e)
+function grads(w1, w2, b) {
+  let g1 = 0, g2 = 0, gb = 0;
+  for (const d of DATA) {
+    const e = w1 * d.x1 + w2 * d.x2 + b - d.y;
+    g1 += e * d.x1; g2 += e * d.x2; gb += e;
+  }
+  const n = DATA.length;
+  return { g1: g1 / n, g2: g2 / n, gb: gb / n };
+}
+
+// ================== 状态 ==================
+let w1 = 0, w2 = 0, b = 0;
+let lr = 0.10, step = 0, diverged = false, timer = null;
+let trail = [{ w1: 0, w2: 0 }];
+let lossHist = [loss(0, 0, 0)];
+const rows = [];
+const $ = id => document.getElementById(id);
+
+// ================== 数据表 ==================
+function drawDataTable() {
+  $('dataBody').innerHTML = DATA.map((d, i) => {
+    const yh = w1 * d.x1 + w2 * d.x2 + b;
+    const e = yh - d.y;
+    const color = Math.abs(e) < 0.15 ? '#0F6E56' : '#993C1D';
+    return `<tr>
+      <td>#${i + 1}</td><td>${d.x1}</td><td>${d.x2}</td><td>${d.y}</td>
+      <td>${yh.toFixed(3)}</td>
+      <td style="color:${color};font-weight:500">${e >= 0 ? '+' : ''}${e.toFixed(3)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ================== 参数空间等高线 ==================
+const CW1 = [-1.5, 5.0], CW2 = [-4.0, 2.5];
+function drawContour() {
+  const cv = $('contour'), ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  const P = 34;                                  // 留出坐标轴边距
+  const toX = v => P + (v - CW1[0]) / (CW1[1] - CW1[0]) * (W - P - 12);
+  const toY = v => (H - P) - (v - CW2[0]) / (CW2[1] - CW2[0]) * (H - P - 12);
+  const fromX = x => CW1[0] + (x - P) / (W - P - 12) * (CW1[1] - CW1[0]);
+  const fromY = y => CW2[0] + ((H - P) - y) / (H - P - 12) * (CW2[1] - CW2[0]);
+
+  ctx.clearRect(0, 0, W, H);
+
+  // 热力图：颜色深 = 损失小
+  const S = 3;
+  let lmax = 0;
+  for (let px = P; px < W - 12; px += S)
+    for (let py = 12; py < H - P; py += S)
+      lmax = Math.max(lmax, loss(fromX(px), fromY(py), b));
+  for (let px = P; px < W - 12; px += S) {
+    for (let py = 12; py < H - P; py += S) {
+      const l = loss(fromX(px), fromY(py), b);
+      const t = Math.pow(l / (lmax || 1), 0.32);      // 幂次压缩，让谷底层次更清楚
+      const r = Math.round(225 + (255 - 225) * t);
+      const g = Math.round(243 - (243 - 252) * t * -1);
+      ctx.fillStyle = `rgb(${Math.round(200 + 55 * t)}, ${Math.round(235 - 20 * t)}, ${Math.round(225 - 30 * t)})`;
+      ctx.fillRect(px, py, S, S);
+    }
+  }
+
+  // 等高线（若干圈）
+  ctx.strokeStyle = 'rgba(95,94,90,0.35)'; ctx.lineWidth = 1;
+  const levels = [0.05, 0.2, 0.6, 1.5, 3.5, 7, 13];
+  for (const lv of levels) {
+    ctx.beginPath();
+    let started = false;
+    for (let px = P; px < W - 12; px++) {
+      // 对每一列找到该等高值的上边界
+      let found = null;
+      for (let py = 12; py < H - P; py++) {
+        if (loss(fromX(px), fromY(py), b) <= lv) { found = py; break; }
+      }
+      if (found === null) { started = false; continue; }
+      if (!started) { ctx.moveTo(px, found); started = true; } else ctx.lineTo(px, found);
+    }
+    ctx.stroke();
+    ctx.beginPath(); started = false;
+    for (let px = P; px < W - 12; px++) {
+      let found = null;
+      for (let py = H - P - 1; py >= 12; py--) {
+        if (loss(fromX(px), fromY(py), b) <= lv) { found = py; break; }
+      }
+      if (found === null) { started = false; continue; }
+      if (!started) { ctx.moveTo(px, found); started = true; } else ctx.lineTo(px, found);
+    }
+    ctx.stroke();
+  }
+
+  // 坐标轴
+  ctx.strokeStyle = '#B4B2A9'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(P, 12); ctx.lineTo(P, H - P); ctx.lineTo(W - 12, H - P); ctx.stroke();
+  ctx.fillStyle = '#5F5E5A'; ctx.font = '12px sans-serif';
+  for (let v = -1; v <= 5; v++) { ctx.textAlign = 'center'; ctx.fillText(v, toX(v), H - P + 16); }
+  for (let v = -4; v <= 2; v++) { ctx.textAlign = 'right'; ctx.fillText(v, P - 6, toY(v) + 4); }
+  ctx.textAlign = 'center'; ctx.fillText('w₁', (W + P) / 2, H - 6);
+  ctx.save(); ctx.translate(11, (H - P) / 2); ctx.rotate(-Math.PI / 2); ctx.fillText('w₂', 0, 0); ctx.restore();
+
+  // 走过的轨迹
+  ctx.strokeStyle = '#EF9F27'; ctx.lineWidth = 2;
+  ctx.beginPath();
+  trail.forEach((p, i) => {
+    const x = toX(p.w1), y = toY(p.w2);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  ctx.fillStyle = '#EF9F27';
+  trail.slice(0, -1).forEach(p => {
+    ctx.beginPath(); ctx.arc(toX(p.w1), toY(p.w2), 3, 0, 7); ctx.fill();
+  });
+
+  // 目标点
+  ctx.fillStyle = '#1D9E75';
+  ctx.beginPath(); ctx.arc(toX(TARGET.w1), toY(TARGET.w2), 6, 0, 7); ctx.fill();
+  ctx.fillStyle = '#0F6E56'; ctx.textAlign = 'left'; ctx.font = '500 12px sans-serif';
+  ctx.fillText('目标 (2, −1)', toX(TARGET.w1) + 10, toY(TARGET.w2) - 6);
+
+  // 当前位置 + 下一步箭头
+  const cx = toX(w1), cy = toY(w2);
+  if (!diverged && Math.abs(w1) < 50 && Math.abs(w2) < 50) {
+    const g = grads(w1, w2, b);
+    const nx = toX(w1 - lr * g.g1), ny = toY(w2 - lr * g.g2);
+    ctx.strokeStyle = '#185FA5'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(nx, ny); ctx.stroke();
+    const ang = Math.atan2(ny - cy, nx - cx);
+    ctx.fillStyle = '#185FA5'; ctx.beginPath();
+    ctx.moveTo(nx, ny);
+    ctx.lineTo(nx - 8 * Math.cos(ang - 0.4), ny - 8 * Math.sin(ang - 0.4));
+    ctx.lineTo(nx - 8 * Math.cos(ang + 0.4), ny - 8 * Math.sin(ang + 0.4));
+    ctx.fill();
+  }
+  ctx.fillStyle = '#E24B4A';
+  ctx.beginPath(); ctx.arc(cx, cy, 7, 0, 7); ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+}
+
+// ================== 损失曲线 ==================
+function drawLossChart() {
+  const W = 420, H = 340, P = 46;
+  const n = lossHist.length;
+  const lmax = Math.max(...lossHist.filter(v => isFinite(v)), 0.001);
+  const toX = i => P + (n <= 1 ? 0 : i / (n - 1)) * (W - P - 16);
+  const toY = l => (H - 40) - Math.min(l, lmax) / lmax * (H - 40 - 20);
+
+  const p = [];
+  p.push(`<line x1="${P}" y1="20" x2="${P}" y2="${H - 40}" stroke="#B4B2A9" stroke-width="1"/>`);
+  p.push(`<line x1="${P}" y1="${H - 40}" x2="${W - 16}" y2="${H - 40}" stroke="#B4B2A9" stroke-width="1"/>`);
+  for (let k = 0; k <= 4; k++) {
+    const v = lmax * k / 4, y = toY(v);
+    p.push(`<line x1="${P}" y1="${y}" x2="${W - 16}" y2="${y}" stroke="#E5E3DB" stroke-width="1"/>`);
+    p.push(`<text x="${P - 6}" y="${y + 4}" font-size="11" fill="#5F5E5A" text-anchor="end">${v.toFixed(2)}</text>`);
+  }
+  p.push(`<text x="${(W + P) / 2}" y="${H - 10}" font-size="12" fill="#5F5E5A" text-anchor="middle">迭代次数</text>`);
+
+  const pts = lossHist.map((l, i) => `${toX(i).toFixed(1)},${toY(isFinite(l) ? l : lmax).toFixed(1)}`).join(' ');
+  p.push(`<polyline points="${pts}" fill="none" stroke="#7F77DD" stroke-width="2.5"/>`);
+  if (n > 0) {
+    const li = n - 1;
+    p.push(`<circle cx="${toX(li)}" cy="${toY(lossHist[li])}" r="5" fill="#E24B4A"/>`);
+    p.push(`<text x="${W - 16}" y="34" font-size="13" fill="#A32D2D" text-anchor="end" font-weight="500">L = ${lossHist[li].toFixed(5)}</text>`);
+  }
+  $('lossChart').innerHTML = p.join('');
+}
+
+// ================== 三个参数面板 ==================
+function drawParams() {
+  const g = grads(w1, w2, b);
+  const specs = [
+    { name: 'w₁', label: '面积的权重', val: w1, tgt: TARGET.w1, grad: g.g1, lo: -1.5, hi: 5.0, y: 40 },
+    { name: 'w₂', label: '房龄的权重', val: w2, tgt: TARGET.w2, grad: g.g2, lo: -4.0, hi: 2.5, y: 120 },
+    { name: 'b',  label: '偏置',       val: b,  tgt: TARGET.b,  grad: g.gb, lo: -1.5, hi: 4.0, y: 200 },
+  ];
+  const X0 = 130, X1 = 620;
+  const p = [];
+  for (const s of specs) {
+    const toX = v => X0 + (Math.max(s.lo, Math.min(s.hi, v)) - s.lo) / (s.hi - s.lo) * (X1 - X0);
+    const y = s.y;
+    p.push(`<text x="20" y="${y + 5}" font-size="16" font-weight="500" fill="#2C2C2A">${s.name}</text>`);
+    p.push(`<text x="52" y="${y + 5}" font-size="12" fill="#5F5E5A">${s.label}</text>`);
+    p.push(`<line x1="${X0}" y1="${y}" x2="${X1}" y2="${y}" stroke="#D3D1C7" stroke-width="3" stroke-linecap="round"/>`);
+    // 目标
+    const tx = toX(s.tgt);
+    p.push(`<line x1="${tx}" y1="${y - 13}" x2="${tx}" y2="${y + 13}" stroke="#1D9E75" stroke-width="2.5"/>`);
+    p.push(`<text x="${tx}" y="${y + 30}" font-size="11" fill="#0F6E56" text-anchor="middle">目标 ${s.tgt}</text>`);
+    // 下一步箭头
+    if (!diverged) {
+      const nx = toX(s.val - lr * s.grad), cx0 = toX(s.val);
+      if (Math.abs(nx - cx0) > 2) {
+        p.push(`<line x1="${cx0}" y1="${y - 22}" x2="${nx}" y2="${y - 22}" stroke="#185FA5" stroke-width="2"/>`);
+        const d = nx > cx0 ? 1 : -1;
+        p.push(`<path d="M${nx} ${y - 22} L${nx - 7 * d} ${y - 26} L${nx - 7 * d} ${y - 18} Z" fill="#185FA5"/>`);
+      }
+    }
+    // 当前值
+    const cx = toX(s.val);
+    p.push(`<circle cx="${cx}" cy="${y}" r="8" fill="#E24B4A" stroke="#fff" stroke-width="2"/>`);
+    // 右侧读数
+    p.push(`<text x="${X1 + 20}" y="${y - 6}" font-size="13" fill="#2C2C2A">当前 ${s.val.toFixed(4)}</text>`);
+    p.push(`<text x="${X1 + 20}" y="${y + 12}" font-size="12" fill="#993C1D">梯度 ${s.grad >= 0 ? '+' : ''}${s.grad.toFixed(4)}</text>`);
+  }
+  $('params').innerHTML = p.join('');
+}
+
+// ================== 文字说明 ==================
+function updateReadout() {
+  const g = grads(w1, w2, b);
+  const L = loss(w1, w2, b);
+  const n = DATA.length;
+  const dir = v => v < 0 ? '负 → 该增大' : v > 0 ? '正 → 该减小' : '零 → 不动';
+  const par = v => v < 0 ? '(' + v.toFixed(3) + ')' : ' ' + v.toFixed(3);   // 负数加括号，避免连着两个减号
+  const sgn = v => (v < 0 ? '− ' : '+ ') + Math.abs(v).toFixed(3);
+  const sub = ['₁', '₂', '₃', '₄', '₅', '₆'];
+
+  // ---------- 第 1 步：逐个样本算预测值和误差 ----------
+  const eArr = [], fwd = [];
+  DATA.forEach((d, i) => {
+    const yh = w1 * d.x1 + w2 * d.x2 + b;
+    const e = yh - d.y;
+    eArr.push(e);
+    fwd.push(
+      `  样本${i + 1}:  ŷ = ${w1.toFixed(3)}×${d.x1} ${sgn(w2)}×${d.x2} ${sgn(b)} = ${yh.toFixed(3)}` +
+      `   →   e${sub[i]} = ${yh.toFixed(3)} − ${d.y} = <span class="hl">${e.toFixed(3)}</span>`
+    );
+  });
+
+  // ---------- 第 2 步：把误差代进三个偏导公式 ----------
+  const t1 = DATA.map((d, i) => `${par(eArr[i])}×${d.x1}`).join('  + ');
+  const t2 = DATA.map((d, i) => `${par(eArr[i])}×${d.x2}`).join('  + ');
+  const t3 = eArr.map(e => par(e)).join('  + ');
+  const tL = eArr.map(e => `${par(e)}²`).join('  + ');
+  const s1 = eArr.reduce((a, e, i) => a + e * DATA[i].x1, 0);
+  const s2 = eArr.reduce((a, e, i) => a + e * DATA[i].x2, 0);
+  const s3 = eArr.reduce((a, e) => a + e, 0);
+  const sL = eArr.reduce((a, e) => a + e * e, 0);
+
+  let txt =
+`当前模型   ŷ = ${w1.toFixed(4)}·x₁ ${sgn(w2)}·x₂ ${sgn(b)}
+
+━━ 第 1 步 · 前向：算出每条样本的预测值和误差 e = ŷ − y ━━
+${fwd.join('\n')}
+
+━━ 第 2 步 · 算损失   L = (1/2n)·Σe²   ━━
+  L = 1/(2×${n}) × [ ${tL} ]
+    = 1/${2 * n} × ${sL.toFixed(3)}
+    = <span class="hl">${L.toFixed(6)}</span>
+
+━━ 第 3 步 · 求三个偏导（公式由 L 对各参数求导得来）━━
+
+  ∂L/∂w₁ = (1/n)·Σ(eᵢ·x₁ᵢ)
+         = 1/${n} × [ ${t1} ]
+         = 1/${n} × ${s1.toFixed(3)}
+         = <span class="hl">${g.g1.toFixed(4)}</span>   ${dir(g.g1)}
+
+  ∂L/∂w₂ = (1/n)·Σ(eᵢ·x₂ᵢ)
+         = 1/${n} × [ ${t2} ]
+         = 1/${n} × ${s2.toFixed(3)}
+         = <span class="hl">${g.g2.toFixed(4)}</span>   ${dir(g.g2)}
+
+  ∂L/∂b  = (1/n)·Σ(eᵢ)
+         = 1/${n} × [ ${t3} ]
+         = 1/${n} × ${s3.toFixed(3)}
+         = <span class="hl">${g.gb.toFixed(4)}</span>   ${dir(g.gb)}
+
+━━ 第 4 步 · 更新参数   新值 = 旧值 − η × 梯度   ━━
+  w₁ ← ${w1.toFixed(4)} − ${lr.toFixed(2)}×${par(g.g1)} = <span class="ok">${(w1 - lr * g.g1).toFixed(4)}</span>   （移动 ${Math.abs(lr * g.g1).toFixed(4)}）
+  w₂ ← ${w2.toFixed(4)} − ${lr.toFixed(2)}×${par(g.g2)} = <span class="ok">${(w2 - lr * g.g2).toFixed(4)}</span>   （移动 ${Math.abs(lr * g.g2).toFixed(4)}）
+  b  ← ${b.toFixed(4)} − ${lr.toFixed(2)}×${par(g.gb)} = <span class="ok">${(b - lr * g.gb).toFixed(4)}</span>   （移动 ${Math.abs(lr * g.gb).toFixed(4)}）`;
+
+  if (diverged) {
+    txt += `\n\n<span class="bad">⚠ 发散了！η = ${lr.toFixed(2)} 太大，参数越跳越远，损失冲向无穷。
+   把学习率调小再点重置。</span>`;
+  } else if (Math.abs(g.g1) < 1e-4 && Math.abs(g.g2) < 1e-4 && Math.abs(g.gb) < 1e-4) {
+    txt += `\n\n<span class="ok">✓ 三个梯度都接近 0，收敛完成。模型学到了 y = 2x₁ − x₂ + 1。</span>`;
+  }
+  $('readout').innerHTML = txt;
+}
+
+// ================== 一步更新 ==================
+function doStep() {
+  if (diverged) return;
+  const g = grads(w1, w2, b);
+  const o1 = w1, o2 = w2, ob = b;
+  w1 -= lr * g.g1;
+  w2 -= lr * g.g2;
+  b  -= lr * g.gb;
+  step++;
+  trail.push({ w1, w2 });
+  if (trail.length > 200) trail.shift();
+  const L = loss(w1, w2, b);
+  lossHist.push(L);
+  if (lossHist.length > 200) lossHist.shift();
+
+  rows.push(`<tr>
+    <td>${step}</td>
+    <td>${o1.toFixed(4)}</td><td style="color:#993C1D">${g.g1.toFixed(4)}</td>
+    <td>${o2.toFixed(4)}</td><td style="color:#993C1D">${g.g2.toFixed(4)}</td>
+    <td>${ob.toFixed(4)}</td><td style="color:#993C1D">${g.gb.toFixed(4)}</td>
+    <td>${L.toFixed(6)}</td></tr>`);
+  $('tbody').innerHTML = rows.slice(-15).join('');
+
+  if (!isFinite(L) || Math.abs(w1) > 1e4 || Math.abs(w2) > 1e4) { diverged = true; stopPlay(); }
+  renderAll();
+}
+
+function renderAll() {
+  drawDataTable(); drawContour(); drawLossChart(); drawParams(); updateReadout();
+}
+
+function reset() {
+  stopPlay();
+  w1 = 0; w2 = 0; b = 0; step = 0; diverged = false;
+  trail = [{ w1: 0, w2: 0 }];
+  lossHist = [loss(0, 0, 0)];
+  rows.length = 0; $('tbody').innerHTML = '';
+  renderAll();
+}
+
+function stopPlay() {
+  if (timer) { clearInterval(timer); timer = null; $('playBtn').textContent = '自动播放'; }
+}
+
+// ================== 事件 ==================
+$('stepBtn').onclick = doStep;
+$('resetBtn').onclick = reset;
+$('playBtn').onclick = () => {
+  if (timer) { stopPlay(); return; }
+  $('playBtn').textContent = '暂停';
+  timer = setInterval(() => {
+    doStep();
+    const g = grads(w1, w2, b);
+    if (diverged || (Math.abs(g.g1) < 1e-4 && Math.abs(g.g2) < 1e-4 && Math.abs(g.gb) < 1e-4)) stopPlay();
+  }, 260);
+};
+$('lr').oninput = e => {
+  lr = parseFloat(e.target.value);
+  $('lrVal').textContent = lr.toFixed(2);
+  renderAll();
+};
+document.querySelectorAll('.presets button').forEach(btn => {
+  btn.onclick = () => {
+    lr = parseFloat(btn.dataset.lr);
+    $('lr').value = lr; $('lrVal').textContent = lr.toFixed(2);
+    reset();
+  };
+});
+
+renderAll();
+</script>
+</body>
+</html>

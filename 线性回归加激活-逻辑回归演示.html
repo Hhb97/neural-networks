@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>线性回归 → 加激活 → 逻辑回归</title>
+<style>
+  * { box-sizing:border-box; }
+  body { margin:0; padding:20px; background:#F5F4EF; color:#2C2C2A;
+         font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; line-height:1.6; }
+  .wrap { max-width:1020px; margin:0 auto; }
+  h1 { font-size:22px; font-weight:500; margin:0 0 4px; }
+  h3 { font-size:15px; font-weight:500; margin:0 0 10px; }
+  .sub { color:#5F5E5A; font-size:14px; margin-bottom:18px; }
+  .card { background:#fff; border:1px solid #D3D1C7; border-radius:12px; padding:18px; margin-bottom:16px; }
+  .row { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:16px; }
+  .row > .card { flex:1; min-width:330px; margin-bottom:0; }
+  svg { display:block; width:100%; height:auto; }
+  .controls { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  button { font-family:inherit; font-size:14px; padding:8px 16px; border-radius:8px;
+           border:1px solid #185FA5; background:#185FA5; color:#fff; cursor:pointer; }
+  button.ghost { background:#fff; color:#185FA5; }
+  button:active { transform:translateY(1px); }
+  .seg { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .seg button { font-size:13px; padding:6px 14px; background:#fff; color:#444441; border-color:#D3D1C7; }
+  .seg button.active { background:#185FA5; color:#fff; border-color:#185FA5; }
+  .slider-row { display:flex; align-items:center; gap:9px; min-width:230px; }
+  input[type=range] { flex:1; accent-color:#185FA5; }
+  select { font-family:inherit; font-size:13px; padding:5px 8px; border-radius:6px; border:1px solid #D3D1C7; background:#fff; }
+  .val { font-variant-numeric:tabular-nums; min-width:40px; text-align:right; font-weight:500; }
+  .readout { background:#F1EFE8; border-radius:8px; padding:12px 14px;
+             font-family:ui-monospace,"SF Mono",Consolas,monospace; font-size:12px;
+             white-space:pre; line-height:1.8; overflow-x:auto; }
+  .fwd{color:#185FA5;font-weight:500} .bwd{color:#993C1D;font-weight:500}
+  .ok{color:#0F6E56;font-weight:500} .bad{color:#A32D2D;font-weight:500} .dim{color:#888780}
+  .chain { background:#F1EFE8; border-radius:8px; padding:14px 16px;
+           font-family:ui-monospace,Consolas,monospace; font-size:12.5px;
+           overflow-x:auto; white-space:pre; line-height:2; }
+  .link { display:inline-block; padding:1px 7px; border-radius:5px; margin:0 1px; }
+  .l-loss{background:#FCEBEB;color:#791F1F} .l-act{background:#FAEEDA;color:#633806}
+  .l-in{background:#E1F5EE;color:#085041} .l-non{background:#EDEBE3;color:#888780;text-decoration:line-through}
+  table { width:100%; border-collapse:collapse; font-size:13px; font-variant-numeric:tabular-nums; }
+  th,td { padding:6px 8px; text-align:right; border-bottom:1px solid #E5E3DB; }
+  th:first-child, td:first-child { text-align:left; }
+  th { color:#5F5E5A; font-weight:500; }
+  .hint { font-size:13px; color:#5F5E5A; margin-top:10px; }
+  .tag { display:inline-block; font-size:12px; padding:2px 9px; border-radius:20px; margin-left:8px; }
+  .tag-l { background:#F1EFE8; color:#444441; }
+  .tag-r { background:#EEEDFE; color:#3C3489; }
+  .derive { background:#FAEEDA; border-left:3px solid #BA7517; padding:12px 16px; font-size:13px; color:#412402; }
+  .derive code { font-family:ui-monospace,Consolas,monospace; background:rgba(0,0,0,.05); padding:1px 4px; border-radius:3px; }
+  .warn { background:#FCEBEB; border-left:3px solid #A32D2D; padding:10px 14px; font-size:13px; color:#791F1F; margin-top:10px; }
+  .legend { font-size:12px; color:#5F5E5A; margin-top:8px; }
+  .sw { display:inline-block; width:12px; height:3px; border-radius:2px; margin-right:5px; vertical-align:middle; }
+  .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:4px; vertical-align:middle; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>加一个 sigmoid，会发生什么</h1>
+  <div class="sub">
+    同一份数据、同样的四步流程，唯一的改动是给输出套上 <b>σ( )</b>。
+    任务：根据<b>复习时长</b>预测<b>能不能及格</b>（0 或 1）。
+    左边直接用直线拟合，右边把直线的输出压进 sigmoid。
+  </div>
+
+  <div class="card">
+    <div class="controls">
+      <button id="playBtn">开始训练</button>
+      <button id="step1" class="ghost">单步</button>
+      <button id="step200" class="ghost">走 200 步</button>
+      <button id="resetBtn" class="ghost">重置</button>
+      <span style="font-size:13px;color:#5F5E5A">迭代 <b id="iterN">0</b> 次</span>
+    </div>
+    <div class="controls" style="margin-top:12px">
+      <div class="slider-row">
+        <span style="font-size:13px">线性 η</span>
+        <input type="range" id="lrL" min="0.01" max="0.15" step="0.01" value="0.10">
+        <span class="val" id="lrLv">0.10</span>
+      </div>
+      <div class="slider-row">
+        <span style="font-size:13px">sigmoid η</span>
+        <input type="range" id="lrR" min="0.2" max="4" step="0.2" value="1.0">
+        <span class="val" id="lrRv">1.0</span>
+      </div>
+      <div class="seg">
+        <span style="font-size:13px;color:#5F5E5A">右侧损失</span>
+        <button data-loss="mse" class="active">MSE</button>
+        <button data-loss="ce">交叉熵</button>
+      </div>
+    </div>
+    <div class="hint">
+      为什么 sigmoid 那边学习率要大 10 倍？因为它的梯度被 <b>σ′ ≤ 0.25</b> 压小了，同样的步子迈不动 —— 这本身就是激活函数带来的副作用。
+      另外：交叉熵模式下 η 超过 2 会陷入震荡，收敛不到最优解，可以自己拖上去看看。
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>两个模型的拟合结果</h3>
+    <svg id="chart" viewBox="0 0 940 400" role="img" aria-label="直线拟合与S形曲线拟合的对比"></svg>
+    <div class="legend">
+      <span class="sw" style="background:#888780"></span>线性回归（直线）
+      <span class="sw" style="background:#7F77DD;margin-left:14px"></span>加了 sigmoid（S 曲线）
+      <span class="dot" style="background:#0F6E56;margin-left:14px"></span>及格 y=1
+      <span class="dot" style="background:#993C1D;margin-left:6px"></span>不及格 y=0
+    </div>
+    <div class="warn" id="oobWarn"></div>
+  </div>
+
+  <div class="card">
+    <h3>链式法则：加了激活，链条多一节</h3>
+    <div class="chain" id="chainBox"></div>
+    <div class="hint" id="chainHint"></div>
+  </div>
+
+  <div class="card">
+    <h3>逐样本计算过程</h3>
+    <div class="controls" style="margin-bottom:12px">
+      <span style="font-size:13px;color:#5F5E5A">看哪条样本：</span>
+      <select id="selSample"></select>
+    </div>
+    <div class="row" style="margin-bottom:0">
+      <div style="flex:1;min-width:330px">
+        <h3 style="font-size:14px">线性回归 <span class="tag tag-l">无激活</span></h3>
+        <div class="readout" id="roL"></div>
+      </div>
+      <div style="flex:1;min-width:330px">
+        <h3 style="font-size:14px">加了 sigmoid <span class="tag tag-r" id="tagR">逻辑回归 · MSE</span></h3>
+        <div class="readout" id="roR"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <h3>关键指标对比</h3>
+      <table>
+        <thead><tr><th></th><th>线性回归</th><th>加了 sigmoid</th></tr></thead>
+        <tbody id="statBody"></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h3>各样本预测值</h3>
+      <div style="max-height:260px;overflow-y:auto">
+        <table>
+          <thead><tr><th>复习时长</th><th>真实</th><th>直线预测</th><th>sigmoid 预测</th></tr></thead>
+          <tbody id="predBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="derive">
+      <b>为什么必须加激活？</b><br>
+      直线的输出范围是 −∞ 到 +∞，你没法把 <code>1.23</code> 解释成"概率"。sigmoid 把它压进 (0,1)，输出立刻变得可解释。
+      更关键的是：<b>没有激活函数，网络堆多少层都还是一条直线</b> —— <code>w₂(w₁x+b₁)+b₂ = Wx+B</code>。<br><br>
+      <b>把右侧损失切成"交叉熵"看看。</b> 交叉熵 <code>L = −[y·ln ŷ + (1−y)·ln(1−ŷ)]</code> 求导后，
+      分母上的 <code>ŷ(1−ŷ)</code> 会和 sigmoid 导数<b>正好约掉</b>，梯度重新变回 <code>(ŷ−y)·x</code> ——
+      既保留了概率输出，又不再被 σ′ 压小。这就是所有分类任务都用交叉熵而不用 MSE 的原因。
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ================= 数据 =================
+const H = [0.50,0.75,1.00,1.25,1.50,1.75,1.75,2.00,2.25,2.50,2.75,3.00,3.25,3.50,4.00,4.25,4.50,4.75,5.00,5.50];
+const Y = [0,0,0,0,0,0,1,0,1,0,1,0,1,0,1,1,1,1,1,1];
+const N = H.length;
+const S = z => 1 / (1 + Math.exp(-z));
+const $ = id => document.getElementById(id);
+const f = (v, d = 4) => v.toFixed(d);
+const par = v => v < 0 ? '(' + f(v) + ')' : f(v);
+
+// ================= 状态 =================
+let wL = 0, bL = 0, wR = 0, bR = 0;
+let lrL = 0.10, lrR = 3.0, lossMode = 'mse', iter = 0, focus = 6, timer = null;
+
+// ================= 两个模型 =================
+// 左：ŷ = w·x + b，无激活，MSE
+function predL(x) { return wL * x + bL; }
+function gradL() {
+  let gw = 0, gb = 0, L = 0;
+  for (let i = 0; i < N; i++) {
+    const yh = predL(H[i]), e = yh - Y[i];
+    L += 0.5 * e * e / N;
+    gw += e * H[i] / N; gb += e / N;        // δ = e（恒等激活导数=1）
+  }
+  return { gw, gb, L };
+}
+// 右：ŷ = σ(w·x + b)
+function predR(x) { return S(wR * x + bR); }
+function deltaR(yh, y) {
+  return lossMode === 'ce' ? (yh - y)              // 交叉熵：σ′ 被约掉
+                           : (yh - y) * yh * (1 - yh);   // MSE：要乘 σ′
+}
+function lossR1(yh, y) {
+  return lossMode === 'ce'
+    ? -(y * Math.log(Math.max(yh, 1e-12)) + (1 - y) * Math.log(Math.max(1 - yh, 1e-12)))
+    : 0.5 * (yh - y) ** 2;
+}
+function gradR() {
+  let gw = 0, gb = 0, L = 0;
+  for (let i = 0; i < N; i++) {
+    const yh = predR(H[i]), d = deltaR(yh, Y[i]);
+    L += lossR1(yh, Y[i]) / N;
+    gw += d * H[i] / N; gb += d / N;
+  }
+  return { gw, gb, L };
+}
+function stepOnce() {
+  const a = gradL(), b = gradR();
+  wL -= lrL * a.gw; bL -= lrL * a.gb;
+  wR -= lrR * b.gw; bR -= lrR * b.gb;
+  iter++;
+}
+
+// ================= 主图 =================
+function drawChart() {
+  const W = 940, Ht = 400, PL = 62, PR = 24, PT = 22, PB = 48;
+  const X0 = 0, X1 = 6.2, Y0 = -0.45, Y1 = 1.45;
+  const tx = v => PL + (v - X0) / (X1 - X0) * (W - PL - PR);
+  const ty = v => (Ht - PB) - (v - Y0) / (Y1 - Y0) * (Ht - PB - PT);
+  const p = [];
+
+  // 越界区（预测值跑出 0~1 的地方）
+  p.push(`<rect x="${PL}" y="${ty(Y1)}" width="${W - PL - PR}" height="${ty(1) - ty(Y1)}" fill="#FCEBEB"/>`);
+  p.push(`<rect x="${PL}" y="${ty(0)}" width="${W - PL - PR}" height="${ty(Y0) - ty(0)}" fill="#FCEBEB"/>`);
+  p.push(`<text x="${W - PR - 8}" y="${ty(1.28)}" font-size="11" fill="#A32D2D" text-anchor="end">概率不可能 &gt; 1</text>`);
+  p.push(`<text x="${W - PR - 8}" y="${ty(-0.28)}" font-size="11" fill="#A32D2D" text-anchor="end">概率不可能 &lt; 0</text>`);
+
+  // 网格与刻度
+  [0, 0.5, 1].forEach(v => {
+    p.push(`<line x1="${PL}" y1="${ty(v)}" x2="${W - PR}" y2="${ty(v)}" stroke="${v === 0.5 ? '#D3D1C7' : '#B4B2A9'}" stroke-width="1" ${v === 0.5 ? 'stroke-dasharray="5 4"' : ''}/>`);
+    p.push(`<text x="${PL - 8}" y="${ty(v) + 4}" font-size="12" fill="#5F5E5A" text-anchor="end">${v}</text>`);
+  });
+  p.push(`<text x="${PL + 6}" y="${ty(0.5) - 6}" font-size="11" fill="#888780">判定阈值 0.5</text>`);
+  p.push(`<line x1="${PL}" y1="${PT}" x2="${PL}" y2="${Ht - PB}" stroke="#B4B2A9"/>`);
+  for (let v = 0; v <= 6; v++) {
+    p.push(`<line x1="${tx(v)}" y1="${Ht - PB}" x2="${tx(v)}" y2="${Ht - PB + 5}" stroke="#B4B2A9"/>`);
+    p.push(`<text x="${tx(v)}" y="${Ht - PB + 20}" font-size="12" fill="#5F5E5A" text-anchor="middle">${v}</text>`);
+  }
+  p.push(`<text x="${(W + PL) / 2}" y="${Ht - 12}" font-size="12.5" fill="#5F5E5A" text-anchor="middle">复习时长（小时）</text>`);
+  p.push(`<text x="${PL - 44}" y="${PT + 6}" font-size="12" fill="#5F5E5A">及格概率</text>`);
+
+  // 曲线
+  const ptsL = [], ptsR = [];
+  for (let x = X0; x <= X1 + 0.001; x += 0.04) {
+    const yl = predL(x);
+    if (yl >= Y0 && yl <= Y1) ptsL.push(`${tx(x).toFixed(1)},${ty(yl).toFixed(1)}`);
+    ptsR.push(`${tx(x).toFixed(1)},${ty(predR(x)).toFixed(1)}`);
+  }
+  if (ptsL.length > 1) p.push(`<polyline points="${ptsL.join(' ')}" fill="none" stroke="#888780" stroke-width="2.5"/>`);
+  p.push(`<polyline points="${ptsR.join(' ')}" fill="none" stroke="#7F77DD" stroke-width="3"/>`);
+
+  // 决策边界（预测=0.5 的位置）
+  const bdL = Math.abs(wL) > 1e-6 ? (0.5 - bL) / wL : null;
+  const bdR = Math.abs(wR) > 1e-6 ? -bR / wR : null;
+  [[bdL, '#888780', '直线判定点'], [bdR, '#7F77DD', 'S曲线判定点']].forEach(([v, c, t]) => {
+    if (v !== null && v > X0 && v < X1) {
+      p.push(`<line x1="${tx(v)}" y1="${ty(0.5)}" x2="${tx(v)}" y2="${Ht - PB}" stroke="${c}" stroke-width="1.5" stroke-dasharray="4 4"/>`);
+      p.push(`<text x="${tx(v)}" y="${Ht - PB - 6}" font-size="11" fill="${c}" text-anchor="middle">${v.toFixed(2)}h</text>`);
+    }
+  });
+
+  // 数据点
+  for (let i = 0; i < N; i++) {
+    const c = Y[i] ? '#0F6E56' : '#993C1D';
+    const r = i === focus ? 7 : 4.5;
+    p.push(`<circle cx="${tx(H[i])}" cy="${ty(Y[i])}" r="${r}" fill="${c}" stroke="#fff" stroke-width="${i === focus ? 2.5 : 1.5}"/>`);
+    if (i === focus) {
+      p.push(`<line x1="${tx(H[i])}" y1="${ty(Y[i])}" x2="${tx(H[i])}" y2="${ty(predR(H[i]))}" stroke="#D85A30" stroke-width="1.5" stroke-dasharray="3 3"/>`);
+      p.push(`<circle cx="${tx(H[i])}" cy="${ty(predR(H[i]))}" r="4" fill="#D85A30"/>`);
+    }
+  }
+  $('chart').innerHTML = p.join('');
+
+  // 越界统计
+  let oob = 0;
+  for (let i = 0; i < N; i++) { const v = predL(H[i]); if (v < 0 || v > 1) oob++; }
+  $('oobWarn').innerHTML = oob > 0
+    ? `直线有 <b>${oob}</b> 条样本的预测值跑出了 0~1（红色区域）—— 这些数字没法当概率解释。sigmoid 那条曲线永远不会越界。`
+    : `当前直线没有越界，但它只是碰巧落在区间内 —— 换一份数据、或者 x 再大一点，它照样会跑出去。`;
+}
+
+// ================= 链条对照 =================
+function drawChain() {
+  const i = focus, x = H[i], y = Y[i];
+  const yhL = predL(x), eL = yhL - y;
+  const yhR = predR(x), sp = yhR * (1 - yhR), dR = deltaR(yhR, y);
+  const Lk = s => `<span class="link l-loss">${s}</span>`;
+  const A = s => `<span class="link l-act">${s}</span>`;
+  const I = s => `<span class="link l-in">${s}</span>`;
+  const X = s => `<span class="link l-non">${s}</span>`;
+  const o = [];
+
+  o.push(`<b>线性回归</b>　∂L/∂w　—— <b>3</b> 节`);
+  o.push(`  = ${Lk('(ŷ−y)')} × ${A('1')} × ${I('x')}`);
+  o.push(`  = ${Lk(par(eL))} × ${A('1')} × ${I(f(x, 2))}  =  <span class="bwd">${f(eL * x, 6)}</span>`);
+  o.push(`  <span class="dim">恒等激活的导数是 1，乘了等于没乘</span>`);
+  o.push('');
+
+  if (lossMode === 'mse') {
+    o.push(`<b>加 sigmoid + MSE</b>　∂L/∂w　—— <b>4</b> 节`);
+    o.push(`  = ${Lk('(ŷ−y)')} × ${A('ŷ(1−ŷ)')} × ${I('x')}`);
+    o.push(`  = ${Lk(par(yhR - y))} × ${A(f(sp))} × ${I(f(x, 2))}  =  <span class="bwd">${f(dR * x, 6)}</span>`);
+    o.push(`  <span class="dim">中间多出来的 ${f(sp)} 就是 σ′，最大只有 0.25，把梯度压小了</span>`);
+  } else {
+    o.push(`<b>加 sigmoid + 交叉熵</b>　∂L/∂w　—— 又回到 <b>3</b> 节`);
+    o.push(`  = ${Lk('(ŷ−y)/[ŷ(1−ŷ)]')} × ${A('ŷ(1−ŷ)')} × ${I('x')}   <span class="dim">← 两个 ŷ(1−ŷ) 约掉</span>`);
+    o.push(`  = ${Lk(par(yhR - y))} × ${X('ŷ(1−ŷ)')} × ${I(f(x, 2))}  =  <span class="bwd">${f(dR * x, 6)}</span>`);
+    o.push(`  <span class="dim">交叉熵的导数分母正好抵消 σ′，梯度不再被压小</span>`);
+  }
+  o.push('');
+  o.push(`<span class="dim">颜色：</span>${Lk('损失对预测')} ${A('激活函数导数')} ${I('输入')}`);
+  $('chainBox').innerHTML = o.join('\n');
+
+  $('chainHint').innerHTML = lossMode === 'mse'
+    ? `注意中间那个黄块 <b>${f(sp)}</b>。样本预测越接近 0 或 1，它越小，梯度越弱 —— 这就是 sigmoid 带来的代价。切到"交叉熵"看看它怎么消失的。`
+    : `黄块被划掉了。<b>梯度回到了和线性回归一样的形式 <code>(ŷ−y)·x</code></b>，但输出仍然是 0~1 的概率 —— 两全其美，所以分类任务标配交叉熵。`;
+}
+
+// ================= 逐样本明细 =================
+function drawReadouts() {
+  const i = focus, x = H[i], y = Y[i];
+  const gL = gradL(), gR = gradR();
+
+  // --- 左 ---
+  const yhL = predL(x), eL = yhL - y;
+  const a = [];
+  a.push(`样本：复习 ${f(x, 2)} 小时，真实结果 y=${y}（${y ? '及格' : '不及格'}）`);
+  a.push('');
+  a.push('<span class="fwd">① 前向</span>');
+  a.push(`  z = w×x + b = ${par(wL)}×${f(x, 2)} + ${par(bL)} = <span class="fwd">${f(yhL)}</span>`);
+  a.push(`  ŷ = z = <span class="fwd">${f(yhL)}</span>   <span class="dim">← 直接输出，不做处理</span>`);
+  if (yhL < 0 || yhL > 1) a.push(`  <span class="bad">⚠ 这个数超出了 0~1，当概率讲不通</span>`);
+  a.push('');
+  a.push('<span class="bad">② 损失（MSE）</span>');
+  a.push(`  L = ½(${f(yhL)} − ${y})² = <span class="bad">${f(0.5 * eL * eL, 6)}</span>`);
+  a.push('');
+  a.push('<span class="bwd">③ 反向</span>');
+  a.push(`  ∂L/∂ŷ = ŷ−y = ${f(eL)}`);
+  a.push(`  ∂ŷ/∂z = 1                <span class="dim">← 没有激活函数</span>`);
+  a.push(`  δ = ${f(eL)} × 1 = <span class="bwd">${f(eL, 6)}</span>`);
+  a.push(`  ∂L/∂w = δ × x = <span class="bwd">${f(eL * x, 6)}</span>`);
+  a.push('');
+  a.push('<span class="ok">④ 更新（batch 平均梯度）</span>');
+  a.push(`  w ← ${f(wL)} − ${f(lrL, 2)}×${par(gL.gw)} = <span class="ok">${f(wL - lrL * gL.gw)}</span>`);
+  a.push(`  b ← ${f(bL)} − ${f(lrL, 2)}×${par(gL.gb)} = <span class="ok">${f(bL - lrL * gL.gb)}</span>`);
+  $('roL').innerHTML = a.join('\n');
+
+  // --- 右 ---
+  const zR = wR * x + bR, yhR = S(zR), sp = yhR * (1 - yhR), dR = deltaR(yhR, y);
+  const b2 = [];
+  b2.push(`样本：复习 ${f(x, 2)} 小时，真实结果 y=${y}（${y ? '及格' : '不及格'}）`);
+  b2.push('');
+  b2.push('<span class="fwd">① 前向（多了一步压缩）</span>');
+  b2.push(`  z = w×x + b = ${par(wR)}×${f(x, 2)} + ${par(bR)} = <span class="fwd">${f(zR)}</span>`);
+  b2.push(`  ŷ = σ(${f(zR)}) = 1/(1+e^${par(-zR)}) = <span class="fwd">${f(yhR)}</span>`);
+  b2.push(`  <span class="dim">→ 读作"有 ${(yhR * 100).toFixed(1)}% 的把握及格"，永远在 0~1 之间</span>`);
+  b2.push('');
+  b2.push(`<span class="bad">② 损失（${lossMode === 'ce' ? '交叉熵' : 'MSE'}）</span>`);
+  if (lossMode === 'ce') {
+    b2.push(`  L = −[y·ln ŷ + (1−y)·ln(1−ŷ)]`);
+    b2.push(`    = −[${y}×ln(${f(yhR)}) + ${1 - y}×ln(${f(1 - yhR)})]`);
+  } else {
+    b2.push(`  L = ½(${f(yhR)} − ${y})²`);
+  }
+  b2.push(`    = <span class="bad">${f(lossR1(yhR, y), 6)}</span>`);
+  b2.push('');
+  b2.push('<span class="bwd">③ 反向（链条多一节）</span>');
+  if (lossMode === 'ce') {
+    b2.push(`  ∂L/∂ŷ = (ŷ−y)/[ŷ(1−ŷ)] = ${f((yhR - y) / sp, 4)}`);
+    b2.push(`  ∂ŷ/∂z = ŷ(1−ŷ) = ${f(sp)}`);
+    b2.push(`  δ = 两者相乘，<span class="dim">ŷ(1−ŷ) 上下约掉</span> = <span class="bwd">${f(dR, 6)}</span>`);
+    b2.push(`  <span class="dim">结果就是 ŷ−y，和线性回归形式一样</span>`);
+  } else {
+    b2.push(`  ∂L/∂ŷ = ŷ−y = ${f(yhR - y)}`);
+    b2.push(`  ∂ŷ/∂z = ŷ(1−ŷ) = ${f(yhR)}×${f(1 - yhR)} = ${f(sp)}   <span class="dim">← 新增这一节</span>`);
+    b2.push(`  δ = ${par(yhR - y)} × ${f(sp)} = <span class="bwd">${f(dR, 6)}</span>`);
+    b2.push(`  <span class="dim">梯度被压小了 ${(1 / Math.max(sp, 1e-9)).toFixed(1)} 倍</span>`);
+  }
+  b2.push(`  ∂L/∂w = δ × x = <span class="bwd">${f(dR * x, 6)}</span>`);
+  b2.push('');
+  b2.push('<span class="ok">④ 更新（batch 平均梯度）</span>');
+  b2.push(`  w ← ${f(wR)} − ${f(lrR, 1)}×${par(gR.gw)} = <span class="ok">${f(wR - lrR * gR.gw)}</span>`);
+  b2.push(`  b ← ${f(bR)} − ${f(lrR, 1)}×${par(gR.gb)} = <span class="ok">${f(bR - lrR * gR.gb)}</span>`);
+  $('roR').innerHTML = b2.join('\n');
+}
+
+// ================= 表格 =================
+function drawTables() {
+  let accL = 0, accR = 0, oob = 0, mseL = 0, mseR = 0;
+  for (let i = 0; i < N; i++) {
+    const a = predL(H[i]), b = predR(H[i]);
+    if ((a > 0.5 ? 1 : 0) === Y[i]) accL++;
+    if ((b > 0.5 ? 1 : 0) === Y[i]) accR++;
+    if (a < 0 || a > 1) oob++;
+    mseL += 0.5 * (a - Y[i]) ** 2 / N;
+    mseR += 0.5 * (b - Y[i]) ** 2 / N;
+  }
+  const bdL = Math.abs(wL) > 1e-6 ? ((0.5 - bL) / wL).toFixed(2) + ' h' : '—';
+  const bdR = Math.abs(wR) > 1e-6 ? (-bR / wR).toFixed(2) + ' h' : '—';
+  const rows = [
+    ['输出范围', '−∞ ~ +∞', '(0, 1) 恒成立'],
+    ['能当概率读吗', `<span style="color:#A32D2D">不能（${oob} 条越界）</span>`, '<span style="color:#0F6E56">可以</span>'],
+    ['参数 w', f(wL), f(wR)],
+    ['参数 b', f(bL), f(bR)],
+    ['判定分界点', bdL, bdR],
+    ['分类正确率', `${accL}/${N}`, `${accR}/${N}`],
+    ['MSE（统一口径）', f(mseL, 5), f(mseR, 5)],
+    ['反向链条节数', '3 节', lossMode === 'ce' ? '3 节（被约掉了）' : '4 节'],
+  ];
+  $('statBody').innerHTML = rows.map(r =>
+    `<tr><td>${r[0]}</td><td>${r[1]}</td><td style="font-weight:500">${r[2]}</td></tr>`).join('');
+
+  $('predBody').innerHTML = H.map((x, i) => {
+    const a = predL(x), b = predR(x);
+    const ca = (a < 0 || a > 1) ? '#A32D2D' : '#444441';
+    const okb = (b > 0.5 ? 1 : 0) === Y[i];
+    const hl = i === focus ? ' style="background:#F1EFE8"' : '';
+    return `<tr${hl}><td>${x.toFixed(2)}</td><td>${Y[i]}</td>
+      <td style="color:${ca}">${a.toFixed(3)}</td>
+      <td style="color:${okb ? '#0F6E56' : '#A32D2D'};font-weight:500">${b.toFixed(3)}</td></tr>`;
+  }).join('');
+}
+
+// ================= 渲染 / 控制 =================
+function render() {
+  $('iterN').textContent = iter;
+  $('tagR').textContent = lossMode === 'ce' ? '逻辑回归 · 交叉熵' : '逻辑回归 · MSE';
+  drawChart(); drawChain(); drawReadouts(); drawTables();
+}
+function reset() { stopPlay(); wL = 0; bL = 0; wR = 0; bR = 0; iter = 0; render(); }
+function stepN(k) { for (let i = 0; i < k; i++) stepOnce(); render(); }
+function stopPlay() { if (timer) { clearInterval(timer); timer = null; $('playBtn').textContent = '开始训练'; } }
+
+$('playBtn').onclick = () => {
+  if (timer) { stopPlay(); return; }
+  $('playBtn').textContent = '暂停';
+  timer = setInterval(() => { stepN(25); if (iter > 8000) stopPlay(); }, 60);
+};
+$('step1').onclick = () => stepN(1);
+$('step200').onclick = () => stepN(200);
+$('resetBtn').onclick = reset;
+$('lrL').oninput = e => { lrL = parseFloat(e.target.value); $('lrLv').textContent = lrL.toFixed(2); };
+$('lrR').oninput = e => { lrR = parseFloat(e.target.value); $('lrRv').textContent = lrR.toFixed(1); };
+document.querySelectorAll('.seg button').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('.seg button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); lossMode = b.dataset.loss; render();
+  };
+});
+$('selSample').innerHTML = H.map((x, i) =>
+  `<option value="${i}"${i === focus ? ' selected' : ''}>复习 ${x.toFixed(2)}h → ${Y[i] ? '及格' : '不及格'}</option>`).join('');
+$('selSample').onchange = e => { focus = +e.target.value; render(); };
+
+reset();
+</script>
+</body>
+</html>

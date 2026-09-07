@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>线性回归 vs 神经网络 · 梯度下降动画</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+        }
+        body {
+            background: linear-gradient(145deg, #f7f9fc 0%, #e9eef3 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .card {
+            max-width: 1100px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(4px);
+            border-radius: 48px;
+            padding: 28px 30px 35px;
+            box-shadow: 0 20px 40px rgba(0, 10, 30, 0.2), 0 8px 16px rgba(0,0,0,0.06);
+            border: 1px solid rgba(255,255,255,0.5);
+            transition: all 0.2s;
+        }
+        h1 {
+            font-weight: 600;
+            font-size: 1.9rem;
+            color: #1a2639;
+            margin: 0 0 6px 0;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .sub {
+            color: #3e4a5e;
+            font-weight: 400;
+            font-size: 1rem;
+            margin: 0 0 16px 0;
+            opacity: 0.8;
+            border-left: 4px solid #3b82f6;
+            padding-left: 16px;
+        }
+        .canvas-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0 18px;
+        }
+        .canvas-box {
+            background: #ffffffdd;
+            backdrop-filter: blur(2px);
+            border-radius: 28px;
+            padding: 16px 16px 12px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+            flex: 1 1 300px;
+            border: 1px solid rgba(255,255,255,0.8);
+            transition: transform 0.2s;
+        }
+        .canvas-box:hover {
+            transform: scale(1.004);
+        }
+        .canvas-box h2 {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin: 0 0 10px 0;
+            color: #1e2b3c;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+        .badge {
+            font-size: 0.7rem;
+            background: #d0d9e6;
+            padding: 4px 12px;
+            border-radius: 40px;
+            color: #1f2a3f;
+            font-weight: 500;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: #fafcff;
+            border-radius: 20px;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.02);
+            border: 1px solid #e2e9f2;
+            aspect-ratio: 1 / 1;
+            width: 100%;
+            height: auto;
+        }
+        .control-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 18px 28px;
+            background: #eef3f9;
+            padding: 14px 30px;
+            border-radius: 60px;
+            margin: 18px 0 6px;
+            backdrop-filter: blur(2px);
+        }
+        .step-indicator {
+            font-weight: 500;
+            color: #1f2a3f;
+            background: white;
+            padding: 6px 18px;
+            border-radius: 40px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            font-size: 0.95rem;
+        }
+        button {
+            background: white;
+            border: none;
+            padding: 8px 24px;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: #1f2a3f;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.02);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: 0.15s;
+            border: 1px solid #d3dce8;
+        }
+        button:hover {
+            background: #1f2a3f;
+            color: white;
+            border-color: #1f2a3f;
+            box-shadow: 0 8px 14px rgba(0, 20, 40, 0.15);
+        }
+        button:active { transform: scale(0.96); }
+        .slider-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        input[type="range"] {
+            width: 120px;
+            height: 4px;
+            -webkit-appearance: none;
+            background: #b7c4d4;
+            border-radius: 10px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #1f2a3f;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .info-text {
+            font-size: 0.9rem;
+            color: #2a3b4e;
+            background: #dce5ef;
+            padding: 8px 18px;
+            border-radius: 40px;
+            display: inline-block;
+            margin: 6px 0 0;
+        }
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px 28px;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: #1f2a3f;
+            padding: 6px 0 2px;
+        }
+        .legend span::before {
+            content: "●";
+            margin-right: 6px;
+            font-size: 1.2rem;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .legend .l1::before { color: #d93f3f; content: "●"; }
+        .legend .l2::before { color: #2b6bb0; content: "●"; }
+        .legend .l3::before { color: #2a9d8f; content: "●"; }
+        .legend .l4::before { color: #e76f51; content: "●"; }
+        @media (max-width: 700px) {
+            .card { padding: 18px; }
+            .control-bar { flex-direction: column; gap: 12px; }
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>
+        <span>📉 梯度下降 · 求解对比</span>
+        <span style="font-size: 0.8rem; font-weight: 400; background: #d2def0; padding: 2px 14px; border-radius: 40px;">线性回归 + 两层网络</span>
+    </h1>
+    <div class="sub">带激活参数 (ReLU) · 步骤动画 — 观察拟合过程</div>
+
+    <div class="canvas-grid">
+        <!-- 左：线性回归 -->
+        <div class="canvas-box">
+            <h2><span>🔹 线性回归</span><span class="badge">无激活</span></h2>
+            <canvas id="canvasLinear" width="400" height="400"></canvas>
+        </div>
+        <!-- 右：两层神经网络 (带ReLU) -->
+        <div class="canvas-box">
+            <h2><span>🧠 两层网络 (ReLU)</span><span class="badge">带激活参数</span></h2>
+            <canvas id="canvasNN" width="400" height="400"></canvas>
+        </div>
+    </div>
+
+    <!-- 控制栏 -->
+    <div class="control-bar">
+        <div class="step-indicator" id="stepDisplay">步骤 0 / 40</div>
+        <button id="resetBtn">⟲ 重置</button>
+        <button id="playBtn">▶ 播放</button>
+        <div class="slider-group">
+            <span style="font-size:0.9rem;">步数</span>
+            <input type="range" id="stepSlider" min="0" max="40" value="0" step="1">
+        </div>
+    </div>
+    <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+        <div class="legend">
+            <span class="l1">真实曲线 (sin)</span>
+            <span class="l2">模型预测</span>
+            <span class="l3">训练样本</span>
+            <span class="l4">损失 (右下角)</span>
+        </div>
+        <div class="info-text" id="lossInfo">Loss: —</div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- 固定数据 ----------
+        // 生成 30 个样本点 (带噪声)  y = sin(x) + noise
+        const N = 30;
+        const xData = new Float32Array(N);
+        const yData = new Float32Array(N);
+        for (let i = 0; i < N; i++) {
+            const x = (i / (N - 1)) * 2 * Math.PI; // 0 ~ 2pi
+            xData[i] = x;
+            yData[i] = Math.sin(x) + (Math.random() - 0.5) * 0.25;
+        }
+
+        // 归一化到 [0,1] 方便网络训练
+        const xMin = 0, xMax = 2 * Math.PI;
+        const yMin = -1.3, yMax = 1.3;
+        function normX(x) { return (x - xMin) / (xMax - xMin); }
+        function normY(y) { return (y - yMin) / (yMax - yMin); }
+        function denormY(ny) { return ny * (yMax - yMin) + yMin; }
+
+        // 训练集 (归一化)
+        const trainX = new Float32Array(N);
+        const trainY = new Float32Array(N);
+        for (let i = 0; i < N; i++) {
+            trainX[i] = normX(xData[i]);
+            trainY[i] = normY(yData[i]);
+        }
+
+        // ---------- 模型定义 ----------
+        // 1) 线性回归: y = w * x + b
+        let lr_w = 0.5, lr_b = 0.0;
+        // 2) 两层神经网络: 隐藏层 8 神经元, ReLU, 输出线性
+        // 权重: W1 (8x1), b1 (8), W2 (1x8), b2 (1)
+        const H = 8;
+        let W1 = new Float32Array(H); // 每个神经元一个权重
+        let b1 = new Float32Array(H);
+        let W2 = new Float32Array(H); // 输出权重
+        let b2 = 0.0;
+        // 初始化 (小随机)
+        function initNN() {
+            for (let i = 0; i < H; i++) {
+                W1[i] = (Math.random() - 0.5) * 0.8;
+                b1[i] = (Math.random() - 0.5) * 0.3;
+                W2[i] = (Math.random() - 0.5) * 0.8;
+            }
+            b2 = (Math.random() - 0.5) * 0.3;
+        }
+        initNN();
+
+        // 记录历史 (用于动画)
+        let historyLR = [];   // 每步 { w, b }
+        let historyNN = [];   // 每步 { W1, b1, W2, b2 }
+        let currentStep = 0;
+        const MAX_STEP = 40;
+
+        // ---------- 前向 & 损失 (MSE) ----------
+        function forwardLR(x, w, b) { return w * x + b; }
+
+        function forwardNN(x, W1, b1, W2, b2) {
+            // 隐藏层: ReLU(W1 * x + b1)
+            let h = new Float32Array(H);
+            for (let i = 0; i < H; i++) {
+                let z = W1[i] * x + b1[i];
+                h[i] = Math.max(0, z); // ReLU
+            }
+            // 输出: W2 · h + b2
+            let out = b2;
+            for (let i = 0; i < H; i++) out += W2[i] * h[i];
+            return out;
+        }
+
+        function computeLossLR(w, b) {
+            let loss = 0;
+            for (let i = 0; i < N; i++) {
+                const pred = forwardLR(trainX[i], w, b);
+                const diff = pred - trainY[i];
+                loss += diff * diff;
+            }
+            return loss / N;
+        }
+
+        function computeLossNN(W1, b1, W2, b2) {
+            let loss = 0;
+            for (let i = 0; i < N; i++) {
+                const pred = forwardNN(trainX[i], W1, b1, W2, b2);
+                const diff = pred - trainY[i];
+                loss += diff * diff;
+            }
+            return loss / N;
+        }
+
+        // ---------- 梯度下降 (一步) ----------
+        function stepLR(w, b, lr = 0.5) {
+            let dw = 0, db = 0;
+            for (let i = 0; i < N; i++) {
+                const x = trainX[i], y = trainY[i];
+                const pred = forwardLR(x, w, b);
+                const diff = pred - y;
+                dw += diff * x;
+                db += diff;
+            }
+            dw = (2 * dw) / N;
+            db = (2 * db) / N;
+            return { w: w - lr * dw, b: b - lr * db };
+        }
+
+        function stepNN(W1, b1, W2, b2, lr = 0.3) {
+            // 梯度 (手动实现)
+            let dW1 = new Float32Array(H).fill(0);
+            let db1 = new Float32Array(H).fill(0);
+            let dW2 = new Float32Array(H).fill(0);
+            let db2 = 0;
+
+            for (let i = 0; i < N; i++) {
+                const x = trainX[i], y = trainY[i];
+                // 前向
+                let z = new Float32Array(H);
+                let h = new Float32Array(H);
+                for (let j = 0; j < H; j++) {
+                    z[j] = W1[j] * x + b1[j];
+                    h[j] = Math.max(0, z[j]);
+                }
+                let out = b2;
+                for (let j = 0; j < H; j++) out += W2[j] * h[j];
+                const diff = out - y;
+
+                // 输出层梯度
+                db2 += diff;
+                for (let j = 0; j < H; j++) {
+                    dW2[j] += diff * h[j];
+                }
+                // 隐藏层梯度 (ReLU: 若 z<=0 梯度为0)
+                for (let j = 0; j < H; j++) {
+                    const grad = (z[j] > 0) ? diff * W2[j] : 0;
+                    dW1[j] += grad * x;
+                    db1[j] += grad;
+                }
+            }
+            // 平均
+            for (let j = 0; j < H; j++) {
+                dW1[j] = (2 * dW1[j]) / N;
+                db1[j] = (2 * db1[j]) / N;
+                dW2[j] = (2 * dW2[j]) / N;
+            }
+            db2 = (2 * db2) / N;
+
+            // 更新
+            const newW1 = new Float32Array(H);
+            const newb1 = new Float32Array(H);
+            const newW2 = new Float32Array(H);
+            for (let j = 0; j < H; j++) {
+                newW1[j] = W1[j] - lr * dW1[j];
+                newb1[j] = b1[j] - lr * db1[j];
+                newW2[j] = W2[j] - lr * dW2[j];
+            }
+            const newb2 = b2 - lr * db2;
+            return { W1: newW1, b1: newb1, W2: newW2, b2: newb2 };
+        }
+
+        // ---------- 预计算历史 (40步) ----------
+        function buildHistory() {
+            historyLR = [];
+            historyNN = [];
+            // 初始状态
+            let w = lr_w, b = lr_b;
+            let W1c = new Float32Array(W1);
+            let b1c = new Float32Array(b1);
+            let W2c = new Float32Array(W2);
+            let b2c = b2;
+
+            for (let step = 0; step <= MAX_STEP; step++) {
+                // 保存
+                historyLR.push({ w, b });
+                historyNN.push({ W1: new Float32Array(W1c), b1: new Float32Array(b1c), 
+                                W2: new Float32Array(W2c), b2: b2c });
+
+                // 更新 (最后一步不更新)
+                if (step < MAX_STEP) {
+                    const resLR = stepLR(w, b, 0.5);
+                    w = resLR.w; b = resLR.b;
+                    const resNN = stepNN(W1c, b1c, W2c, b2c, 0.25);
+                    W1c = resNN.W1; b1c = resNN.b1; W2c = resNN.W2; b2c = resNN.b2;
+                }
+            }
+        }
+        buildHistory();
+
+        // ---------- 绘制 ----------
+        const canvasLR = document.getElementById('canvasLinear');
+        const canvasNN = document.getElementById('canvasNN');
+        const ctxLR = canvasLR.getContext('2d');
+        const ctxNN = canvasNN.getContext('2d');
+        const stepDisplay = document.getElementById('stepDisplay');
+        const stepSlider = document.getElementById('stepSlider');
+        const lossInfo = document.getElementById('lossInfo');
+
+        function draw(step) {
+            const s = Math.min(step, MAX_STEP);
+            currentStep = s;
+            stepSlider.value = s;
+            stepDisplay.innerText = `步骤 ${s} / ${MAX_STEP}`;
+
+            // 获取当前参数
+            const lrState = historyLR[s];
+            const nnState = historyNN[s];
+
+            // 计算损失
+            const lossLR = computeLossLR(lrState.w, lrState.b);
+            const lossNN = computeLossNN(nnState.W1, nnState.b1, nnState.W2, nnState.b2);
+            lossInfo.innerHTML = `📉 线性 Loss: ${lossLR.toFixed(4)} &nbsp;|&nbsp; 🧠 NN Loss: ${lossNN.toFixed(4)}`;
+
+            drawCanvas(ctxLR, canvasLR, 'linear', lrState, s);
+            drawCanvas(ctxNN, canvasNN, 'nn', nnState, s);
+        }
+
+        function drawCanvas(ctx, canvas, type, state, step) {
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            // 背景网格
+            ctx.strokeStyle = "#e7edf5";
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i <= 10; i++) {
+                const x = (i / 10) * w;
+                const y = (i / 10) * h;
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, h);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(w, y);
+                ctx.stroke();
+            }
+
+            // 坐标映射 (x: 0~1 -> 画布, y: 0~1 -> 画布 注意翻转)
+            function toCanvasX(nx) { return nx * w; }
+            function toCanvasY(ny) { return (1 - ny) * h; }
+
+            // 绘制真实曲线 (sin) 归一化
+            ctx.beginPath();
+            ctx.strokeStyle = "#d93f3f";
+            ctx.lineWidth = 2.2;
+            ctx.setLineDash([4, 4]);
+            for (let px = 0; px <= w; px+=1) {
+                const nx = px / w;
+                const x = nx * (xMax - xMin) + xMin;
+                const yTrue = Math.sin(x);
+                const ny = normY(yTrue);
+                const cx = toCanvasX(nx);
+                const cy = toCanvasY(ny);
+                if (px === 0) ctx.moveTo(cx, cy);
+                else ctx.lineTo(cx, cy);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 绘制训练样本 (圆圈)
+            for (let i = 0; i < N; i++) {
+                const nx = trainX[i];
+                const ny = trainY[i];
+                const cx = toCanvasX(nx);
+                const cy = toCanvasY(ny);
+                ctx.beginPath();
+                ctx.arc(cx, cy, 4, 0, 2 * Math.PI);
+                ctx.fillStyle = "#2a9d8f";
+                ctx.shadowColor = "rgba(0,0,0,0.08)";
+                ctx.shadowBlur = 6;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = "#1e6b5e";
+                ctx.lineWidth = 1.2;
+                ctx.stroke();
+            }
+
+            // 绘制模型预测 (曲线)
+            ctx.beginPath();
+            ctx.strokeStyle = "#2b6bb0";
+            ctx.lineWidth = 3;
+            for (let px = 0; px <= w; px+=1) {
+                const nx = px / w;
+                let pred;
+                if (type === 'linear') {
+                    pred = forwardLR(nx, state.w, state.b);
+                } else {
+                    pred = forwardNN(nx, state.W1, state.b1, state.W2, state.b2);
+                }
+                // 限制范围防止溢出
+                const clamped = Math.max(0, Math.min(1, pred));
+                const cx = toCanvasX(nx);
+                const cy = toCanvasY(clamped);
+                if (px === 0) ctx.moveTo(cx, cy);
+                else ctx.lineTo(cx, cy);
+            }
+            ctx.stroke();
+
+            // 绘制损失数值 (右下角)
+            const loss = type === 'linear' ? computeLossLR(state.w, state.b) : computeLossNN(state.W1, state.b1, state.W2, state.b2);
+            ctx.fillStyle = "#1f2a3f";
+            ctx.font = "13px 'Segoe UI', monospace";
+            ctx.fillText(`Loss: ${loss.toFixed(4)}`, w - 120, h - 14);
+            ctx.fillStyle = "#4d5f73";
+            ctx.font = "11px 'Segoe UI'";
+            ctx.fillText(`step ${step}`, 12, 22);
+        }
+
+        // ---------- 控制 ----------
+        let playing = false;
+        let timer = null;
+
+        function setStep(val) {
+            const s = Math.min(MAX_STEP, Math.max(0, parseInt(val) || 0));
+            draw(s);
+        }
+
+        document.getElementById('resetBtn').addEventListener('click', function() {
+            if (playing) togglePlay();
+            // 重新初始化
+            lr_w = 0.5; lr_b = 0.0;
+            initNN();
+            buildHistory();
+            setStep(0);
+        });
+
+        document.getElementById('playBtn').addEventListener('click', function() {
+            togglePlay();
+        });
+
+        function togglePlay() {
+            playing = !playing;
+            document.getElementById('playBtn').innerText = playing ? '⏸ 暂停' : '▶ 播放';
+            if (playing) {
+                if (currentStep >= MAX_STEP) {
+                    // 如果已经结束，重置到0
+                    lr_w = 0.5; lr_b = 0.0;
+                    initNN();
+                    buildHistory();
+                    setStep(0);
+                }
+                timer = setInterval(() => {
+                    let next = currentStep + 1;
+                    if (next > MAX_STEP) {
+                        clearInterval(timer);
+                        playing = false;
+                        document.getElementById('playBtn').innerText = '▶ 播放';
+                        return;
+                    }
+                    setStep(next);
+                }, 250);
+            } else {
+                if (timer) clearInterval(timer);
+                timer = null;
+            }
+        }
+
+        stepSlider.addEventListener('input', function(e) {
+            if (playing) togglePlay();
+            setStep(e.target.value);
+        });
+
+        // 初始绘制
+        setStep(0);
+    })();
+</script>
+</body>
+</html>

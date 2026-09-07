@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>反向传播 交互演示</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px;
+    background: #F5F4EF; color: #2C2C2A;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 500; margin: 0 0 4px; }
+  h3 { font-size: 15px; font-weight: 500; margin: 0 0 10px; }
+  .sub { color: #5F5E5A; font-size: 14px; margin-bottom: 18px; }
+  .card { background: #fff; border: 1px solid #D3D1C7; border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+  .row > .card { flex: 1; min-width: 300px; margin-bottom: 0; }
+  svg { display: block; width: 100%; height: auto; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  button {
+    font-family: inherit; font-size: 14px; padding: 8px 16px;
+    border-radius: 8px; border: 1px solid #185FA5; background: #185FA5; color: #fff; cursor: pointer;
+  }
+  button.ghost { background: #fff; color: #185FA5; }
+  button:active { transform: translateY(1px); }
+  .slider-row { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 220px; }
+  input[type=range] { flex: 1; accent-color: #185FA5; }
+  .lr-val { font-variant-numeric: tabular-nums; min-width: 42px; text-align: right; font-weight: 500; }
+  .phase-bar { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+  .ph {
+    flex: 1; min-width: 130px; padding: 8px 10px; border-radius: 8px; font-size: 13px;
+    background: #F1EFE8; color: #888780; border: 1px solid #E5E3DB; text-align: center;
+  }
+  .ph.done { background: #E1F5EE; color: #0F6E56; border-color: #9FE1CB; }
+  .ph.now  { background: #185FA5; color: #fff; border-color: #185FA5; font-weight: 500; }
+  .readout {
+    background: #F1EFE8; border-radius: 8px; padding: 14px 16px;
+    font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 12.5px;
+    white-space: pre; line-height: 1.8; overflow-x: auto; max-height: 620px; overflow-y: auto;
+  }
+  .fwd  { color: #185FA5; font-weight: 500; }
+  .bwd  { color: #993C1D; font-weight: 500; }
+  .ok   { color: #0F6E56; font-weight: 500; }
+  .bad  { color: #A32D2D; font-weight: 500; }
+  .dim  { color: #888780; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+  th, td { padding: 5px 8px; text-align: right; border-bottom: 1px solid #E5E3DB; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: #5F5E5A; font-weight: 500; }
+  .hint { font-size: 13px; color: #5F5E5A; margin-top: 10px; }
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
+  .presets button, .samp button { font-size: 13px; padding: 6px 12px; background: #fff; color: #444441; border-color: #D3D1C7; }
+  .samp { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+  .samp button.active { background: #185FA5; color: #fff; border-color: #185FA5; }
+  .derive { background: #FAEEDA; border-left: 3px solid #BA7517; padding: 12px 16px; margin-top: 14px; font-size: 13px; color: #412402; }
+  .derive code { font-family: ui-monospace, Consolas, monospace; background: rgba(0,0,0,.05); padding: 1px 4px; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>反向传播：梯度怎么一层层传回来</h1>
+  <div class="sub">
+    任务是<b>异或（XOR）</b>：两个输入不同时输出 1，相同时输出 0 —— 这是一条直线学不会的问题，必须靠隐藏层。
+    网络结构 <b>2 → 2 → 1</b>，激活函数用 sigmoid。
+  </div>
+
+  <div class="card">
+    <div class="phase-bar" id="phaseBar">
+      <div class="ph" data-p="0">① 前向传播<br><span style="font-size:11px">算出预测值</span></div>
+      <div class="ph" data-p="1">② 算损失<br><span style="font-size:11px">和答案比一比</span></div>
+      <div class="ph" data-p="2">③ 反向传播<br><span style="font-size:11px">算每个参数的责任</span></div>
+      <div class="ph" data-p="3">④ 更新参数<br><span style="font-size:11px">各减去 η×梯度</span></div>
+    </div>
+
+    <svg id="net" viewBox="0 0 790 355" role="img" aria-label="两层神经网络的前向计算与反向梯度回传示意"></svg>
+
+    <div class="controls" style="margin-top:6px">
+      <button id="nextBtn">下一阶段 →</button>
+      <button id="stepBtn" class="ghost">完整走一轮</button>
+      <button id="playBtn" class="ghost">自动训练</button>
+      <button id="resetBtn" class="ghost">重置</button>
+      <div class="slider-row">
+        <span style="font-size:14px">学习率 η</span>
+        <input type="range" id="lr" min="0.5" max="8" step="0.5" value="4">
+        <span class="lr-val" id="lrVal">4.0</span>
+      </div>
+    </div>
+    <div class="presets">
+      <span style="font-size:13px;color:#5F5E5A;align-self:center">初始权重：</span>
+      <button data-init="0" class="active">正常（能学会）</button>
+      <button data-init="1">另一组（也能学会）</button>
+      <button data-init="2">坏初值（会卡住）</button>
+      <span style="font-size:13px;color:#5F5E5A;align-self:center;margin-left:8px">迭代 <b id="iterN">0</b> 次</span>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <h3>损失下降曲线</h3>
+      <svg id="lossChart" viewBox="0 0 420 300" role="img" aria-label="损失随迭代下降"></svg>
+      <div class="hint">前期常有一段"平台期"，看着没进展，之后突然掉下去 —— 这是训练的正常现象，别急着停。</div>
+    </div>
+    <div class="card">
+      <h3>四条样本的当前表现</h3>
+      <table>
+        <thead><tr><th>x₁</th><th>x₂</th><th>正确 y</th><th>预测 ŷ</th><th>误差</th></tr></thead>
+        <tbody id="sampleBody"></tbody>
+      </table>
+      <div class="hint">四个预测都接近 0 / 1 / 1 / 0，就说明学会异或了。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>完整计算过程</h3>
+    <div class="samp">
+      <span style="font-size:13px;color:#5F5E5A">展开看哪条样本：</span>
+      <button data-s="0">#1 (0,0)→0</button>
+      <button data-s="1" class="active">#2 (0,1)→1</button>
+      <button data-s="2">#3 (1,0)→1</button>
+      <button data-s="3">#4 (1,1)→0</button>
+    </div>
+    <div class="readout" id="readout"></div>
+    <div class="derive">
+      <b>反向传播只用到三条求导规则：</b><br>
+      ① 损失对预测：<code>L = ½(ŷ−y)²</code> → <code>∂L/∂ŷ = ŷ − y</code><br>
+      ② sigmoid：<code>a = σ(z)</code> → <code>∂a/∂z = a(1−a)</code>（直接复用前向算好的 a，不用重算指数）<br>
+      ③ 线性层：<code>z = w·a + b</code> → <code>∂z/∂w = a</code>，<code>∂z/∂b = 1</code>，<code>∂z/∂a = w</code><br>
+      把这三条按链式法则乘起来，就是下面每一行的来历。
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>九个参数的当前值与梯度</h3>
+    <table>
+      <thead><tr><th>参数</th><th>当前值</th><th>梯度 ∂L/∂参数</th><th>η × 梯度</th><th>更新后</th></tr></thead>
+      <tbody id="paramBody"></tbody>
+    </table>
+    <div class="hint">
+      梯度是四条样本的<b>平均值</b>（batch 梯度）。注意第一层的梯度普遍比第二层小 —— 这就是梯度往回传时的衰减。
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ==================== 基础 ====================
+const S = z => 1 / (1 + Math.exp(-z));
+const DATA = [
+  { x: [0, 0], y: 0 },
+  { x: [0, 1], y: 1 },
+  { x: [1, 0], y: 1 },
+  { x: [1, 1], y: 0 },
+];
+const INITS = [
+  { W1: [[0.8, -0.7], [-0.9, 0.6]], b1: [-0.3, 0.4], W2: [1.0, -1.0], b2: 0.2 },
+  { W1: [[0.6, 0.9], [0.7, -0.8]], b1: [-0.2, 0.3], W2: [-0.9, 1.1], b2: 0.1 },
+  { W1: [[0.5, -0.4], [-0.6, 0.7]], b1: [0.1, -0.2], W2: [0.8, -0.9], b2: 0.3 },
+];
+
+let initIdx = 0, W1, b1, W2, b2;
+let lr = 4, iter = 0, phase = 0, focus = 1, timer = null;
+let lossHist = [];
+const $ = id => document.getElementById(id);
+const f = (v, d = 4) => v.toFixed(d);
+const par = v => v < 0 ? '(' + f(v) + ')' : f(v);          // 负数加括号，避免两个减号连在一起
+const sg = v => (v < 0 ? '− ' : '+ ') + f(Math.abs(v));
+
+// ==================== 前向 / 反向 ====================
+function forward(d) {
+  const z1 = [0, 1].map(j => d.x[0] * W1[0][j] + d.x[1] * W1[1][j] + b1[j]);
+  const a1 = z1.map(S);
+  const z2 = a1[0] * W2[0] + a1[1] * W2[1] + b2;
+  const yh = S(z2);
+  return { z1, a1, z2, yh, L: 0.5 * (yh - d.y) ** 2 };
+}
+function backward(d, fw) {
+  const dLdy = fw.yh - d.y;                       // ① 损失对预测
+  const sp2 = fw.yh * (1 - fw.yh);                // ② sigmoid 导数
+  const d2 = dLdy * sp2;                          // δ₂ = ∂L/∂z₂
+  const dW2 = [d2 * fw.a1[0], d2 * fw.a1[1]];     // ③ 线性层：梯度 = δ × 该层输入
+  const db2 = d2;
+  const through = [d2 * W2[0], d2 * W2[1]];       // 梯度穿过权重门
+  const sp1 = fw.a1.map(a => a * (1 - a));        // 穿过激活门
+  const d1 = [through[0] * sp1[0], through[1] * sp1[1]];
+  const dW1 = [[d1[0] * d.x[0], d1[1] * d.x[0]],
+               [d1[0] * d.x[1], d1[1] * d.x[1]]];
+  const db1 = [d1[0], d1[1]];
+  return { dLdy, sp2, d2, dW2, db2, through, sp1, d1, dW1, db1 };
+}
+function batchGrads() {
+  const n = DATA.length;
+  const g = { W1: [[0, 0], [0, 0]], b1: [0, 0], W2: [0, 0], b2: 0, L: 0 };
+  for (const d of DATA) {
+    const fw = forward(d), bw = backward(d, fw);
+    g.L += fw.L / n;
+    for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) g.W1[i][j] += bw.dW1[i][j] / n;
+    for (let j = 0; j < 2; j++) { g.b1[j] += bw.db1[j] / n; g.W2[j] += bw.dW2[j] / n; }
+    g.b2 += bw.db2 / n;
+  }
+  return g;
+}
+
+// ==================== 网络图 ====================
+function drawNet() {
+  const d = DATA[focus], fw = forward(d), bw = backward(d, fw);
+  const showF = phase >= 1, showB = phase >= 3;
+  const p = [];
+
+  p.push(`<defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.6" stroke-linecap="round"/></marker></defs>`);
+
+  const phaseTxt = ['① 待前向传播 —— 点"下一阶段"开始',
+                    '② 前向完成，预测值已算出',
+                    '③ 损失已算出，接下来往回传梯度',
+                    '④ 反向完成，每个参数的梯度都有了'][phase];
+  p.push(`<text x="395" y="26" font-size="14" font-weight="500" fill="#185FA5" text-anchor="middle">${phaseTxt}</text>`);
+
+  const cols = [[75, '输入层'], [345, '隐藏层 · sigmoid'], [555, '输出层'], [710, '损失']];
+  cols.forEach(([x, t]) => p.push(`<text x="${x}" y="66" font-size="12" fill="#888780" text-anchor="middle">${t}</text>`));
+
+  // ---- 连线（画在节点下面）----
+  const IN = [[120, 127], [120, 237]], HD = [[290, 127], [290, 237]];
+  const HR = [[400, 127], [400, 237]], OUT = [500, 187];
+  const eStyle = v => `stroke="${v >= 0 ? '#7F77DD' : '#B4B2A9'}" stroke-width="${Math.min(5, 0.8 + Math.abs(v) * 1.6)}"`;
+
+  for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) {
+    const [x1, y1] = IN[i], [x2, y2] = HD[j];
+    p.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" ${eStyle(W1[i][j])} opacity="0.75"/>`);
+    const t = (i === j) ? 0.42 : (i === 0 ? 0.32 : 0.68);
+    const lx = x1 + (x2 - x1) * t, ly = y1 + (y2 - y1) * t + (i === j ? (j === 0 ? -9 : 15) : 0);
+    p.push(`<text x="${lx}" y="${ly}" font-size="11" fill="#534AB7" text-anchor="middle">${f(W1[i][j], 3)}</text>`);
+  }
+  for (let j = 0; j < 2; j++) {
+    const [x1, y1] = HR[j];
+    p.push(`<line x1="${x1}" y1="${y1}" x2="${OUT[0]}" y2="${OUT[1]}" ${eStyle(W2[j])} opacity="0.75"/>`);
+    const t = 0.45, lx = x1 + (OUT[0] - x1) * t, ly = y1 + (OUT[1] - y1) * t + (j === 0 ? -8 : 16);
+    p.push(`<text x="${lx}" y="${ly}" font-size="11" fill="#534AB7" text-anchor="middle">${f(W2[j], 3)}</text>`);
+  }
+  p.push(`<line x1="610" y1="187" x2="656" y2="187" stroke="#B4B2A9" stroke-width="1.5" marker-end="url(#ar)"/>`);
+
+  // ---- 节点 ----
+  const node = (x, y, w, h, fill, stroke, lines) => {
+    let s = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`;
+    lines.forEach((L, k) => {
+      s += `<text x="${x + w / 2}" y="${y + 22 + k * 19}" font-size="${L[2] || 13}" fill="${L[1]}" text-anchor="middle" font-weight="${L[3] || 400}">${L[0]}</text>`;
+    });
+    return s;
+  };
+  const G = ['#F1EFE8', '#B4B2A9'], P = ['#EEEDFE', '#7F77DD'], C = ['#FAECE7', '#D85A30'];
+
+  for (let i = 0; i < 2; i++) {
+    p.push(node(30, 92 + i * 110, 90, 70, G[0], G[1], [
+      [`x${i ? '₂' : '₁'}`, '#444441', 14, 500],
+      [`${d.x[i]}`, '#2C2C2A', 16, 500],
+    ]));
+  }
+  for (let j = 0; j < 2; j++) {
+    const lines = [[`h${j ? '₂' : '₁'}`, '#3C3489', 14, 500]];
+    lines.push(showF ? [`a = ${f(fw.a1[j])}`, '#185FA5', 12.5, 500] : ['a = ?', '#B4B2A9', 12.5]);
+    lines.push(showB ? [`δ = ${f(bw.d1[j], 5)}`, '#993C1D', 12, 500] : ['', '#fff', 12]);
+    p.push(node(290, 92 + j * 110, 110, 70, P[0], P[1], lines));
+    p.push(`<text x="345" y="${180 + j * 110}" font-size="11" fill="#5F5E5A" text-anchor="middle">b = ${f(b1[j], 3)}</text>`);
+  }
+  const oLines = [['ŷ', '#3C3489', 14, 500]];
+  oLines.push(showF ? [`${f(fw.yh)}`, '#185FA5', 14, 500] : ['?', '#B4B2A9', 14]);
+  oLines.push(showB ? [`δ₂ = ${f(bw.d2, 5)}`, '#993C1D', 12, 500] : ['', '#fff', 12]);
+  p.push(node(500, 152, 110, 70, P[0], P[1], oLines));
+  p.push(`<text x="555" y="240" font-size="11" fill="#5F5E5A" text-anchor="middle">b = ${f(b2, 3)}</text>`);
+
+  p.push(node(660, 152, 100, 70, C[0], C[1], [
+    ['L', '#712B13', 14, 500],
+    [phase >= 2 ? f(fw.L, 5) : '?', phase >= 2 ? '#993C1D' : '#B4B2A9', 14, 500],
+    [phase >= 2 ? `答案 y = ${d.y}` : '', '#993C1D', 11],
+  ]));
+
+  // ---- 方向指示 ----
+  if (phase >= 1 && phase < 3) {
+    p.push(`<line x1="60" y1="322" x2="700" y2="322" stroke="#185FA5" stroke-width="2" marker-end="url(#ar)"/>`);
+    p.push(`<text x="380" y="345" font-size="12.5" fill="#185FA5" text-anchor="middle" font-weight="500">前向：数据从左往右流，算出预测值</text>`);
+  } else if (showB) {
+    p.push(`<line x1="700" y1="322" x2="60" y2="322" stroke="#D85A30" stroke-width="2" marker-end="url(#ar)"/>`);
+    p.push(`<text x="380" y="345" font-size="12.5" fill="#993C1D" text-anchor="middle" font-weight="500">反向：梯度 δ 从右往左传，每层算出自己参数的责任</text>`);
+  } else {
+    p.push(`<text x="380" y="330" font-size="12.5" fill="#888780" text-anchor="middle">点"下一阶段"开始前向传播</text>`);
+  }
+
+  $('net').innerHTML = p.join('');
+}
+
+// ==================== 阶段条 ====================
+function drawPhaseBar() {
+  document.querySelectorAll('.ph').forEach(el => {
+    const p = +el.dataset.p;
+    el.className = 'ph' + (p < phase ? ' done' : p === phase ? ' now' : '');
+  });
+}
+
+// ==================== 详细计算 ====================
+function drawReadout() {
+  const d = DATA[focus], fw = forward(d), bw = backward(d, fw);
+  const g = batchGrads();
+  const L = [];
+
+  L.push(`样本 #${focus + 1}:  输入 x₁=${d.x[0]}, x₂=${d.x[1]}   正确答案 y=${d.y}`);
+  L.push('');
+
+  if (phase < 1) {
+    L.push('<span class="dim">点「下一阶段」开始前向传播 ……</span>');
+    $('readout').innerHTML = L.join('\n'); return;
+  }
+
+  // ---------- 前向 ----------
+  L.push('<span class="fwd">━━━━━ ① 前向传播：从左往右算 ━━━━━</span>');
+  L.push('');
+  for (let j = 0; j < 2; j++) {
+    const s = j ? '₂' : '₁';
+    L.push(`隐藏神经元 h${s}`);
+    L.push(`  z${s} = x₁×w(x₁→h${s}) + x₂×w(x₂→h${s}) + b(h${s})`);
+    L.push(`     = ${d.x[0]}×${par(W1[0][j])} + ${d.x[1]}×${par(W1[1][j])} + ${par(b1[j])}`);
+    L.push(`     = <span class="fwd">${f(fw.z1[j])}</span>`);
+    L.push(`  a${s} = σ(${f(fw.z1[j])}) = 1 / (1 + e^${par(-fw.z1[j])}) = <span class="fwd">${f(fw.a1[j])}</span>`);
+    L.push('');
+  }
+  L.push('输出神经元');
+  L.push(`  z₂ = a₁×w(h₁→ŷ) + a₂×w(h₂→ŷ) + b(ŷ)`);
+  L.push(`     = ${f(fw.a1[0])}×${par(W2[0])} + ${f(fw.a1[1])}×${par(W2[1])} + ${par(b2)}`);
+  L.push(`     = <span class="fwd">${f(fw.z2)}</span>`);
+  L.push(`  ŷ  = σ(${f(fw.z2)}) = <span class="fwd">${f(fw.yh)}</span>`);
+  L.push('');
+
+  if (phase < 2) {
+    L.push('<span class="dim">下一步：拿预测值和正确答案比，算损失 ……</span>');
+    $('readout').innerHTML = L.join('\n'); return;
+  }
+
+  L.push('<span class="bad">━━━━━ ② 算损失 ━━━━━</span>');
+  L.push(`  L = ½ × (ŷ − y)² = ½ × (${f(fw.yh)} − ${d.y})² = ½ × ${f((fw.yh - d.y) ** 2)}`);
+  L.push(`    = <span class="bad">${f(fw.L, 6)}</span>`);
+  L.push('');
+
+  if (phase < 3) {
+    L.push('<span class="dim">下一步：反向传播，算出每个参数该负多少责任 ……</span>');
+    $('readout').innerHTML = L.join('\n'); return;
+  }
+
+  // ---------- 反向 ----------
+  L.push('<span class="bwd">━━━━━ ③ 反向传播：从右往左传 ━━━━━</span>');
+  L.push('');
+  L.push('【输出层】先算这一层的误差项 δ₂ = ∂L/∂z₂');
+  L.push(`  ∂L/∂ŷ  = ŷ − y = ${f(fw.yh)} − ${d.y} = ${f(bw.dLdy)}          <span class="dim">← 规则①</span>`);
+  L.push(`  ∂ŷ/∂z₂ = ŷ(1−ŷ) = ${f(fw.yh)}×${f(1 - fw.yh)} = ${f(bw.sp2)}   <span class="dim">← 规则②</span>`);
+  L.push(`  δ₂ = ${par(bw.dLdy)} × ${f(bw.sp2)} = <span class="bwd">${f(bw.d2, 6)}</span>   <span class="dim">← 链式法则：两段相乘</span>`);
+  L.push('');
+  L.push('  有了 δ₂，这一层三个参数的梯度直接就出来了（规则③）：');
+  L.push(`  ∂L/∂w(h₁→ŷ) = δ₂ × a₁ = ${par(bw.d2)} × ${f(fw.a1[0])} = <span class="bwd">${f(bw.dW2[0], 6)}</span>`);
+  L.push(`  ∂L/∂w(h₂→ŷ) = δ₂ × a₂ = ${par(bw.d2)} × ${f(fw.a1[1])} = <span class="bwd">${f(bw.dW2[1], 6)}</span>`);
+  L.push(`  ∂L/∂b(ŷ)     = δ₂ × 1  = <span class="bwd">${f(bw.db2, 6)}</span>`);
+  L.push('');
+  L.push('【隐藏层】梯度要穿过两道门才能传到这里');
+  for (let j = 0; j < 2; j++) {
+    const s = j ? '₂' : '₁';
+    L.push(`  h${s}:`);
+    L.push(`    ① 穿过权重门：δ₂ × w(h${s}→ŷ) = ${par(bw.d2)} × ${par(W2[j])} = ${f(bw.through[j], 6)}`);
+    L.push(`    ② 穿过激活门：× a${s}(1−a${s}) = × ${f(fw.a1[j])}×${f(1 - fw.a1[j])} = × ${f(bw.sp1[j])}`);
+    L.push(`    δ${s} = <span class="bwd">${f(bw.d1[j], 6)}</span>`);
+    L.push('');
+  }
+  L.push('  同样用规则③，第一层参数的梯度：');
+  for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) {
+    const sj = j ? '₂' : '₁', si = i ? '₂' : '₁';
+    L.push(`  ∂L/∂w(x${si}→h${sj}) = δ${sj} × x${si} = ${par(bw.d1[j])} × ${d.x[i]} = <span class="bwd">${f(bw.dW1[i][j], 6)}</span>`);
+  }
+  L.push(`  ∂L/∂b(h₁) = δ₁ = <span class="bwd">${f(bw.db1[0], 6)}</span>`);
+  L.push(`  ∂L/∂b(h₂) = δ₂ᴴ = <span class="bwd">${f(bw.db1[1], 6)}</span>`);
+  L.push('');
+  const ratio = Math.abs(bw.d2) > 1e-12 ? Math.abs(bw.d1[0] / bw.d2) : 0;
+  L.push(`<span class="dim">注意衰减：|δ₂| = ${f(Math.abs(bw.d2), 6)}，往回传一层后 |δ₁| = ${f(Math.abs(bw.d1[0]), 6)}，`);
+  L.push(`只剩 ${(ratio * 100).toFixed(1)}%。sigmoid 的导数最大只有 0.25，每穿一层就要乘一次 —— 这就是梯度消失。</span>`);
+  L.push('');
+  L.push('<span class="ok">━━━━━ ④ 更新参数（用四条样本梯度的平均）━━━━━</span>');
+  L.push(`  本轮 batch 平均损失 L = ${f(g.L, 6)}`);
+  L.push(`  每个参数都做同一件事：新值 = 旧值 − η × 梯度，η = ${f(lr, 1)}`);
+  L.push('  <span class="dim">具体数字见下方"九个参数"表格。</span>');
+
+  $('readout').innerHTML = L.join('\n');
+}
+
+// ==================== 参数表 ====================
+function drawParams() {
+  const g = batchGrads();
+  const items = [
+    ['w(x₁→h₁)', W1[0][0], g.W1[0][0]], ['w(x₁→h₂)', W1[0][1], g.W1[0][1]],
+    ['w(x₂→h₁)', W1[1][0], g.W1[1][0]], ['w(x₂→h₂)', W1[1][1], g.W1[1][1]],
+    ['b(h₁)', b1[0], g.b1[0]], ['b(h₂)', b1[1], g.b1[1]],
+    ['w(h₁→ŷ)', W2[0], g.W2[0]], ['w(h₂→ŷ)', W2[1], g.W2[1]],
+    ['b(ŷ)', b2, g.b2],
+  ];
+  $('paramBody').innerHTML = items.map(([n, v, gr], i) => {
+    const sep = i === 6 ? ' style="border-top:2px solid #D3D1C7"' : '';
+    return `<tr${sep}><td>${n}</td><td>${f(v, 5)}</td>
+      <td style="color:#993C1D">${f(gr, 6)}</td>
+      <td>${f(lr * gr, 6)}</td>
+      <td style="color:#0F6E56;font-weight:500">${f(v - lr * gr, 5)}</td></tr>`;
+  }).join('');
+}
+
+// ==================== 样本表 & 损失曲线 ====================
+function drawSamples() {
+  $('sampleBody').innerHTML = DATA.map(d => {
+    const fw = forward(d), e = fw.yh - d.y;
+    const c = Math.abs(e) < 0.1 ? '#0F6E56' : Math.abs(e) < 0.3 ? '#854F0B' : '#A32D2D';
+    return `<tr><td>${d.x[0]}</td><td>${d.x[1]}</td><td>${d.y}</td>
+      <td style="font-weight:500">${f(fw.yh)}</td>
+      <td style="color:${c}">${e >= 0 ? '+' : ''}${f(e)}</td></tr>`;
+  }).join('');
+}
+function drawLossChart() {
+  const W = 420, H = 300, P = 48;
+  const n = lossHist.length;
+  const p = [];
+  const lmax = n ? Math.max(...lossHist) : 0.2;
+  const toX = i => P + (n <= 1 ? 0 : i / (n - 1)) * (W - P - 16);
+  const toY = l => (H - 38) - (l / (lmax || 1)) * (H - 38 - 18);
+  p.push(`<line x1="${P}" y1="18" x2="${P}" y2="${H - 38}" stroke="#B4B2A9"/>`);
+  p.push(`<line x1="${P}" y1="${H - 38}" x2="${W - 16}" y2="${H - 38}" stroke="#B4B2A9"/>`);
+  for (let k = 0; k <= 4; k++) {
+    const v = lmax * k / 4, y = toY(v);
+    p.push(`<line x1="${P}" y1="${y}" x2="${W - 16}" y2="${y}" stroke="#E5E3DB"/>`);
+    p.push(`<text x="${P - 6}" y="${y + 4}" font-size="11" fill="#5F5E5A" text-anchor="end">${v.toFixed(3)}</text>`);
+  }
+  p.push(`<text x="${(W + P) / 2}" y="${H - 8}" font-size="12" fill="#5F5E5A" text-anchor="middle">迭代次数</text>`);
+  if (n > 1) {
+    p.push(`<polyline points="${lossHist.map((l, i) => `${toX(i).toFixed(1)},${toY(l).toFixed(1)}`).join(' ')}"
+      fill="none" stroke="#7F77DD" stroke-width="2.5"/>`);
+    p.push(`<circle cx="${toX(n - 1)}" cy="${toY(lossHist[n - 1])}" r="4.5" fill="#E24B4A"/>`);
+  }
+  p.push(`<text x="${W - 16}" y="32" font-size="13" fill="#A32D2D" text-anchor="end" font-weight="500">L = ${n ? f(lossHist[n - 1], 6) : '—'}</text>`);
+  $('lossChart').innerHTML = p.join('');
+}
+
+// ==================== 更新与控制 ====================
+function applyUpdate() {
+  const g = batchGrads();
+  for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) W1[i][j] -= lr * g.W1[i][j];
+  for (let j = 0; j < 2; j++) { b1[j] -= lr * g.b1[j]; W2[j] -= lr * g.W2[j]; }
+  b2 -= lr * g.b2;
+  iter++;
+  lossHist.push(batchGrads().L);
+  if (lossHist.length > 300) lossHist.shift();
+}
+function nextPhase() {
+  if (phase < 3) { phase++; }
+  else { applyUpdate(); phase = 0; }
+  render();
+}
+function fullStep() { applyUpdate(); phase = 0; render(); }
+
+function render() {
+  $('iterN').textContent = iter;
+  drawPhaseBar(); drawNet(); drawReadout(); drawParams(); drawSamples(); drawLossChart();
+}
+function reset() {
+  stopPlay();
+  const c = INITS[initIdx];
+  W1 = c.W1.map(r => r.slice()); b1 = c.b1.slice(); W2 = c.W2.slice(); b2 = c.b2;
+  iter = 0; phase = 0; lossHist = [batchGrads().L];
+  render();
+}
+function stopPlay() { if (timer) { clearInterval(timer); timer = null; $('playBtn').textContent = '自动训练'; } }
+
+$('nextBtn').onclick = nextPhase;
+$('stepBtn').onclick = fullStep;
+$('resetBtn').onclick = reset;
+$('playBtn').onclick = () => {
+  if (timer) { stopPlay(); return; }
+  $('playBtn').textContent = '暂停';
+  phase = 0;
+  timer = setInterval(() => {
+    for (let k = 0; k < 40; k++) applyUpdate();     // 每帧多跑几步，否则看不出变化
+    render();
+    if (batchGrads().L < 1e-5 || iter > 40000) stopPlay();
+  }, 60);
+};
+$('lr').oninput = e => { lr = parseFloat(e.target.value); $('lrVal').textContent = f(lr, 1); render(); };
+document.querySelectorAll('.presets button').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.presets button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    initIdx = +btn.dataset.init; reset();
+  };
+});
+document.querySelectorAll('.samp button').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.samp button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    focus = +btn.dataset.s; render();
+  };
+});
+
+reset();
+</script>
+</body>
+</html>

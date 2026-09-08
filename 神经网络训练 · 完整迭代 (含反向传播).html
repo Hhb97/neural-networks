@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>神经网络训练 · 完整迭代 (含反向传播)</title>
+    <style>
+        * { box-sizing: border-box; font-family: system-ui, sans-serif; }
+        body { background: #f0f4f8; display: flex; justify-content: center; padding: 20px; }
+        .card { max-width: 1100px; width: 100%; background: white; border-radius: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.12); padding: 30px; }
+        h1 { font-weight: 600; color: #0b1e33; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .sub { color: #3a5a7a; border-left: 4px solid #3b82f6; padding-left: 16px; background: #f8faff; border-radius: 0 12px 12px 0; margin-bottom: 20px; }
+        .network-viz { display: flex; justify-content: space-around; align-items: center; background: #eef2f7; border-radius: 60px; padding: 18px 10px; flex-wrap: wrap; border: 1px solid #d0dae8; }
+        .layer { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .node { background: white; border-radius: 50%; width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.8rem; border: 2px solid #b7c9e0; transition: 0.2s; }
+        .node.input-node { border-color: #3b82f6; background: #e6f0ff; }
+        .node.hidden-node { border-color: #8b5cf6; background: #f0ebff; }
+        .node.output-node { border-color: #0b8a5e; background: #e2f7ee; }
+        .node.active { box-shadow: 0 0 0 4px #fbbf24; transform: scale(1.05); }
+        .arrow-symbol { font-size: 1.8rem; color: #6b7e9c; }
+        .control-bar { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin: 20px 0; }
+        .slider-group { display: flex; align-items: center; gap: 10px; }
+        input[type=range] { width: 120px; accent-color: #2563eb; }
+        .value-badge { background: #e9eff6; padding: 2px 14px; border-radius: 40px; font-weight: 600; min-width: 40px; text-align: center; }
+        .btn { background: #1e3a5f; border: none; color: white; font-weight: 600; padding: 10px 28px; border-radius: 40px; cursor: pointer; transition: 0.15s; }
+        .btn:hover { background: #0b2844; transform: scale(0.97); }
+        .btn-outline { background: transparent; border: 2px solid #b7c9e0; color: #1e3a5f; }
+        .step-panel { background: #fafcff; border-radius: 28px; padding: 18px 20px; border: 1px solid #dce5f0; margin-top: 12px; }
+        .calc-box { background: #ffffff; border-radius: 20px; padding: 16px 20px; border-left: 6px solid #3b82f6; font-family: monospace; font-size: 0.9rem; line-height: 1.9; overflow-x: auto; white-space: pre-wrap; }
+        .hl { background: #fef3c7; padding: 1px 6px; border-radius: 6px; font-weight: 600; }
+        .loss-chart { background: #f8faff; border-radius: 20px; padding: 16px; margin-top: 16px; border: 1px solid #dce5f0; }
+        .loss-bar { display: flex; align-items: center; gap: 12px; font-size: 0.85rem; }
+        .loss-bar-fill { height: 24px; background: #3b82f6; border-radius: 12px; transition: width 0.3s; min-width: 4px; }
+        .metrics { display: flex; flex-wrap: wrap; gap: 12px 30px; padding: 10px 0; font-size: 0.9rem; }
+        .metrics span { background: #ecf3fa; padding: 4px 16px; border-radius: 40px; }
+        .footer { font-size: 0.75rem; color: #6b7f98; margin-top: 20px; border-top: 1px solid #dce5f0; padding-top: 16px; text-align: center; }
+        .flex-row { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; }
+        @media (max-width: 700px) { .node { width: 40px; height: 40px; font-size: 0.7rem; } .arrow-symbol { font-size: 1.2rem; } }
+    </style>
+</head>
+<body>
+<div class="card" id="app">
+    <h1>🏠 神经网络训练 · 完整迭代 <span style="font-size:1rem; font-weight:400; margin-left:auto; background:#e9eff6; padding:4px 18px; border-radius:40px;">正向 + 反向 + 更新</span></h1>
+    <div class="sub">每次点击“训练一步” → 完整执行一次梯度下降迭代，权重实时更新</div>
+
+    <div class="network-viz">
+        <div class="layer"><div class="layer-title">输入</div><div class="node input-node" id="node-x1">x₁</div><div class="node input-node" id="node-x2">x₂</div></div>
+        <div class="arrow-symbol">⟶</div>
+        <div class="layer"><div class="layer-title">隐藏</div><div class="node hidden-node" id="node-z1">z₁</div><div class="node hidden-node" id="node-a1">a₁</div></div>
+        <div class="arrow-symbol">⟶</div>
+        <div class="layer"><div class="layer-title">输出</div><div class="node output-node" id="node-z2">z₂</div><div class="node output-node" id="node-yhat">ŷ</div></div>
+    </div>
+
+    <div class="control-bar">
+        <div class="slider-group"><label>🏠 面积</label><input type="range" id="slider-x1" min="40" max="120" value="80" step="1"><span class="value-badge" id="val-x1">80</span></div>
+        <div class="slider-group"><label>📅 房龄</label><input type="range" id="slider-x2" min="1" max="10" value="4" step="0.5"><span class="value-badge" id="val-x2">4</span></div>
+        <div class="slider-group"><label>🎯 真实房价</label><input type="range" id="slider-y" min="150" max="400" value="280" step="5"><span class="value-badge" id="val-y">280</span></div>
+        <button class="btn" id="btnTrain">⚡ 训练一步</button>
+        <button class="btn btn-outline" id="btnReset">↺ 重置权重</button>
+    </div>
+
+    <div class="step-panel">
+        <div class="step-header" style="display:flex; justify-content:space-between; flex-wrap:wrap;">
+            <span class="step-title" id="stepTitle">📌 准备训练</span>
+            <span class="step-badge" id="stepBadge">迭代 0</span>
+        </div>
+        <div id="calcDisplay" class="calc-box">点击 <strong>“训练一步”</strong> 查看完整计算（含梯度与更新）。</div>
+        <div class="metrics" id="metricsDisplay">
+            <span>📉 损失 J = <strong id="m-loss">—</strong></span>
+            <span>🧠 w₁ = <strong id="m-w1">0.45</strong></span>
+            <span>🧠 w₂ = <strong id="m-w2">-0.30</strong></span>
+            <span>🧠 b₁ = <strong id="m-b1">0.10</strong></span>
+            <span>🧠 w₃ = <strong id="m-w3">1.20</strong></span>
+            <span>🧠 b₂ = <strong id="m-b2">0.50</strong></span>
+        </div>
+        <div class="loss-chart" id="lossChart">
+            <div style="font-weight:600; margin-bottom:6px;">📈 损失下降曲线</div>
+            <div id="lossBars" style="display:flex; gap:6px; align-items:flex-end; height:60px; overflow-x:auto; padding:4px 0;"></div>
+        </div>
+    </div>
+    <div class="footer">每步执行：正向传播 → 损失 → 反向传播(链式法则) → 梯度下降更新 (学习率 η=0.001)</div>
+</div>
+
+<script>
+    (function() {
+        // ---- 初始权重 ----
+        let w1 = 0.45, w2 = -0.30, b1 = 0.10, w3 = 1.20, b2 = 0.50;
+        const LR = 0.001;  // 学习率
+        let lossHistory = [];
+        let stepCount = 0;
+
+        // DOM
+        const sliderX1 = document.getElementById('slider-x1');
+        const sliderX2 = document.getElementById('slider-x2');
+        const sliderY = document.getElementById('slider-y');
+        const valX1 = document.getElementById('val-x1');
+        const valX2 = document.getElementById('val-x2');
+        const valY = document.getElementById('val-y');
+        const btnTrain = document.getElementById('btnTrain');
+        const btnReset = document.getElementById('btnReset');
+        const stepTitle = document.getElementById('stepTitle');
+        const stepBadge = document.getElementById('stepBadge');
+        const calcDisplay = document.getElementById('calcDisplay');
+        const mLoss = document.getElementById('m-loss');
+        const mW1 = document.getElementById('m-w1');
+        const mW2 = document.getElementById('m-w2');
+        const mB1 = document.getElementById('m-b1');
+        const mW3 = document.getElementById('m-w3');
+        const mB2 = document.getElementById('m-b2');
+        const lossBars = document.getElementById('lossBars');
+
+        function sigmoid(z) { return 1 / (1 + Math.exp(-z)); }
+        function sigmoidDeriv(a) { return a * (1 - a); }
+
+        function getInputs() {
+            return {
+                x1: parseFloat(sliderX1.value),
+                x2: parseFloat(sliderX2.value),
+                y: parseFloat(sliderY.value)
+            };
+        }
+
+        function updateSliders() {
+            valX1.textContent = sliderX1.value;
+            valX2.textContent = sliderX2.value;
+            valY.textContent = sliderY.value;
+        }
+
+        function updateMetrics() {
+            mW1.textContent = w1.toFixed(4);
+            mW2.textContent = w2.toFixed(4);
+            mB1.textContent = b1.toFixed(4);
+            mW3.textContent = w3.toFixed(4);
+            mB2.textContent = b2.toFixed(4);
+        }
+
+        function renderLossBars() {
+            if (lossHistory.length === 0) { lossBars.innerHTML = '<span style="color:#999;">暂无数据</span>'; return; }
+            const maxLoss = Math.max(...lossHistory, 1);
+            let html = '';
+            const len = lossHistory.length;
+            const show = Math.min(len, 30);
+            const start = Math.max(0, len - show);
+            for (let i = start; i < len; i++) {
+                const pct = (lossHistory[i] / maxLoss) * 100;
+                const height = Math.max(4, 60 - (pct * 0.55));
+                html += `<div style="width:18px; height:${height}px; background:#3b82f6; border-radius:6px 6px 0 0; flex-shrink:0;" title="iter${i}: ${lossHistory[i].toFixed(2)}"></div>`;
+            }
+            lossBars.innerHTML = html;
+        }
+
+        // 核心训练步骤 (完整一次迭代)
+        function trainStep() {
+            const { x1, x2, y } = getInputs();
+            updateSliders();
+
+            // ---- 正向传播 ----
+            const z1 = w1 * x1 + w2 * x2 + b1;
+            const a1 = sigmoid(z1);
+            const z2 = w3 * a1 + b2;
+            const yhat = z2;
+
+            // ---- 损失 (MSE / 2) ----
+            const loss = 0.5 * (yhat - y) ** 2;
+            lossHistory.push(loss);
+            if (lossHistory.length > 50) lossHistory.shift();
+
+            // ---- 反向传播 (链式法则) ----
+            // dL/dyhat
+            const dL_dyhat = yhat - y;
+            // 输出层
+            const dL_dw3 = dL_dyhat * a1;
+            const dL_db2 = dL_dyhat;
+            // 传回隐藏层
+            const dL_da1 = dL_dyhat * w3;
+            const dL_dz1 = dL_da1 * sigmoidDeriv(a1);
+            const dL_dw1 = dL_dz1 * x1;
+            const dL_dw2 = dL_dz1 * x2;
+            const dL_db1 = dL_dz1;
+
+            // ---- 梯度下降更新 ----
+            w1 = w1 - LR * dL_dw1;
+            w2 = w2 - LR * dL_dw2;
+            b1 = b1 - LR * dL_db1;
+            w3 = w3 - LR * dL_dw3;
+            b2 = b2 - LR * dL_db2;
+
+            stepCount++;
+            updateMetrics();
+            renderLossBars();
+
+            // ---- 显示详细计算 ----
+            const html = `
+🔹 <strong>正向传播</strong>
+   z₁ = ${w1.toFixed(4)}·${x1} + ${w2.toFixed(4)}·${x2} + ${b1.toFixed(4)} = <span class="hl">${z1.toFixed(4)}</span>
+   a₁ = σ(z₁) = <span class="hl">${a1.toFixed(6)}</span>
+   z₂ = ${w3.toFixed(4)}·${a1.toFixed(6)} + ${b2.toFixed(4)} = <span class="hl">${z2.toFixed(4)}</span>
+   ŷ = ${yhat.toFixed(4)}  真实 y = ${y}
+
+🔸 <strong>损失</strong>  J = ½(ŷ - y)² = ½(${yhat.toFixed(4)} - ${y})² = <span class="hl">${loss.toFixed(4)}</span>
+
+🔹 <strong>反向传播 (梯度)</strong>
+   ∂J/∂w₃ = (ŷ-y)·a₁ = ${dL_dyhat.toFixed(4)} × ${a1.toFixed(4)} = <span class="hl">${dL_dw3.toFixed(4)}</span>
+   ∂J/∂b₂ = ŷ-y = ${dL_db2.toFixed(4)}
+   ∂J/∂a₁ = (ŷ-y)·w₃ = ${dL_dyhat.toFixed(4)} × ${w3.toFixed(4)} = ${dL_da1.toFixed(4)}
+   ∂J/∂z₁ = ∂J/∂a₁ · σ'(a₁) = ${dL_da1.toFixed(4)} × ${sigmoidDeriv(a1).toFixed(6)} = <span class="hl">${dL_dz1.toFixed(6)}</span>
+   ∂J/∂w₁ = ∂J/∂z₁ · x₁ = ${dL_dz1.toFixed(6)} × ${x1} = <span class="hl">${dL_dw1.toFixed(6)}</span>
+   ∂J/∂w₂ = ∂J/∂z₁ · x₂ = ${dL_dz1.toFixed(6)} × ${x2} = <span class="hl">${dL_dw2.toFixed(6)}</span>
+   ∂J/∂b₁ = ∂J/∂z₁ = ${dL_db1.toFixed(6)}
+
+🔸 <strong>参数更新</strong> (η = ${LR})
+   w₁ = ${(w1 + LR * dL_dw1).toFixed(4)} - ${LR}·(${dL_dw1.toFixed(4)}) = <span class="hl">${w1.toFixed(4)}</span>
+   w₂ = ${(w2 + LR * dL_dw2).toFixed(4)} - ${LR}·(${dL_dw2.toFixed(4)}) = <span class="hl">${w2.toFixed(4)}</span>
+   b₁ = ${(b1 + LR * dL_db1).toFixed(4)} - ${LR}·(${dL_db1.toFixed(4)}) = <span class="hl">${b1.toFixed(4)}</span>
+   w₃ = ${(w3 + LR * dL_dw3).toFixed(4)} - ${LR}·(${dL_dw3.toFixed(4)}) = <span class="hl">${w3.toFixed(4)}</span>
+   b₂ = ${(b2 + LR * dL_db2).toFixed(4)} - ${LR}·(${dL_db2.toFixed(4)}) = <span class="hl">${b2.toFixed(4)}</span>
+            `;
+            calcDisplay.innerHTML = html;
+            mLoss.textContent = loss.toFixed(4);
+            stepTitle.textContent = `✅ 迭代 ${stepCount} 完成`;
+            stepBadge.textContent = `损失 ${loss.toFixed(2)}`;
+
+            // 节点高亮动画
+            document.querySelectorAll('.node').forEach(n => n.classList.remove('active'));
+            document.getElementById('node-x1').classList.add('active');
+            document.getElementById('node-x2').classList.add('active');
+            setTimeout(() => { document.getElementById('node-z1').classList.add('active'); document.getElementById('node-a1').classList.add('active'); }, 200);
+            setTimeout(() => { document.getElementById('node-z2').classList.add('active'); document.getElementById('node-yhat').classList.add('active'); }, 400);
+        }
+
+        function resetAll() {
+            w1 = 0.45; w2 = -0.30; b1 = 0.10; w3 = 1.20; b2 = 0.50;
+            lossHistory = [];
+            stepCount = 0;
+            updateMetrics();
+            renderLossBars();
+            calcDisplay.innerHTML = '点击 <strong>“训练一步”</strong> 查看完整计算（含梯度与更新）。';
+            mLoss.textContent = '—';
+            stepTitle.textContent = '📌 已重置';
+            stepBadge.textContent = '迭代 0';
+            document.querySelectorAll('.node').forEach(n => n.classList.remove('active'));
+        }
+
+        // 绑定事件
+        sliderX1.addEventListener('input', updateSliders);
+        sliderX2.addEventListener('input', updateSliders);
+        sliderY.addEventListener('input', updateSliders);
+        btnTrain.addEventListener('click', trainStep);
+        btnReset.addEventListener('click', resetAll);
+
+        // 初始化
+        updateSliders();
+        updateMetrics();
+        renderLossBars();
+        // 自动演示一次
+        setTimeout(trainStep, 400);
+    })();
+</script>
+</body>
+</html>

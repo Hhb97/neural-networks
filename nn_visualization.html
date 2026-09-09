@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>神经网络前向 / 反向传播 · 逐步拆解</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+         background:#F5F4EF; color:#2C2C2A; padding:20px; line-height:1.6; }
+  .wrap { max-width:1180px; margin:0 auto; }
+  h1 { font-size:22px; font-weight:500; margin-bottom:4px; }
+  .sub { color:#5F5E5A; font-size:14px; margin-bottom:16px; }
+  .sub code { font-family:ui-monospace,Consolas,monospace; background:#EDEBE3; padding:1px 6px; border-radius:4px; }
+
+  /* ---- 阶段进度条 ---- */
+  .phases { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
+  .phase { flex:1; min-width:120px; padding:9px 10px; border-radius:9px; font-size:13px; text-align:center;
+           background:#EDEBE3; color:#888780; border:1px solid #E5E3DB; transition:all .2s; }
+  .phase .n { font-size:11px; display:block; opacity:.85; }
+  .phase.done { background:#E1F5EE; color:#0F6E56; border-color:#9FE1CB; }
+  .phase.now  { background:#185FA5; color:#fff; border-color:#185FA5; font-weight:500; }
+
+  .main { display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap; }
+  .col-l { flex:1 1 420px; min-width:380px; }
+  .col-r { flex:1.15 1 460px; min-width:400px; }
+  .card { background:#fff; border:1px solid #D3D1C7; border-radius:12px; padding:16px; margin-bottom:14px; }
+  .card h3 { font-size:14px; font-weight:500; margin-bottom:10px; color:#444441; }
+  svg { display:block; width:100%; height:auto; }
+
+  /* ---- 步骤主体 ---- */
+  .step-head { display:flex; align-items:baseline; gap:10px; margin-bottom:12px; }
+  .step-no { font-size:12px; color:#fff; background:#185FA5; padding:2px 9px; border-radius:20px; font-weight:500; }
+  .step-no.bwd { background:#D85A30; } .step-no.upd { background:#1D9E75; } .step-no.pre { background:#888780; }
+  .step-title { font-size:17px; font-weight:500; }
+
+  .blk { margin-bottom:12px; }
+  .blk-lab { font-size:12px; color:#888780; margin-bottom:5px; letter-spacing:.03em; }
+  .mono { font-family:ui-monospace,"SF Mono",Consolas,monospace; }
+  .sym { background:#EEEDFE; border:1px solid #CECBF6; border-radius:8px; padding:10px 14px;
+         font-family:ui-monospace,Consolas,monospace; font-size:15px; color:#3C3489; white-space:pre; overflow-x:auto; }
+  .calc { background:#F1EFE8; border-radius:8px; padding:10px 14px;
+          font-family:ui-monospace,Consolas,monospace; font-size:13.5px; white-space:pre; overflow-x:auto; line-height:1.85; }
+  .res { background:#E1F5EE; border:1px solid #9FE1CB; border-radius:8px; padding:10px 14px;
+         font-family:ui-monospace,Consolas,monospace; font-size:16px; color:#085041; font-weight:500; }
+  .res.bwd { background:#FAECE7; border-color:#F0997B; color:#712B13; }
+  .note { font-size:13px; color:#5F5E5A; background:#FAEEDA; border-left:3px solid #BA7517;
+          padding:9px 13px; border-radius:0 6px 6px 0; color:#412402; }
+  .note.warn { background:#FCEBEB; border-left-color:#A32D2D; color:#791F1F; }
+
+  /* ---- 来源表：这一步用到的每个数字从哪来 ---- */
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th,td { padding:5px 8px; border-bottom:1px solid #E5E3DB; text-align:left; }
+  th { color:#888780; font-weight:500; font-size:12px; }
+  td.v { font-family:ui-monospace,Consolas,monospace; text-align:right; font-weight:500; font-variant-numeric:tabular-nums; }
+  td.s { color:#5F5E5A; font-size:12px; }
+  .src-init { color:#3C3489; } .src-step { color:#0F6E56; } .src-data { color:#854F0B; }
+
+  /* ---- 已知量累积面板 ---- */
+  .known { display:grid; grid-template-columns:repeat(auto-fill,minmax(112px,1fr)); gap:7px; }
+  .kv { border:1px solid #E5E3DB; border-radius:7px; padding:6px 9px; background:#FAF9F5; }
+  .kv .k { font-size:11px; color:#888780; }
+  .kv .val { font-family:ui-monospace,Consolas,monospace; font-size:14px; font-weight:500; font-variant-numeric:tabular-nums; }
+  .kv.pending { opacity:.35; }
+  .kv.fwd .val { color:#185FA5; } .kv.bwd .val { color:#993C1D; } .kv.now { border-color:#185FA5; background:#EEF4FB; box-shadow:0 0 0 2px rgba(24,95,165,.12); }
+  .kv.dead .val { color:#A32D2D; }
+
+  /* ---- 控制条 ---- */
+  .bar { position:sticky; bottom:0; background:#fff; border:1px solid #D3D1C7; border-radius:12px;
+         padding:12px 16px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:4px;
+         box-shadow:0 -2px 14px rgba(0,0,0,.05); }
+  button { font-family:inherit; font-size:14px; padding:8px 16px; border-radius:8px; cursor:pointer;
+           border:1px solid #185FA5; background:#185FA5; color:#fff; }
+  button.ghost { background:#fff; color:#185FA5; }
+  button:disabled { opacity:.35; cursor:not-allowed; }
+  button:active:not(:disabled) { transform:translateY(1px); }
+  .prog { flex:1; min-width:150px; height:6px; background:#EDEBE3; border-radius:4px; overflow:hidden; }
+  .prog i { display:block; height:100%; background:#185FA5; transition:width .25s; }
+  .cnt { font-size:13px; color:#5F5E5A; font-variant-numeric:tabular-nums; }
+  .kbd { font-size:12px; color:#888780; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>神经网络前向 / 反向传播 · 逐步拆解</h1>
+  <div class="sub">
+    网络 <code>x → [h₁, h₂] → ŷ</code>，隐藏层用 ReLU，损失 <code>L = ½(ŷ−y)²</code>。
+    每一步只做<b>一件事</b>，并且标出用到的每个数字<b>是从哪来的</b>。
+  </div>
+
+  <div class="phases" id="phases"></div>
+
+  <div class="main">
+    <div class="col-l">
+      <div class="card">
+        <h3>网络状态（当前步用到的部分会高亮）</h3>
+        <svg id="net" viewBox="0 0 520 400" role="img" aria-label="网络结构与各节点当前数值"></svg>
+      </div>
+      <div class="card">
+        <h3>已算出的量（随步骤累积）</h3>
+        <div class="blk-lab">前向</div>
+        <div class="known" id="knownF"></div>
+        <div class="blk-lab" style="margin-top:11px">反向（梯度）</div>
+        <div class="known" id="knownB"></div>
+      </div>
+    </div>
+
+    <div class="col-r">
+      <div class="card" id="stepCard"></div>
+      <div class="card">
+        <h3>参数与损失（第 <b id="roundN">1</b> 轮）</h3>
+        <table>
+          <thead><tr><th>参数</th><th style="text-align:right">当前值</th><th style="text-align:right">梯度</th><th style="text-align:right">更新后</th></tr></thead>
+          <tbody id="paramBody"></tbody>
+        </table>
+        <div style="margin-top:12px">
+          <div class="blk-lab">每轮训练后的损失</div>
+          <svg id="lossChart" viewBox="0 0 420 130" role="img" aria-label="损失随训练轮次下降"></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bar">
+    <button id="prevBtn" class="ghost">← 上一步</button>
+    <button id="nextBtn">下一步 →</button>
+    <button id="autoBtn" class="ghost">自动播放</button>
+    <button id="resetBtn" class="ghost">重置</button>
+    <div class="prog"><i id="progBar"></i></div>
+    <span class="cnt" id="cnt"></span>
+    <span class="kbd">← → 翻页</span>
+  </div>
+
+</div>
+
+<script>
+// ==================== 数据与参数 ====================
+const X = 2.0, Y = 3.0, LR = 0.1;
+const INIT = { w11:0.5, w12:-0.3, w21:0.8, w22:0.4, b1:0.1, b2:-0.2, b3:0.05 };
+let P = { ...INIT };
+let round = 1, step = 0, timer = null;
+let lossHist = [];
+const $ = id => document.getElementById(id);
+const f = (v, d = 4) => (v === 0 ? '0' : v.toFixed(d));
+
+// ==================== 一次性算出全部中间量 ====================
+// 关键：所有值都由当前参数纯函数推出，步骤只控制"显示到哪一步"
+// 这样点"上一步"永远不会看到脏数据
+function compute(p) {
+  const z1 = X * p.w11 + p.b1,  h1 = Math.max(0, z1);
+  const z2 = X * p.w12 + p.b2,  h2 = Math.max(0, z2);
+  const yh = h1 * p.w21 + h2 * p.w22 + p.b3;
+  const L  = 0.5 * (yh - Y) ** 2;
+  const dLdy = yh - Y;
+  const d3 = dLdy;                                  // 输出层无激活，导数为 1
+  const gw21 = d3 * h1, gw22 = d3 * h2, gb3 = d3;
+  const dh1 = d3 * p.w21, dh2 = d3 * p.w22;         // ① 穿过权重
+  const r1 = z1 > 0 ? 1 : 0, r2 = z2 > 0 ? 1 : 0;   // ② 穿过 ReLU
+  const d1 = dh1 * r1, d2 = dh2 * r2;
+  const gw11 = d1 * X, gw12 = d2 * X, gb1 = d1, gb2 = d2;
+  const next = {
+    w11: p.w11 - LR * gw11, w12: p.w12 - LR * gw12,
+    w21: p.w21 - LR * gw21, w22: p.w22 - LR * gw22,
+    b1:  p.b1  - LR * gb1,  b2:  p.b2  - LR * gb2, b3: p.b3 - LR * gb3,
+  };
+  const n = compute2(next);
+  return { z1,h1,z2,h2,yh,L,dLdy,d3,gw21,gw22,gb3,dh1,dh2,r1,r2,d1,d2,gw11,gw12,gb1,gb2,next,
+           grads:{w11:gw11,w12:gw12,w21:gw21,w22:gw22,b1:gb1,b2:gb2,b3:gb3}, nextL:n.L, nextY:n.yh };
+}
+function compute2(p) {                              // 只算新参数下的前向，用于验证损失下降
+  const z1 = X*p.w11+p.b1, h1 = Math.max(0,z1);
+  const z2 = X*p.w12+p.b2, h2 = Math.max(0,z2);
+  const yh = h1*p.w21 + h2*p.w22 + p.b3;
+  return { yh, L: 0.5*(yh-Y)**2 };
+}
+let V = compute(P);
+
+// ==================== 步骤定义 ====================
+// src 三种来源：data=题目给的  init=当前轮的参数  step N=第 N 步算出来的
+const D = (s) => `<span class="src-data">${s}</span>`;
+const I = (s) => `<span class="src-init">${s}</span>`;
+const T = (n) => `<span class="src-step">第 ${n} 步</span>`;
+
+function steps() {
+  const v = V, p = P;
+  return [
+  { // 0
+    ph:0, title:'准备：手上有什么',
+    sym:`ŷ = ReLU(x·w₁₁ + b₁)·w₂₁ + ReLU(x·w₁₂ + b₂)·w₂₂ + b₃`,
+    inputs:[
+      ['x', X, D('输入数据')], ['y', Y, D('真实答案')],
+      ['w₁₁', p.w11, I('参数')], ['w₁₂', p.w12, I('参数')],
+      ['w₂₁', p.w21, I('参数')], ['w₂₂', p.w22, I('参数')],
+      ['b₁', p.b1, I('参数')], ['b₂', p.b2, I('参数')], ['b₃', p.b3, I('参数')],
+      ['η', LR, D('学习率')],
+    ],
+    calc:null, res:null,
+    note:'目标是调整那 7 个参数，让 ŷ 尽量接近 y=3。下面 12 步走完就是一轮完整训练。',
+    hl:{nodes:['x','yt'],edges:[]}
+  },
+  { // 1
+    ph:1, title:'算 h₁ 的加权和 z₁',
+    sym:`z₁ = x · w₁₁ + b₁`,
+    inputs:[['x', X, D('输入数据')], ['w₁₁', p.w11, I('本轮参数')], ['b₁', p.b1, I('本轮参数')]],
+    calc:[`z₁ = ${X} × ${p.w11} + ${p.b1}`, `   = ${f(X*p.w11,2)} + ${p.b1}`],
+    res:['z₁', v.z1, 'fwd'],
+    note:'这一步纯粹是乘加，还没有任何非线性。神经元做的第一件事永远是加权求和。',
+    hl:{nodes:['x','h1'],edges:['e11'],dir:'fwd'}
+  },
+  { // 2
+    ph:1, title:'激活：h₁ = ReLU(z₁)',
+    sym:`h₁ = ReLU(z₁) = max(0, z₁)`,
+    inputs:[['z₁', v.z1, T(1)]],
+    calc:[`h₁ = max(0, ${f(v.z1,4)})`, `   = ${f(v.z1,4)}   （因为 z₁ > 0，原样通过）`],
+    res:['h₁', v.h1, 'fwd'],
+    note:'ReLU 只做一件事：负数变 0，正数不变。没有它，堆多少层都还是一条直线。',
+    hl:{nodes:['h1'],edges:[],dir:'fwd'}
+  },
+  { // 3
+    ph:1, title:'算 h₂ 的加权和 z₂',
+    sym:`z₂ = x · w₁₂ + b₂`,
+    inputs:[['x', X, D('输入数据')], ['w₁₂', p.w12, I('本轮参数')], ['b₂', p.b2, I('本轮参数')]],
+    calc:[`z₂ = ${X} × ${p.w12} + ${p.b2}`, `   = ${f(X*p.w12,2)} + ${p.b2}`],
+    res:['z₂', v.z2, 'fwd'],
+    note:'和 z₁ 完全一样的算法，只是换了一组参数。同一层的神经元互相独立。',
+    hl:{nodes:['x','h2'],edges:['e12'],dir:'fwd'}
+  },
+  { // 4
+    ph:1, title:'激活：h₂ = ReLU(z₂)',
+    sym:`h₂ = ReLU(z₂) = max(0, z₂)`,
+    inputs:[['z₂', v.z2, T(3)]],
+    calc:[`h₂ = max(0, ${f(v.z2,4)})`, `   = 0   （因为 z₂ < 0，被截断）`],
+    res:['h₂', v.h2, 'fwd'],
+    note:`z₂ = ${f(v.z2,2)} 是负数，ReLU 把它压成 0。h₂ 这个神经元这次"没有发言权"——它对输出的贡献是 0。留意它，第 10 步会出事。`,
+    noteWarn:true,
+    hl:{nodes:['h2'],edges:[],dir:'fwd'}
+  },
+  { // 5
+    ph:1, title:'算输出 ŷ',
+    sym:`ŷ = h₁ · w₂₁ + h₂ · w₂₂ + b₃`,
+    inputs:[['h₁', v.h1, T(2)], ['h₂', v.h2, T(4)],
+            ['w₂₁', p.w21, I('本轮参数')], ['w₂₂', p.w22, I('本轮参数')], ['b₃', p.b3, I('本轮参数')]],
+    calc:[`ŷ = ${f(v.h1,4)} × ${p.w21} + ${f(v.h2,0)} × ${p.w22} + ${p.b3}`,
+          `  = ${f(v.h1*p.w21,4)} + 0 + ${p.b3}`],
+    res:['ŷ', v.yh, 'fwd'],
+    note:'输出层这里没有激活函数（回归任务直接输出实数）。注意 h₂=0，所以 w₂₂ 那一项整个消失了。',
+    hl:{nodes:['h1','h2','yh'],edges:['e21','e22'],dir:'fwd'}
+  },
+  { // 6
+    ph:2, title:'算损失 L',
+    sym:`L = ½ (ŷ − y)²`,
+    inputs:[['ŷ', v.yh, T(5)], ['y', Y, D('真实答案')]],
+    calc:[`L = ½ × (${f(v.yh,4)} − ${Y})²`,
+          `  = ½ × (${f(v.yh-Y,4)})²`,
+          `  = ½ × ${f((v.yh-Y)**2,4)}`],
+    res:['L', v.L, 'fwd'],
+    note:'前面那个 ½ 是为了求导时和平方掉下来的 2 约掉，让梯度写成 (ŷ−y) 而不是 2(ŷ−y)。它不影响最优解在哪。',
+    hl:{nodes:['yh','yt','L'],edges:['eL'],dir:'fwd'}
+  },
+  { // 7
+    ph:3, title:'反向起点：输出层的误差项 δ₃',
+    sym:`δ₃ = ∂L/∂z₃ = (∂L/∂ŷ) · (∂ŷ/∂z₃)`,
+    inputs:[['ŷ', v.yh, T(5)], ['y', Y, D('真实答案')]],
+    calc:[`∂L/∂ŷ = ŷ − y = ${f(v.yh,4)} − ${Y} = ${f(v.dLdy,4)}`,
+          `∂ŷ/∂z₃ = 1              （输出层没有激活函数）`,
+          `δ₃ = ${f(v.dLdy,4)} × 1`],
+    res:['δ₃', v.d3, 'bwd'],
+    note:'δ 读作 delta，含义是"这一层的加权和动一点点，损失会动多少"。它是反向传播的传递单位——后面每层都算一个 δ。',
+    hl:{nodes:['yh'],edges:[],dir:'bwd'}
+  },
+  { // 8
+    ph:3, title:'输出层三个参数的梯度',
+    sym:`∂L/∂w = δ₃ · (该权重连接的输入)\n∂L/∂b = δ₃ · 1`,
+    inputs:[['δ₃', v.d3, T(7)], ['h₁', v.h1, T(2)], ['h₂', v.h2, T(4)]],
+    calc:[`∂L/∂w₂₁ = δ₃ × h₁ = ${f(v.d3,4)} × ${f(v.h1,4)} = ${f(v.gw21,4)}`,
+          `∂L/∂w₂₂ = δ₃ × h₂ = ${f(v.d3,4)} × ${f(v.h2,0)} = ${f(v.gw22,4)}   ← h₂=0，梯度也是 0`,
+          `∂L/∂b₃  = δ₃ × 1  = ${f(v.gb3,4)}`],
+    res:['三个梯度', null, 'bwd',
+         `∂L/∂w₂₁ = ${f(v.gw21,4)}\n∂L/∂w₂₂ = ${f(v.gw22,4)}\n∂L/∂b₃  = ${f(v.gb3,4)}`],
+    note:'规律记住这一句：某个权重的梯度 = 该层的 δ × 这个权重接收的输入。输入是 0 的权重，梯度必然是 0。',
+    hl:{nodes:['yh','h1','h2'],edges:['e21','e22'],dir:'bwd'}
+  },
+  { // 9
+    ph:3, title:'梯度回传 · 第①道门：穿过权重',
+    sym:`∂L/∂h = δ₃ · w₂ⱼ`,
+    inputs:[['δ₃', v.d3, T(7)], ['w₂₁', p.w21, I('本轮参数')], ['w₂₂', p.w22, I('本轮参数')]],
+    calc:[`∂L/∂h₁ = δ₃ × w₂₁ = ${f(v.d3,4)} × ${p.w21} = ${f(v.dh1,4)}`,
+          `∂L/∂h₂ = δ₃ × w₂₂ = ${f(v.d3,4)} × ${p.w22} = ${f(v.dh2,4)}`],
+    res:['∂L/∂h', null, 'bwd', `∂L/∂h₁ = ${f(v.dh1,4)}\n∂L/∂h₂ = ${f(v.dh2,4)}`],
+    note:'前向时是"输入乘权重传给下一层"，反向时就是"误差乘同一个权重传回上一层"。方向反了，权重不变。',
+    hl:{nodes:['h1','h2','yh'],edges:['e21','e22'],dir:'bwd'}
+  },
+  { // 10
+    ph:3, title:'梯度回传 · 第②道门：穿过 ReLU',
+    sym:`δⱼ = (∂L/∂hⱼ) · ReLU′(zⱼ)\nReLU′(z) = 1 (z>0)  或  0 (z≤0)`,
+    inputs:[['∂L/∂h₁', v.dh1, T(9)], ['∂L/∂h₂', v.dh2, T(9)],
+            ['z₁', v.z1, T(1)], ['z₂', v.z2, T(3)]],
+    calc:[`ReLU′(z₁) = 1   （z₁ = ${f(v.z1,2)} > 0）`,
+          `δ₁ = ${f(v.dh1,4)} × 1 = ${f(v.d1,4)}`,
+          ``,
+          `ReLU′(z₂) = 0   （z₂ = ${f(v.z2,2)} ≤ 0）`,
+          `δ₂ = ${f(v.dh2,4)} × 0 = 0    ← 梯度被砍断`],
+    res:['δ₁, δ₂', null, 'bwd', `δ₁ = ${f(v.d1,4)}\nδ₂ = 0`],
+    note:'这就是 Dead ReLU。z₂ 一旦为负，梯度乘 0 归零，这条通路的参数永远收不到更新信号，等于死亡。LeakyReLU（负半轴给 0.01 斜率）就是为了修这个问题。',
+    noteWarn:true,
+    hl:{nodes:['h1','h2'],edges:[],dir:'bwd'}
+  },
+  { // 11
+    ph:3, title:'隐藏层四个参数的梯度',
+    sym:`∂L/∂w₁ⱼ = δⱼ · x\n∂L/∂bⱼ  = δⱼ · 1`,
+    inputs:[['δ₁', v.d1, T(10)], ['δ₂', v.d2, T(10)], ['x', X, D('输入数据')]],
+    calc:[`∂L/∂w₁₁ = δ₁ × x = ${f(v.d1,4)} × ${X} = ${f(v.gw11,4)}`,
+          `∂L/∂b₁  = δ₁     = ${f(v.gb1,4)}`,
+          ``,
+          `∂L/∂w₁₂ = δ₂ × x = 0 × ${X} = 0        ← 死路`,
+          `∂L/∂b₂  = δ₂     = 0                  ← 死路`],
+    res:['四个梯度', null, 'bwd',
+         `∂L/∂w₁₁ = ${f(v.gw11,4)}\n∂L/∂b₁  = ${f(v.gb1,4)}\n∂L/∂w₁₂ = 0\n∂L/∂b₂  = 0`],
+    note:'和第 8 步用的是同一条规则：梯度 = δ × 该层输入。不管网络多深，每层都长这样，所以能写成一个循环。',
+    hl:{nodes:['x','h1','h2'],edges:['e11','e12'],dir:'bwd'}
+  },
+  { // 12
+    ph:4, title:'更新全部参数',
+    sym:`新值 = 旧值 − η × 梯度`,
+    inputs:[['η', LR, D('学习率')]],
+    calc:[
+      `w₁₁ = ${p.w11} − ${LR}×(${f(v.gw11,4)}) = ${f(v.next.w11,4)}`,
+      `w₁₂ = ${p.w12} − ${LR}×(0)      = ${f(v.next.w12,4)}   ← 没变`,
+      `w₂₁ = ${p.w21} − ${LR}×(${f(v.gw21,4)}) = ${f(v.next.w21,4)}`,
+      `w₂₂ = ${p.w22} − ${LR}×(0)      = ${f(v.next.w22,4)}   ← 没变`,
+      `b₁  = ${p.b1} − ${LR}×(${f(v.gb1,4)}) = ${f(v.next.b1,4)}`,
+      `b₂  = ${p.b2} − ${LR}×(0)      = ${f(v.next.b2,4)}   ← 没变`,
+      `b₃  = ${p.b3} − ${LR}×(${f(v.gb3,4)}) = ${f(v.next.b3,4)}`,
+    ],
+    res:['更新后损失', null, 'fwd',
+         `用新参数重算：ŷ = ${f(v.nextY,4)}\n损失 L: ${f(v.L,4)} → ${f(v.nextL,4)}   ↓${((1-v.nextL/v.L)*100).toFixed(1)}%`],
+    note:'梯度为负 → 减去负数 → 参数变大；梯度为正 → 参数变小。一个公式自动处理两个方向，不用写 if。点「下一轮」继续训练。',
+    hl:{nodes:['x','h1','h2','yh'],edges:['e11','e12','e21','e22'],dir:'upd'}
+  }];
+}
+let SP = steps();
+const PHASES = [['准备','看清已知条件'],['① 前向传播','从输入算到输出'],['② 计算损失','预测 vs 答案'],
+                ['③ 反向传播','逐层算出梯度'],['④ 更新参数','沿负梯度走一步']];
+
+// ==================== 网络图 ====================
+const NODES = {
+  x:  { x:60,  y:190, r:26, name:'x'  },
+  h1: { x:200, y:100, r:26, name:'h₁' },
+  h2: { x:200, y:280, r:26, name:'h₂' },
+  yh: { x:340, y:190, r:26, name:'ŷ'  },
+  yt: { x:340, y:330, r:21, name:'y'  },
+  L:  { x:460, y:190, r:26, name:'L'  },
+};
+const EDGES = {
+  e11:{ a:'x', b:'h1', lab:'w₁₁', key:'w11' },
+  e12:{ a:'x', b:'h2', lab:'w₁₂', key:'w12' },
+  e21:{ a:'h1',b:'yh', lab:'w₂₁', key:'w21' },
+  e22:{ a:'h2',b:'yh', lab:'w₂₂', key:'w22' },
+  eL: { a:'yh',b:'L',  lab:'',    key:null  },
+};
+// 每个节点的数值在第几步之后才揭晓
+const REVEAL = { x:0, yt:0, h1:1, h2:3, yh:5, L:6 };
+
+function nodeVal(id) {
+  const v = V;
+  if (id === 'x')  return `${X}`;
+  if (id === 'yt') return `${Y}`;
+  if (id === 'h1') return step >= 2 ? `h₁=${f(v.h1,3)}` : (step >= 1 ? `z₁=${f(v.z1,3)}` : '?');
+  if (id === 'h2') return step >= 4 ? `h₂=${f(v.h2,0)}` : (step >= 3 ? `z₂=${f(v.z2,3)}` : '?');
+  if (id === 'yh') return step >= 5 ? `ŷ=${f(v.yh,3)}` : '?';
+  if (id === 'L')  return step >= 6 ? `L=${f(v.L,3)}` : '?';
+  return '';
+}
+function nodeDelta(id) {
+  const v = V;
+  if (id === 'yh' && step >= 7) return `δ₃=${f(v.d3,3)}`;
+  if (id === 'h1' && step >= 10) return `δ₁=${f(v.d1,3)}`;
+  if (id === 'h2' && step >= 10) return `δ₂=0`;
+  return null;
+}
+
+function drawNet() {
+  const s = SP[step], hlN = s.hl.nodes || [], hlE = s.hl.edges || [], dir = s.hl.dir;
+  const p = [];
+  p.push(`<defs>
+    <marker id="mf" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M1 1L9 5L1 9" fill="none" stroke="#185FA5" stroke-width="1.8" stroke-linecap="round"/></marker>
+    <marker id="mb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M1 1L9 5L1 9" fill="none" stroke="#D85A30" stroke-width="1.8" stroke-linecap="round"/></marker>
+  </defs>`);
+
+  // ---- 连线 ----
+  for (const [id, e] of Object.entries(EDGES)) {
+    const A = NODES[e.a], B = NODES[e.b];
+    const dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy);
+    const ux = dx / len, uy = dy / len;
+    const x1 = A.x + ux * A.r, y1 = A.y + uy * A.r;
+    const x2 = B.x - ux * B.r, y2 = B.y - uy * B.r;
+    const on = hlE.includes(id);
+    const back = on && dir === 'bwd';
+    const col = !on ? '#D3D1C7' : (back ? '#D85A30' : '#185FA5');
+    const mk = on ? (back ? 'url(#mb)' : 'url(#mf)') : '';
+    if (back) {
+      p.push(`<line x1="${x2}" y1="${y2}" x2="${x1}" y2="${y1}" stroke="${col}" stroke-width="2.6"
+              stroke-dasharray="6 4" marker-end="${mk}"/>`);
+    } else {
+      p.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}"
+              stroke-width="${on ? 2.6 : 1.6}" ${mk ? `marker-end="${mk}"` : ''}/>`);
+    }
+    if (e.lab) {
+      const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+      const off = (e.a === 'x' ? (e.b === 'h1' ? -12 : 18) : (e.b === 'yh' && e.a === 'h1' ? -12 : 18));
+      const changed = step >= 12 && Math.abs(V.grads[e.key]) > 1e-9;
+      p.push(`<text x="${mx}" y="${my + off}" font-size="11.5" text-anchor="middle"
+              fill="${on ? col : '#5F5E5A'}" font-weight="${on ? 500 : 400}">${e.lab}=${f(P[e.key], 2)}</text>`);
+      if (step >= 12) {
+        p.push(`<text x="${mx}" y="${my + off + 14}" font-size="10.5" text-anchor="middle"
+                fill="${changed ? '#0F6E56' : '#A32D2D'}">→ ${f(V.next[e.key], 3)}${changed ? '' : ' 未变'}</text>`);
+      }
+    }
+  }
+
+  // ---- 节点 ----
+  for (const [id, n] of Object.entries(NODES)) {
+    const on = hlN.includes(id);
+    const dead = (id === 'h2' && step >= 4);
+    let fill = '#F1EFE8', stroke = '#B4B2A9';
+    if (id === 'yt') { fill = '#E1F5EE'; stroke = '#1D9E75'; }
+    else if (id === 'L') { fill = '#FAECE7'; stroke = '#D85A30'; }
+    else if (dead) { fill = '#FCEBEB'; stroke = '#D98080'; }
+    if (on) { stroke = dir === 'bwd' ? '#D85A30' : '#185FA5'; }
+    p.push(`<circle cx="${n.x}" cy="${n.y}" r="${n.r}" fill="${fill}" stroke="${stroke}"
+            stroke-width="${on ? 3 : 1.6}"/>`);
+    p.push(`<text x="${n.x}" y="${n.y}" font-size="15" text-anchor="middle" dominant-baseline="central"
+            fill="#2C2C2A" font-weight="500">${n.name}</text>`);
+    const val = nodeVal(id);
+    if (val) p.push(`<text x="${n.x}" y="${n.y + n.r + 15}" font-size="11.5" text-anchor="middle"
+            fill="${val === '?' ? '#B4B2A9' : '#185FA5'}" font-weight="500">${val}</text>`);
+    const dl = nodeDelta(id);
+    if (dl) p.push(`<text x="${n.x}" y="${n.y + n.r + 29}" font-size="11" text-anchor="middle"
+            fill="#993C1D" font-weight="500">${dl}</text>`);
+    if (dead) p.push(`<text x="${n.x}" y="${n.y - n.r - 9}" font-size="10.5" text-anchor="middle"
+            fill="#A32D2D">ReLU 截断</text>`);
+  }
+  // 真实值 y 连到 L
+  p.push(`<line x1="${NODES.yt.x + 12}" y1="${NODES.yt.y - 16}" x2="${NODES.L.x - 12}" y2="${NODES.L.y + 20}"
+          stroke="#9FE1CB" stroke-width="1.6" stroke-dasharray="4 4"/>`);
+  p.push(`<text x="60" y="30" font-size="11.5" fill="#888780">输入</text>`);
+  p.push(`<text x="200" y="30" font-size="11.5" fill="#888780" text-anchor="middle">隐藏层 · ReLU</text>`);
+  p.push(`<text x="340" y="30" font-size="11.5" fill="#888780" text-anchor="middle">输出</text>`);
+  p.push(`<text x="460" y="30" font-size="11.5" fill="#888780" text-anchor="middle">损失</text>`);
+  const arrow = dir === 'bwd'
+    ? `<line x1="470" y1="378" x2="50" y2="378" stroke="#D85A30" stroke-width="2" marker-end="url(#mb)"/>
+       <text x="260" y="396" font-size="12" fill="#993C1D" text-anchor="middle" font-weight="500">反向：梯度从右往左传</text>`
+    : dir === 'fwd'
+    ? `<line x1="50" y1="378" x2="470" y2="378" stroke="#185FA5" stroke-width="2" marker-end="url(#mf)"/>
+       <text x="260" y="396" font-size="12" fill="#185FA5" text-anchor="middle" font-weight="500">前向：数据从左往右流</text>`
+    : dir === 'upd'
+    ? `<text x="260" y="392" font-size="12" fill="#0F6E56" text-anchor="middle" font-weight="500">更新：七个参数各减去 η×自己的梯度</text>`
+    : '';
+  p.push(arrow);
+  $('net').innerHTML = p.join('');
+}
+
+// ==================== 已知量面板 ====================
+function drawKnown() {
+  const v = V;
+  const fwd = [
+    ['x', `${X}`, 0], ['y', `${Y}`, 0],
+    ['z₁', f(v.z1,4), 1], ['h₁', f(v.h1,4), 2],
+    ['z₂', f(v.z2,4), 3], ['h₂', f(v.h2,0), 4],
+    ['ŷ', f(v.yh,4), 5], ['L', f(v.L,4), 6],
+  ];
+  const bwd = [
+    ['δ₃', f(v.d3,4), 7],
+    ['∂L/∂w₂₁', f(v.gw21,4), 8], ['∂L/∂w₂₂', f(v.gw22,4), 8], ['∂L/∂b₃', f(v.gb3,4), 8],
+    ['∂L/∂h₁', f(v.dh1,4), 9], ['∂L/∂h₂', f(v.dh2,4), 9],
+    ['δ₁', f(v.d1,4), 10], ['δ₂', '0', 10],
+    ['∂L/∂w₁₁', f(v.gw11,4), 11], ['∂L/∂b₁', f(v.gb1,4), 11],
+    ['∂L/∂w₁₂', '0', 11], ['∂L/∂b₂', '0', 11],
+  ];
+  const cell = (k, val, at, cls) => {
+    const shown = step >= at;
+    const now = step === at && at > 0;
+    const dead = shown && (val === '0' && at >= 4);
+    return `<div class="kv ${cls} ${shown ? '' : 'pending'} ${now ? 'now' : ''} ${dead ? 'dead' : ''}">
+      <div class="k">${k}</div><div class="val">${shown ? val : '—'}</div></div>`;
+  };
+  $('knownF').innerHTML = fwd.map(r => cell(r[0], r[1], r[2], 'fwd')).join('');
+  $('knownB').innerHTML = bwd.map(r => cell(r[0], r[1], r[2], 'bwd')).join('');
+}
+
+// ==================== 步骤卡片 ====================
+function drawStep() {
+  const s = SP[step];
+  const clsMap = { 0:'pre', 1:'', 2:'', 3:'bwd', 4:'upd' };
+  const h = [];
+  h.push(`<div class="step-head">
+    <span class="step-no ${clsMap[s.ph]}">第 ${step} 步 / 共 ${SP.length - 1} 步</span>
+    <span class="step-title">${s.title}</span></div>`);
+
+  h.push(`<div class="blk"><div class="blk-lab">公式</div><div class="sym">${s.sym}</div></div>`);
+
+  if (s.inputs && s.inputs.length) {
+    h.push(`<div class="blk"><div class="blk-lab">这一步用到的数字，分别从哪来</div>
+      <table><thead><tr><th>符号</th><th style="text-align:right">数值</th><th>来源</th></tr></thead><tbody>`);
+    for (const [sym, val, src] of s.inputs) {
+      h.push(`<tr><td class="mono">${sym}</td><td class="v">${typeof val === 'number' ? f(val, 4) : val}</td><td class="s">${src}</td></tr>`);
+    }
+    h.push(`</tbody></table></div>`);
+  }
+  if (s.calc) {
+    h.push(`<div class="blk"><div class="blk-lab">代入计算</div><div class="calc">${s.calc.join('\n')}</div></div>`);
+  }
+  if (s.res) {
+    const [lab, val, kind, custom] = s.res;
+    const body = custom !== undefined ? custom : `${lab} = ${f(val, 6)}`;
+    h.push(`<div class="blk"><div class="blk-lab">结果</div>
+      <div class="res ${kind === 'bwd' ? 'bwd' : ''}">${body}</div></div>`);
+  }
+  h.push(`<div class="note ${s.noteWarn ? 'warn' : ''}">${s.note}</div>`);
+  $('stepCard').innerHTML = h.join('');
+}
+
+// ==================== 阶段条 / 参数表 / 损失图 ====================
+function drawPhases() {
+  const cur = SP[step].ph;
+  $('phases').innerHTML = PHASES.map((p, i) =>
+    `<div class="phase ${i < cur ? 'done' : i === cur ? 'now' : ''}">${p[0]}<span class="n">${p[1]}</span></div>`
+  ).join('');
+}
+function drawParams() {
+  const keys = [['w₁₁','w11'],['w₁₂','w12'],['w₂₁','w21'],['w₂₂','w22'],['b₁','b1'],['b₂','b2'],['b₃','b3']];
+  $('roundN').textContent = round;
+  $('paramBody').innerHTML = keys.map(([lab, k]) => {
+    const g = V.grads[k], hasG = step >= (k === 'w21' || k === 'w22' || k === 'b3' ? 8 : 11);
+    const dead = Math.abs(g) < 1e-9;
+    return `<tr>
+      <td class="mono">${lab}</td>
+      <td class="v">${f(P[k], 4)}</td>
+      <td class="v" style="color:${hasG ? (dead ? '#A32D2D' : '#993C1D') : '#B4B2A9'}">${hasG ? f(g, 4) : '—'}</td>
+      <td class="v" style="color:${step >= 12 ? (dead ? '#A32D2D' : '#0F6E56') : '#B4B2A9'}">${step >= 12 ? f(V.next[k], 4) : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+function drawLoss() {
+  const H = lossHist.concat(step >= 12 ? [V.nextL] : []);
+  const W = 420, Ht = 130, PL = 44, PB = 24;
+  const n = H.length, mx = Math.max(...H, 0.01);
+  const p = [];
+  p.push(`<line x1="${PL}" y1="10" x2="${PL}" y2="${Ht - PB}" stroke="#B4B2A9"/>`);
+  p.push(`<line x1="${PL}" y1="${Ht - PB}" x2="${W - 12}" y2="${Ht - PB}" stroke="#B4B2A9"/>`);
+  [0, mx / 2, mx].forEach(v => {
+    const y = (Ht - PB) - v / mx * (Ht - PB - 12);
+    p.push(`<text x="${PL - 6}" y="${y + 4}" font-size="10" fill="#888780" text-anchor="end">${v.toFixed(2)}</text>`);
+  });
+  if (n > 0) {
+    const tx = i => n === 1 ? PL + 30 : PL + i / (n - 1) * (W - PL - 20);
+    const ty = v => (Ht - PB) - v / mx * (Ht - PB - 12);
+    if (n > 1) p.push(`<polyline points="${H.map((v, i) => `${tx(i)},${ty(v)}`).join(' ')}" fill="none" stroke="#7F77DD" stroke-width="2.5"/>`);
+    H.forEach((v, i) => {
+      p.push(`<circle cx="${tx(i)}" cy="${ty(v)}" r="4" fill="${i === n - 1 ? '#E24B4A' : '#7F77DD'}"/>`);
+      p.push(`<text x="${tx(i)}" y="${ty(v) - 9}" font-size="10" fill="#5F5E5A" text-anchor="middle">${v.toFixed(3)}</text>`);
+      p.push(`<text x="${tx(i)}" y="${Ht - PB + 14}" font-size="10" fill="#888780" text-anchor="middle">${i + 1}</text>`);
+    });
+  }
+  p.push(`<text x="${W / 2}" y="${Ht - 2}" font-size="10.5" fill="#888780" text-anchor="middle">训练轮次</text>`);
+  $('lossChart').innerHTML = p.join('');
+}
+
+// ==================== 渲染与控制 ====================
+function render() {
+  SP = steps();
+  drawPhases(); drawNet(); drawStep(); drawKnown(); drawParams(); drawLoss();
+  $('cnt').textContent = `第 ${round} 轮 · 步骤 ${step}/${SP.length - 1}`;
+  $('progBar').style.width = (step / (SP.length - 1) * 100) + '%';
+  $('prevBtn').disabled = (step === 0 && round === 1);
+  $('nextBtn').textContent = step === SP.length - 1 ? '进入下一轮 ↻' : '下一步 →';
+}
+function next() {
+  if (step < SP.length - 1) { step++; }
+  else {                              // 一轮走完：真正应用更新，进入下一轮
+    lossHist.push(V.L);
+    P = { ...V.next }; V = compute(P);
+    round++; step = 0;
+  }
+  render();
+}
+function prev() {
+  if (step > 0) { step--; render(); }
+}
+function reset() {
+  stopAuto();
+  P = { ...INIT }; V = compute(P); round = 1; step = 0; lossHist = [];
+  render();
+}
+function stopAuto() { if (timer) { clearInterval(timer); timer = null; $('autoBtn').textContent = '自动播放'; } }
+
+$('nextBtn').onclick = () => { stopAuto(); next(); };
+$('prevBtn').onclick = () => { stopAuto(); prev(); };
+$('resetBtn').onclick = reset;
+$('autoBtn').onclick = () => {
+  if (timer) { stopAuto(); return; }
+  $('autoBtn').textContent = '暂停';
+  timer = setInterval(() => { next(); if (round > 6) stopAuto(); }, 1400);
+};
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') { stopAuto(); next(); }
+  if (e.key === 'ArrowLeft')  { stopAuto(); prev(); }
+});
+
+render();
+</script>
+</body>
+</html>

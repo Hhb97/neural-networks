@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>最简单的网络：1个隐藏神经元</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+         background:#F5F4EF; color:#2C2C2A; padding:20px; line-height:1.6; }
+  .wrap { max-width:1080px; margin:0 auto; }
+  h1 { font-size:22px; font-weight:500; margin-bottom:4px; }
+  .sub { color:#5F5E5A; font-size:14px; margin-bottom:16px; }
+  .sub code { font-family:ui-monospace,Consolas,monospace; background:#EDEBE3; padding:1px 6px; border-radius:4px; }
+
+  .phases { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
+  .phase { flex:1; min-width:100px; padding:9px 8px; border-radius:9px; font-size:12.5px; text-align:center;
+           background:#EDEBE3; color:#888780; border:1px solid #E5E3DB; }
+  .phase .n { font-size:10.5px; display:block; opacity:.85; }
+  .phase.done { background:#E1F5EE; color:#0F6E56; border-color:#9FE1CB; }
+  .phase.now  { background:#185FA5; color:#fff; border-color:#185FA5; font-weight:500; }
+
+  .main { display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap; }
+  .col-l { flex:1 1 400px; min-width:360px; }
+  .col-r { flex:1.05 1 420px; min-width:380px; }
+  .card { background:#fff; border:1px solid #D3D1C7; border-radius:12px; padding:16px; margin-bottom:14px; }
+  .card h3 { font-size:14px; font-weight:500; margin-bottom:10px; color:#444441; }
+  svg { display:block; width:100%; height:auto; }
+
+  .step-head { display:flex; align-items:baseline; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .step-no { font-size:12px; color:#fff; background:#185FA5; padding:2px 9px; border-radius:20px; font-weight:500; }
+  .step-no.bwd { background:#D85A30; } .step-no.upd { background:#1D9E75; } .step-no.pre { background:#888780; }
+  .step-title { font-size:17px; font-weight:500; }
+
+  .blk { margin-bottom:12px; }
+  .blk-lab { font-size:12px; color:#888780; margin-bottom:5px; letter-spacing:.03em; }
+  .sym { background:#EEEDFE; border:1px solid #CECBF6; border-radius:8px; padding:10px 14px;
+         font-family:ui-monospace,Consolas,monospace; font-size:14.5px; color:#3C3489; white-space:pre; overflow-x:auto; }
+  .calc { background:#F1EFE8; border-radius:8px; padding:10px 14px;
+          font-family:ui-monospace,Consolas,monospace; font-size:13.5px; white-space:pre; overflow-x:auto; line-height:1.85; }
+  .res { background:#E1F5EE; border:1px solid #9FE1CB; border-radius:8px; padding:10px 14px;
+         font-family:ui-monospace,Consolas,monospace; font-size:16px; color:#085041; font-weight:500; }
+  .res.bwd { background:#FAECE7; border-color:#F0997B; color:#712B13; }
+  .note { font-size:13px; padding:9px 13px; border-radius:0 6px 6px 0; }
+  .note.tip  { background:#FAEEDA; border-left:3px solid #BA7517; color:#412402; }
+  .note.key  { background:#EEF4FB; border-left:3px solid #185FA5; color:#0D3D6B; font-weight:500; }
+  .note.good { background:#E1F5EE; border-left:3px solid #1D9E75; color:#0A4A3A; }
+
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th,td { padding:5px 8px; border-bottom:1px solid #E5E3DB; text-align:right; }
+  th:first-child, td:first-child { text-align:left; }
+  th { color:#888780; font-weight:500; font-size:12px; }
+  td.mono { font-family:ui-monospace,Consolas,monospace; }
+  .s { color:#5F5E5A; font-size:11.5px; }
+  .src-init{color:#3C3489} .src-step{color:#0F6E56} .src-data{color:#854F0B}
+
+  .known { display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:7px; }
+  .kv { border:1px solid #E5E3DB; border-radius:7px; padding:6px 9px; background:#FAF9F5; }
+  .kv .k { font-size:11px; color:#888780; }
+  .kv .val { font-family:ui-monospace,Consolas,monospace; font-size:13.5px; font-weight:500; font-variant-numeric:tabular-nums; }
+  .kv.pending { opacity:.35; }
+  .kv.fwd .val { color:#185FA5; } .kv.bwd .val { color:#993C1D; }
+  .kv.now { border-color:#185FA5; background:#EEF4FB; box-shadow:0 0 0 2px rgba(24,95,165,.12); }
+  .kv.dual { border-color:#BA7517; background:#FFF7E8; }
+
+  .bar { position:sticky; bottom:0; background:#fff; border:1px solid #D3D1C7; border-radius:12px;
+         padding:12px 16px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:4px;
+         box-shadow:0 -2px 14px rgba(0,0,0,.05); }
+  button { font-family:inherit; font-size:14px; padding:8px 16px; border-radius:8px; cursor:pointer;
+           border:1px solid #185FA5; background:#185FA5; color:#fff; }
+  button.ghost { background:#fff; color:#185FA5; }
+  button:disabled { opacity:.35; cursor:not-allowed; }
+  button:active:not(:disabled) { transform:translateY(1px); }
+  .prog { flex:1; min-width:120px; height:6px; background:#EDEBE3; border-radius:4px; overflow:hidden; }
+  .prog i { display:block; height:100%; background:#185FA5; transition:width .25s; }
+  .cnt { font-size:13px; color:#5F5E5A; font-variant-numeric:tabular-nums; }
+  .kbd { font-size:12px; color:#888780; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>最简单的网络：1 个输入 → 1 个隐藏神经元 → 1 个输出</h1>
+  <div class="sub">
+    专门搞清楚这条链：<code>x → z₁ → a₁(激活) → z₂ → ŷ(激活)</code>。
+    重点看 <b>a₁</b> 这一个数字——它对隐藏层来说是"输出"，对输出层来说是"输入"，是同一个数，只是站的角度不同。
+  </div>
+
+  <div class="phases" id="phases"></div>
+
+  <div class="main">
+    <div class="col-l">
+      <div class="card">
+        <h3>网络结构（高亮当前在算哪一段）</h3>
+        <svg id="net" viewBox="0 0 520 300" role="img" aria-label="单隐藏神经元网络结构图"></svg>
+      </div>
+      <div class="card">
+        <h3>已算出的量</h3>
+        <div class="blk-lab">前向</div>
+        <div class="known" id="knownF"></div>
+        <div class="blk-lab" style="margin-top:11px">反向（梯度）</div>
+        <div class="known" id="knownB"></div>
+      </div>
+    </div>
+
+    <div class="col-r">
+      <div class="card" id="stepCard"></div>
+    </div>
+  </div>
+
+  <div class="bar">
+    <button id="prevBtn" class="ghost">← 上一步</button>
+    <button id="nextBtn">下一步 →</button>
+    <button id="autoBtn" class="ghost">自动播放</button>
+    <button id="resetBtn" class="ghost">重置</button>
+    <div class="prog"><i id="progBar"></i></div>
+    <span class="cnt" id="cnt"></span>
+    <span class="kbd">← → 翻页</span>
+  </div>
+
+</div>
+
+<script>
+// ==================== 数据（沿用你已经算过很多遍的那组数字） ====================
+const X = 1.0, Y = 1.0, LR = 0.5;
+const P = { w1:0.5, b1:0.0, w2:0.8, b2:0.0 };
+const S = z => 1 / (1 + Math.exp(-z));
+const $ = id => document.getElementById(id);
+const f = (v, d=4) => v.toFixed(d);
+
+// 一次性把全部前向/反向数值算出来（纯函数，翻页不会脏）
+function compute(p) {
+  const z1 = p.w1*X + p.b1;
+  const a1 = S(z1);
+  const z2 = p.w2*a1 + p.b2;
+  const yh = S(z2);
+  const L = 0.5*(yh-Y)**2;
+
+  const dLdy = yh - Y;
+  const sp2 = yh*(1-yh);
+  const d2 = dLdy*sp2;
+  const gw2 = d2*a1, gb2 = d2;
+
+  const dh1 = d2*p.w2;
+  const sp1 = a1*(1-a1);
+  const d1 = dh1*sp1;
+  const gw1 = d1*X, gb1 = d1;
+
+  const next = { w1:p.w1-LR*gw1, b1:p.b1-LR*gb1, w2:p.w2-LR*gw2, b2:p.b2-LR*gb2 };
+  const nz1=next.w1*X+next.b1, na1=S(nz1), nz2=next.w2*na1+next.b2, nyh=S(nz2), nL=0.5*(nyh-Y)**2;
+
+  return { z1,a1,z2,yh,L, dLdy,sp2,d2,gw2,gb2, dh1,sp1,d1,gw1,gb1, next, nL };
+}
+const V = compute(P);
+
+// ==================== 步骤定义 ====================
+const D = s => `<span class="src-data">${s}</span>`;
+const I = s => `<span class="src-init">${s}</span>`;
+const T = n => `<span class="src-step">第 ${n} 步</span>`;
+
+const STEPS = [
+{ ph:0, title:'准备：手上有什么', kind:'pre',
+  sym:`x → [z₁=w₁x+b₁] → [a₁=σ(z₁)] → [z₂=w₂a₁+b₂] → [ŷ=σ(z₂)] → L`,
+  inputs:[['x',X,D('输入数据')],['y',Y,D('真实答案')],
+          ['w₁',P.w1,I('参数')],['b₁',P.b1,I('参数')],
+          ['w₂',P.w2,I('参数')],['b₂',P.b2,I('参数')],['η',LR,D('学习率')]],
+  note:'一共只有 4 个参数：w₁,b₁ 属于隐藏层；w₂,b₂ 属于输出层。注意隐藏层和输出层的公式长得一模一样，都是"加权求和 + 激活"。',
+  hl:{nodes:['x'],edges:[]} },
+
+{ ph:1, title:'隐藏层 · 第一步：加权求和 z₁', kind:'',
+  sym:`z₁ = w₁ · x + b₁`,
+  inputs:[['x',X,D('输入数据')],['w₁',P.w1,I('参数')],['b₁',P.b1,I('参数')]],
+  calc:[`z₁ = ${P.w1} × ${X} + ${P.b1}`,`   = ${f(P.w1*X,2)} + ${P.b1}`],
+  res:['z₁',V.z1,'fwd'],
+  note:'这一步纯粹是乘加，还没有任何"压缩"或"折"的动作——和输出层马上要做的第一步性质完全一样。',
+  hl:{nodes:['x','z1'],edges:['e1'],dir:'fwd'} },
+
+{ ph:1, title:'隐藏层 · 第二步：激活 a₁ = σ(z₁)', kind:'',
+  sym:`a₁ = σ(z₁) = 1 / (1+e⁻ᶻ¹)`,
+  inputs:[['z₁',V.z1,T(1)]],
+  calc:[`a₁ = σ(${f(V.z1,4)})`,`   = 1 / (1 + e^${f(-V.z1,4)})`,`   = ${f(V.a1,4)}`],
+  res:['a₁',V.a1,'fwd'],
+  note:'★ 这就是你问的那个关键点。a₁ 这个数字，从隐藏层的角度看是"我的最终输出"；但从下一层（输出层）的角度看，它就是"我的输入"——就像工厂里第一道工序的产品，直接变成第二道工序的原料，编号没变，只是换了称呼。',
+  keyNote:true,
+  hl:{nodes:['z1','a1'],edges:[],dir:'fwd'} },
+
+{ ph:1, title:'输出层 · 第一步：加权求和 z₂（把 a₁ 当作这一步的输入）', kind:'',
+  sym:`z₂ = w₂ · a₁ + b₂`,
+  inputs:[['a₁',V.a1,T(2)+'（隐藏层刚算出来的输出，现在被当作输入用）'],['w₂',P.w2,I('参数')],['b₂',P.b2,I('参数')]],
+  calc:[`z₂ = ${P.w2} × ${f(V.a1,4)} + ${P.b2}`,`   = ${f(P.w2*V.a1,4)} + ${P.b2}`],
+  res:['z₂',V.z2,'fwd'],
+  note:'对比第 1 步：那里是"w₁ × x + b₁"，这里是"w₂ × a₁ + b₂"——公式结构一模一样，唯一区别是被乘的对象从原始输入 x 换成了上一层激活后的 a₁。输出层的这个神经元根本不知道、也不在乎 a₁ 是"原始数据"还是"别的神经元算出来的"，它只是照常做乘加。',
+  hl:{nodes:['a1','z2'],edges:['e2'],dir:'fwd'} },
+
+{ ph:1, title:'输出层 · 第二步：激活 ŷ = σ(z₂)', kind:'',
+  sym:`ŷ = σ(z₂)`,
+  inputs:[['z₂',V.z2,T(3)]],
+  calc:[`ŷ = σ(${f(V.z2,4)})`,`   = 1 / (1 + e^${f(-V.z2,4)})`,`   = ${f(V.yh,4)}`],
+  res:['ŷ',V.yh,'fwd'],
+  note:'和第 2 步用的是同一个激活函数 σ，只是发生在最后一层。到这里，"输入→隐藏层→输出层"这条完整链就走完了：一共做了两次"加权求和+激活"，一次都没少，也没有第三种全新的运算。',
+  hl:{nodes:['z2','yh'],edges:[],dir:'fwd'} },
+
+{ ph:2, title:'算损失 L', kind:'',
+  sym:`L = ½ (ŷ − y)²`,
+  inputs:[['ŷ',V.yh,T(4)],['y',Y,D('真实答案')]],
+  calc:[`L = ½ × (${f(V.yh,4)} − ${Y})²`,`  = ½ × (${f(V.yh-Y,4)})²`,`  = ${f(V.L,4)}`],
+  res:['L',V.L,'fwd'],
+  note:'预测 0.622，真实答案 1，还差得比较远，损失是 0.0714。接下来反向传播，去算这 4 个参数各自该负多少责任。',
+  hl:{nodes:['yh','yt','L'],edges:['eL'],dir:'fwd'} },
+
+{ ph:3, title:'反向 · 输出层的误差项 δ₂', kind:'bwd',
+  sym:`δ₂ = (∂L/∂ŷ) × (∂ŷ/∂z₂) = (ŷ−y) × ŷ(1−ŷ)`,
+  inputs:[['ŷ',V.yh,T(4)],['y',Y,D('真实答案')]],
+  calc:[`∂L/∂ŷ = ŷ−y = ${f(V.yh,4)} − ${Y} = ${f(V.dLdy,4)}`,
+        `∂ŷ/∂z₂ = ŷ(1−ŷ) = ${f(V.yh,4)}×${f(1-V.yh,4)} = ${f(V.sp2,4)}`,
+        `δ₂ = ${f(V.dLdy,4)} × ${f(V.sp2,4)}`],
+  res:['δ₂',V.d2,'bwd'],
+  note:'δ 是"这一层的加权和动一点点，损失会跟着动多少"。它会被拿去乘两次：一次算输出层自己的梯度（下一步），一次继续往回传给隐藏层（第9步）。',
+  hl:{nodes:['yh'],edges:[],dir:'bwd'} },
+
+{ ph:3, title:'反向 · 输出层参数的梯度', kind:'bwd',
+  sym:`∂L/∂w₂ = δ₂ · a₁\n∂L/∂b₂ = δ₂ · 1`,
+  inputs:[['δ₂',V.d2,T(6)],['a₁',V.a1,T(2)+'（同一个 a₁，这次被拿来算梯度）']],
+  calc:[`∂L/∂w₂ = ${f(V.d2,4)} × ${f(V.a1,4)} = ${f(V.gw2,4)}`,
+        `∂L/∂b₂ = ${f(V.d2,4)} × 1 = ${f(V.gb2,4)}`],
+  res:['两个梯度',null,'bwd',`∂L/∂w₂ = ${f(V.gw2,4)}\n∂L/∂b₂ = ${f(V.gb2,4)}`],
+  note:'注意 a₁ 在这里又出现了第三次（前向算过一次、输出层加权求和用过一次、这里再用一次）。这不是巧合——a₁ 是隐藏层唯一的产出，凡是需要"隐藏层给了什么"的地方，都要用到它。',
+  hl:{nodes:['yh','a1'],edges:['e2'],dir:'bwd'} },
+
+{ ph:3, title:'反向 · 梯度传回隐藏层 · 第①道门：穿过权重', kind:'bwd',
+  sym:`∂L/∂a₁ = δ₂ · w₂`,
+  inputs:[['δ₂',V.d2,T(6)],['w₂',P.w2,I('参数')]],
+  calc:[`∂L/∂a₁ = ${f(V.d2,4)} × ${P.w2}`,`       = ${f(V.dh1,4)}`],
+  res:['∂L/∂a₁',V.dh1,'bwd'],
+  note:'前向时是"a₁ 乘 w₂ 传给输出层"；反向时对称地"误差乘同一个 w₂ 传回隐藏层"。方向反了，用到的权重没变。',
+  hl:{nodes:['a1','yh'],edges:['e2'],dir:'bwd'} },
+
+{ ph:3, title:'反向 · 第②道门：穿过 sigmoid，得到 δ₁', kind:'bwd',
+  sym:`δ₁ = (∂L/∂a₁) × σ′(z₁) = (∂L/∂a₁) × a₁(1−a₁)`,
+  inputs:[['∂L/∂a₁',V.dh1,T(8)],['a₁',V.a1,T(2)]],
+  calc:[`σ′(z₁) = a₁(1−a₁) = ${f(V.a1,4)}×${f(1-V.a1,4)} = ${f(V.sp1,4)}`,
+        `δ₁ = ${f(V.dh1,4)} × ${f(V.sp1,4)}`],
+  res:['δ₁',V.d1,'bwd'],
+  note:'穿过一次 sigmoid，梯度被压小了——sigmoid 的导数最大只有 0.25。这就是隐藏层收到的信号，天然比输出层弱一些。',
+  hl:{nodes:['a1','z1'],edges:[],dir:'bwd'} },
+
+{ ph:3, title:'反向 · 隐藏层参数的梯度', kind:'bwd',
+  sym:`∂L/∂w₁ = δ₁ · x\n∂L/∂b₁ = δ₁ · 1`,
+  inputs:[['δ₁',V.d1,T(9)],['x',X,D('输入数据')]],
+  calc:[`∂L/∂w₁ = ${f(V.d1,4)} × ${X} = ${f(V.gw1,4)}`,
+        `∂L/∂b₁ = ${f(V.d1,4)} × 1 = ${f(V.gb1,4)}`],
+  res:['两个梯度',null,'bwd',`∂L/∂w₁ = ${f(V.gw1,4)}\n∂L/∂b₁ = ${f(V.gb1,4)}`],
+  note:'和第7步用的是同一条规则：梯度 = δ × 该层的输入。输出层的输入是 a₁，隐藏层的输入是 x——公式一样，输入的东西不一样。',
+  hl:{nodes:['x','z1'],edges:['e1'],dir:'bwd'} },
+
+{ ph:4, title:'更新全部 4 个参数', kind:'upd',
+  sym:`新值 = 旧值 − η × 梯度`,
+  inputs:[['η',LR,D('学习率')]],
+  calc:[`w₁ = ${P.w1} − ${LR}×(${f(V.gw1,4)}) = ${f(V.next.w1,4)}`,
+        `b₁ = ${P.b1} − ${LR}×(${f(V.gb1,4)}) = ${f(V.next.b1,4)}`,
+        `w₂ = ${P.w2} − ${LR}×(${f(V.gw2,4)}) = ${f(V.next.w2,4)}`,
+        `b₂ = ${P.b2} − ${LR}×(${f(V.gb2,4)}) = ${f(V.next.b2,4)}`],
+  res:['更新后损失',null,'fwd',`用新参数重走一遍前向：L 从 ${f(V.L,4)} 降到 ${f(V.nL,4)}`],
+  note:'四个参数各自减去"学习率×自己的梯度"，一步到位。用新参数重新算一遍 z₁→a₁→z₂→ŷ→L，损失确实降了。',
+  hl:{nodes:['x','z1','a1','z2','yh'],edges:['e1','e2'],dir:'upd'} },
+];
+
+// ==================== 网络图节点位置 ====================
+const NODES = {
+  x:  {x:50,  y:150, r:24, name:'x'},
+  z1: {x:170, y:80,  r:24, name:'z₁'},
+  a1: {x:170, y:220, r:24, name:'a₁'},
+  z2: {x:320, y:80,  r:24, name:'z₂'},
+  yh: {x:320, y:220, r:24, name:'ŷ'},
+  yt: {x:440, y:260, r:19, name:'y'},
+  L:  {x:460, y:150, r:24, name:'L'},
+};
+const EDGES = {
+  e1:{a:'x', b:'z1', through:'a1', lab1:'w₁', lab2:'b₁'},
+  e2:{a:'a1',b:'z2', through:'yh', lab1:'w₂', lab2:'b₂'},
+  eL:{a:'yh',b:'L'},
+};
+
+function drawNet() {
+  const s = STEPS[step], hlN = s.hl.nodes||[], hlE = s.hl.edges||[], dir = s.hl.dir;
+  const p = [];
+  p.push(`<defs>
+    <marker id="mf" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M1 1L9 5L1 9" fill="none" stroke="#185FA5" stroke-width="1.8" stroke-linecap="round"/></marker>
+    <marker id="mb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M1 1L9 5L1 9" fill="none" stroke="#D85A30" stroke-width="1.8" stroke-linecap="round"/></marker>
+  </defs>`);
+
+  // 分组底色：隐藏层 vs 输出层
+  p.push(`<rect x="20" y="20" width="230" height="250" rx="12" fill="#FAF9F5" stroke="#E5E3DB" stroke-dasharray="4 3"/>`);
+  p.push(`<text x="30" y="38" font-size="11.5" fill="#888780">隐藏层</text>`);
+  p.push(`<rect x="270" y="20" width="230" height="250" rx="12" fill="#FDFBF6" stroke="#E5E3DB" stroke-dasharray="4 3"/>`);
+  p.push(`<text x="280" y="38" font-size="11.5" fill="#888780">输出层</text>`);
+
+  // 连线：x-z1, z1-a1(同层内), a1-z2(跨层，重点), z2-yh(同层内), yh-L
+  function line(a,b,on,back,lab){
+    const A=NODES[a],B=NODES[b];
+    const dx=B.x-A.x,dy=B.y-A.y,len=Math.hypot(dx,dy),ux=dx/len,uy=dy/len;
+    const x1=A.x+ux*A.r,y1=A.y+uy*A.r,x2=B.x-ux*B.r,y2=B.y-uy*B.r;
+    const col = !on?'#D3D1C7':(back?'#D85A30':'#185FA5');
+    const mk = on?(back?'url(#mb)':'url(#mf)'):'';
+    if(back){ p.push(`<line x1="${x2}" y1="${y2}" x2="${x1}" y2="${y1}" stroke="${col}" stroke-width="2.4" stroke-dasharray="6 4" marker-end="${mk}"/>`); }
+    else { p.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="${on?2.4:1.4}" ${mk?`marker-end="${mk}"`:''}/>`); }
+    if(lab){ p.push(`<text x="${(x1+x2)/2}" y="${(y1+y2)/2-8}" font-size="11" fill="${on?col:'#888780'}" text-anchor="middle" font-weight="${on?500:400}">${lab}</text>`); }
+  }
+  const onE1 = hlE.includes('e1'), onE2 = hlE.includes('e2'), onEL = hlE.includes('eL');
+  line('x','z1', onE1, dir==='bwd', `w₁=${P.w1}`);
+  line('z1','a1', hlN.includes('z1')&&hlN.includes('a1'), false, '');
+  line('a1','z2', onE2, dir==='bwd', `w₂=${P.w2}`);
+  line('z2','yh', hlN.includes('z2')&&hlN.includes('yh'), false, '');
+  line('yh','L', onEL, false, '');
+  p.push(`<line x1="${NODES.yt.x-10}" y1="${NODES.yt.y-14}" x2="${NODES.L.x-6}" y2="${NODES.L.y+22}" stroke="#9FE1CB" stroke-width="1.4" stroke-dasharray="3 3"/>`);
+
+  // 节点
+  for (const [id,n] of Object.entries(NODES)) {
+    const on = hlN.includes(id);
+    let fill='#F1EFE8', stroke='#B4B2A9';
+    if (id==='yt'){fill='#E1F5EE';stroke='#1D9E75';}
+    else if (id==='L'){fill='#FAECE7';stroke='#D85A30';}
+    if (on) stroke = dir==='bwd' ? '#D85A30' : '#185FA5';
+    p.push(`<circle cx="${n.x}" cy="${n.y}" r="${n.r}" fill="${fill}" stroke="${stroke}" stroke-width="${on?3:1.6}"/>`);
+    p.push(`<text x="${n.x}" y="${n.y}" font-size="14" text-anchor="middle" dominant-baseline="central" font-weight="500">${n.name}</text>`);
+    const val = nodeVal(id);
+    if (val) p.push(`<text x="${n.x}" y="${n.y+n.r+14}" font-size="11" text-anchor="middle" fill="${val==='?'?'#B4B2A9':'#185FA5'}" font-weight="500">${val}</text>`);
+  }
+  // a1 的"双重身份"标注
+  if (step >= 2) {
+    p.push(`<text x="170" y="266" font-size="10.5" text-anchor="middle" fill="#BA7517" font-weight="500">↑隐藏层的输出 / 输出层的输入↑</text>`);
+  }
+  $('net').innerHTML = p.join('');
+}
+function nodeVal(id) {
+  if (id==='x') return `${X}`;
+  if (id==='yt') return `${Y}`;
+  if (id==='z1') return step>=1 ? f(V.z1,3) : '?';
+  if (id==='a1') return step>=2 ? f(V.a1,3) : '?';
+  if (id==='z2') return step>=3 ? f(V.z2,3) : '?';
+  if (id==='yh') return step>=4 ? f(V.yh,3) : '?';
+  if (id==='L')  return step>=5 ? f(V.L,3) : '?';
+  return '';
+}
+
+// ==================== 已知量面板 ====================
+function drawKnown() {
+  const fwd = [['x',X,0],['y',Y,0],['z₁',f(V.z1,4),1],['a₁',f(V.a1,4),2],
+               ['z₂',f(V.z2,4),3],['ŷ',f(V.yh,4),4],['L',f(V.L,4),5]];
+  const bwd = [['δ₂',f(V.d2,4),6],['∂L/∂w₂',f(V.gw2,4),7],['∂L/∂b₂',f(V.gb2,4),7],
+               ['∂L/∂a₁',f(V.dh1,4),8],['δ₁',f(V.d1,4),9],
+               ['∂L/∂w₁',f(V.gw1,4),10],['∂L/∂b₁',f(V.gb1,4),10]];
+  const cell=(k,val,at,cls)=>{
+    const shown = step>=at, now = step===at;
+    const dual = k==='a₁' && shown;
+    return `<div class="kv ${cls} ${shown?'':'pending'} ${now?'now':''} ${dual?'dual':''}">
+      <div class="k">${k}</div><div class="val">${shown?val:'—'}</div></div>`;
+  };
+  $('knownF').innerHTML = fwd.map(r=>cell(r[0],r[1],r[2],'fwd')).join('');
+  $('knownB').innerHTML = bwd.map(r=>cell(r[0],r[1],r[2],'bwd')).join('');
+}
+
+// ==================== 步骤卡片 ====================
+function drawStep() {
+  const s = STEPS[step];
+  const clsMap = {0:'pre',1:'',2:'',3:'bwd',4:'upd'};
+  const h=[];
+  h.push(`<div class="step-head"><span class="step-no ${clsMap[s.ph]}">第 ${step} 步 / 共 ${STEPS.length-1} 步</span><span class="step-title">${s.title}</span></div>`);
+  h.push(`<div class="blk"><div class="blk-lab">公式</div><div class="sym">${s.sym}</div></div>`);
+  if (s.inputs && s.inputs.length) {
+    h.push(`<div class="blk"><div class="blk-lab">用到的数字，从哪来</div><table><thead><tr><th>符号</th><th>数值</th><th>来源</th></tr></thead><tbody>`);
+    for (const [sym,val,src] of s.inputs) {
+      h.push(`<tr><td class="mono">${sym}</td><td class="mono">${typeof val==='number'?f(val,4):val}</td><td class="s">${src}</td></tr>`);
+    }
+    h.push(`</tbody></table></div>`);
+  }
+  if (s.calc) h.push(`<div class="blk"><div class="blk-lab">代入计算</div><div class="calc">${s.calc.join('\n')}</div></div>`);
+  if (s.res) {
+    const [lab,val,kind,custom]=s.res;
+    const body = custom!==undefined ? custom : `${lab} = ${f(val,6)}`;
+    h.push(`<div class="blk"><div class="blk-lab">结果</div><div class="res ${kind==='bwd'?'bwd':''}">${body}</div></div>`);
+  }
+  h.push(`<div class="note ${s.keyNote?'key':'tip'}">${s.note}</div>`);
+  $('stepCard').innerHTML = h.join('');
+}
+
+// ==================== 阶段条 ====================
+const PHASES=[['准备','看清已知'],['前向','逐层往右算'],['损失','预测vs答案'],['反向','逐层往回传'],['更新','走一小步']];
+function drawPhases() {
+  const cur = STEPS[step].ph;
+  $('phases').innerHTML = PHASES.map((p,i)=>`<div class="phase ${i<cur?'done':i===cur?'now':''}">${p[0]}<span class="n">${p[1]}</span></div>`).join('');
+}
+
+// ==================== 控制 ====================
+let step = 0, timer = null;
+function render() {
+  drawPhases(); drawNet(); drawStep(); drawKnown();
+  $('cnt').textContent = `步骤 ${step}/${STEPS.length-1}`;
+  $('progBar').style.width = (step/(STEPS.length-1)*100)+'%';
+  $('prevBtn').disabled = step===0;
+  $('nextBtn').disabled = step===STEPS.length-1;
+}
+function next(){ if(step<STEPS.length-1){step++;render();} }
+function prev(){ if(step>0){step--;render();} }
+function stopAuto(){ if(timer){clearInterval(timer);timer=null;$('autoBtn').textContent='自动播放';} }
+$('nextBtn').onclick=()=>{stopAuto();next();};
+$('prevBtn').onclick=()=>{stopAuto();prev();};
+$('resetBtn').onclick=()=>{stopAuto();step=0;render();};
+$('autoBtn').onclick=()=>{
+  if(timer){stopAuto();return;}
+  $('autoBtn').textContent='暂停';
+  timer=setInterval(()=>{ if(step>=STEPS.length-1){stopAuto();return;} next(); },1500);
+};
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowRight'){stopAuto();next();}
+  if(e.key==='ArrowLeft'){stopAuto();prev();}
+});
+
+render();
+</script>
+</body>
+</html>

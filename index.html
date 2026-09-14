@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>机器学习 · 神经网络笔记与演示</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f6f8fa;
+    --card: #ffffff;
+    --border: #d0d7de;
+    --text: #1f2328;
+    --muted: #57606a;
+    --accent: #0969da;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    padding: 40px 16px 64px;
+  }
+  main {
+    max-width: 880px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 1.6rem;
+    margin: 0 0 4px;
+  }
+  .subtitle {
+    color: var(--muted);
+    margin: 0 0 32px;
+    font-size: 0.95rem;
+  }
+  h2 {
+    font-size: 1.05rem;
+    margin: 36px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+  }
+  a.card {
+    display: block;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card);
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.92rem;
+    line-height: 1.4;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  a.card:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+  a.card .tag {
+    display: block;
+    color: var(--accent);
+    font-size: 0.75rem;
+    margin-top: 6px;
+  }
+  footer {
+    margin-top: 48px;
+    color: var(--muted);
+    font-size: 0.8rem;
+    text-align: center;
+  }
+  footer a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1>机器学习 · 神经网络笔记与演示</h1>
+  <p class="subtitle">零基础入门笔记 + 可交互的梯度下降 / 神经网络演示页面</p>
+
+  <h2>📘 入门笔记</h2>
+  <div class="grid">
+    <a class="card" href="从机器学习到神经网络-零基础入门.html">从机器学习到神经网络：零基础入门<span class="tag">完整图文笔记</span></a>
+  </div>
+
+  <h2>🧮 数学基础</h2>
+  <div class="grid">
+    <a class="card" href="高数入门.html">高等数学 · 导数与微积分 · 初学者指南</a>
+    <a class="card" href="高数进阶版.html">高等数学 · 导数与微积分 · 进阶版</a>
+    <a class="card" href="线性代数基础.html">线性代数基础 · 初学者的直观指南</a>
+    <a class="card" href="线性代数-大学范围.html">线性代数 · 大学全量 · 初学者指南</a>
+    <a class="card" href="线性代数进阶版.html">线性代数 · 大学全量 · 进阶版</a>
+  </div>
+
+  <h2>📉 梯度下降演示</h2>
+  <div class="grid">
+    <a class="card" href="梯度下降交互演示--单参数.html">梯度下降 交互演示（单参数）</a>
+    <a class="card" href="梯度下降三参数演示.html">梯度下降 · 三个参数</a>
+    <a class="card" href="梯度下降VS两层网络.html">线性回归 vs 神经网络 · 梯度下降动画</a>
+    <a class="card" href="梯度下降VS两层神经网络带步骤html.html">线性回归 vs 神经网络 · 分步计算过程</a>
+  </div>
+
+  <h2>🧠 神经网络演示</h2>
+  <div class="grid">
+    <a class="card" href="single_neuron_demo.html">最简单的网络：1 个隐藏神经元</a>
+    <a class="card" href="两层神经网络演示.html">梯度下降对比 — 直接法 vs 两层神经网络</a>
+    <a class="card" href="线性回归vs两层网络-对照演示.html">线性回归 vs 两层网络 · 同一套流程对照</a>
+    <a class="card" href="线性回归加激活-逻辑回归演示.html">线性回归 → 加激活 → 逻辑回归</a>
+    <a class="card" href="nn_visualization.html">神经网络前向 / 反向传播 · 逐步拆解</a>
+    <a class="card" href="反向传播交互演示.html">反向传播 交互演示</a>
+    <a class="card" href="神经网络训练 · 完整迭代 (含反向传播).html">神经网络训练 · 完整迭代（含反向传播）</a>
+  </div>
+
+  <footer>
+    数据来源：<a href="https://github.com/Hhb97/neural-networks">Hhb97/neural-networks</a>
+  </footer>
+</main>
+</body>
+</html>

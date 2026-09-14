@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高等数学 · 导数与微积分 · 进阶版</title>
+    <!-- KaTeX -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+    <!-- ECharts（不加 defer，保证底部内联脚本执行时已可用） -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', system-ui, -apple-system, sans-serif;
+            background: #f6f8fc;
+            color: #1e293b;
+            line-height: 1.65;
+            padding: 1.5rem 1rem;
+            display: flex;
+            gap: 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* 侧边目录 */
+        .toc {
+            width: 280px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 1.5rem;
+            height: calc(100vh - 3rem);
+            overflow-y: auto;
+            background: white;
+            border-radius: 24px;
+            padding: 1.5rem 1rem 1.5rem 1.5rem;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.02);
+            border: 1px solid #e9eef3;
+        }
+
+        .toc h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 1.2rem;
+            padding-left: 0.75rem;
+            border-left: 4px solid #7c3aed;
+        }
+
+        .toc ul {
+            list-style: none;
+        }
+
+        .toc li {
+            margin-bottom: 0.35rem;
+        }
+
+        .toc a {
+            text-decoration: none;
+            color: #334155;
+            font-size: 0.94rem;
+            display: block;
+            padding: 0.5rem 0.75rem;
+            border-radius: 12px;
+            transition: 0.12s;
+            font-weight: 450;
+            border-left: 3px solid transparent;
+        }
+
+        .toc a:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        .toc a.active {
+            background: #f3ecff;
+            color: #7c3aed;
+            font-weight: 500;
+            border-left-color: #7c3aed;
+        }
+
+        /* 主内容 */
+        .main {
+            flex: 1;
+            min-width: 0;
+            max-width: 1000px;
+        }
+
+        .main h1 {
+            font-size: 2.4rem;
+            font-weight: 650;
+            letter-spacing: -0.02em;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .main h1 small {
+            font-size: 1rem;
+            font-weight: 400;
+            color: #64748b;
+            margin-left: 1rem;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #475569;
+            margin-bottom: 2.5rem;
+            border-left: 4px solid #94a3b8;
+            padding-left: 1.2rem;
+        }
+
+        .section {
+            background: white;
+            border-radius: 24px;
+            padding: 2rem 2rem 2rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.015), 0 2px 6px rgba(0, 0, 0, 0.02);
+            border: 1px solid #eef2f6;
+            scroll-margin-top: 1.5rem;
+        }
+
+        .section h2 {
+            font-size: 1.8rem;
+            font-weight: 550;
+            margin-bottom: 1.5rem;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #e9eef3;
+        }
+
+        .section h2 .num {
+            background: #7c3aed;
+            color: white;
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .section h3 {
+            font-size: 1.3rem;
+            font-weight: 550;
+            margin: 1.5rem 0 0.8rem 0;
+            color: #1e293b;
+        }
+
+        .section h4 {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin: 1.2rem 0 0.6rem 0;
+            color: #334155;
+        }
+
+        .section p {
+            margin: 0.8rem 0;
+            color: #334155;
+        }
+
+        .section ul, .section ol {
+            margin: 0.8rem 0 0.8rem 1.5rem;
+            color: #334155;
+        }
+
+        .section li {
+            margin-bottom: 0.35rem;
+        }
+
+        .advance-tag {
+            display: inline-block;
+            background: #f3ecff;
+            color: #7c3aed;
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 0.25rem 0.8rem;
+            border-radius: 30px;
+            margin-bottom: 0.9rem;
+        }
+
+        .highlight {
+            background: #f5f1ff;
+            border-radius: 16px;
+            padding: 1.2rem 1.5rem;
+            margin: 1.2rem 0;
+            border-left: 5px solid #7c3aed;
+        }
+
+        .note {
+            background: #f8fafc;
+            border-radius: 14px;
+            padding: 1rem 1.3rem;
+            margin: 1rem 0;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            font-size: 0.98rem;
+        }
+
+        .theorem {
+            background: #fefaf0;
+            border-radius: 16px;
+            padding: 1.2rem 1.5rem;
+            margin: 1.2rem 0;
+            border-left: 5px solid #f59e0b;
+        }
+
+        .theorem .label {
+            display: block;
+            font-weight: 650;
+            color: #b45309;
+            margin-bottom: 0.5rem;
+            font-size: 1.02rem;
+        }
+
+        .proof {
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 14px;
+            padding: 1rem 1.3rem;
+            margin: 1rem 0;
+            color: #334155;
+            font-size: 0.96rem;
+        }
+
+        .proof .label {
+            display: block;
+            font-weight: 650;
+            color: #475569;
+            margin-bottom: 0.5rem;
+        }
+
+        .qed {
+            text-align: right;
+            color: #94a3b8;
+        }
+
+        .eq {
+            text-align: center;
+            margin: 1.2rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+        }
+
+        .katex {
+            font-size: 1.15rem !important;
+        }
+
+        .btn {
+            background: #7c3aed;
+            color: white;
+            border: none;
+            padding: 0.7rem 1.6rem;
+            border-radius: 40px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.15s;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
+            margin: 0.3rem 0.3rem 0.3rem 0;
+        }
+
+        .btn:hover {
+            background: #6d28d9;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(124, 58, 237, 0.3);
+        }
+
+        .btn.secondary {
+            background: #64748b;
+            box-shadow: 0 4px 12px rgba(100, 116, 139, 0.2);
+        }
+
+        .btn.secondary:hover {
+            background: #475569;
+        }
+
+        .demo-box {
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+            margin: 1.2rem 0;
+        }
+
+        .flex-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .result-badge {
+            background: #ede9fe;
+            padding: 0.4rem 1rem;
+            border-radius: 30px;
+            font-family: monospace;
+            font-size: 1.2rem;
+            color: #4c1d95;
+            font-weight: 500;
+        }
+
+        .echart-box {
+            width: 100%;
+            max-width: 640px;
+            height: 340px;
+            margin: 0 auto;
+        }
+
+        .demo-caption {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .data-table-wrap {
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        .data-table {
+            width: 100%;
+            min-width: 420px;
+            border-collapse: collapse;
+            font-size: 0.92rem;
+        }
+
+        .data-table th, .data-table td {
+            border: 1px solid #e2e8f0;
+            padding: 0.5rem 0.7rem;
+            text-align: center;
+        }
+
+        .data-table th {
+            background: #f1f5f9;
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        .data-caption {
+            font-size: 0.82rem;
+            color: #94a3b8;
+            margin-top: 0.4rem;
+            text-align: center;
+        }
+
+        .data-badge {
+            display: inline-block;
+            background: #fff7ed;
+            color: #c2410c;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 0.2rem 0.7rem;
+            border-radius: 20px;
+            margin-bottom: 0.5rem;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 2.5rem;
+            color: #94a3b8;
+            font-size: 0.9rem;
+            padding: 1rem 0;
+        }
+
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column;
+                padding: 1rem;
+            }
+            .toc {
+                width: 100%;
+                height: auto;
+                position: static;
+                max-height: 300px;
+                margin-bottom: 1rem;
+            }
+        }
+
+        .toc::-webkit-scrollbar {
+            width: 5px;
+        }
+        .toc::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        .toc::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .toc::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ========= 侧边目录 ========= -->
+<nav class="toc" id="toc">
+    <h3>📘 高数进阶 · 目录</h3>
+    <ul>
+        <li><a href="#ch1" class="active">1. 极限与连续</a></li>
+        <li><a href="#ch2">2. 导数与微分</a></li>
+        <li><a href="#ch3">3. 求导法则</a></li>
+        <li><a href="#ch4">4. 高阶导数与泰勒展开</a></li>
+        <li><a href="#ch5">5. 积分基础</a></li>
+        <li><a href="#ch6">6. 微积分基本定理</a></li>
+        <li><a href="#ch7">7. 多元函数与偏导数</a></li>
+        <li><a href="#ch8">8. 梯度与方向导数</a></li>
+        <li><a href="#ch9">9. 链式法则与自动微分</a></li>
+        <li><a href="#ch10">10. MLP 应用 —— 反向传播</a></li>
+    </ul>
+</nav>
+
+<!-- ========= 主内容 ========= -->
+<main class="main">
+    <h1>高等数学 <small>导数 · 微积分 · 进阶版</small></h1>
+    <div class="subtitle">承接《初学者指南》的直觉，本篇补上严格定义、定理证明，并用电压 / 电流 / 能耗的示例数据，把每一章都落到一次真实可算的深度学习式数值推演上。</div>
+
+    <!-- 1. 极限与连续 -->
+    <section class="section" id="ch1">
+        <h2><span class="num">1</span> 极限与连续</h2>
+        <span class="advance-tag">进阶</span>
+        <p>初学者指南里，我们把极限理解成"无限靠近但不一定到达"。这一节把这句直觉翻译成一句可以逐字检验、不依赖"感觉"的数学陈述——ε-δ 语言。它的好处是：任何人都可以拿到具体的 ε，独立算出一个 δ，然后机械地验证极限是否成立，不再需要"看图说话"。</p>
+
+        <h3>1.1 极限的 ε-δ 定义</h3>
+        <div class="theorem">
+            <span class="label">定义（极限）</span>
+            设函数 \(f\) 在 \(a\) 的某个去心邻域内有定义。称
+            \[
+            \lim_{x \to a} f(x) = L
+            \]
+            当且仅当：对任意 \(\varepsilon > 0\)，都存在 \(\delta > 0\)，使得只要 \(0 < |x-a| < \delta\)，就有 \(|f(x) - L| < \varepsilon\)。
+        </div>
+        <p>逐字翻译一遍：无论对方（挑剔的验证者）给出多小的容差 \(\varepsilon\)（"你敢说 \(f(x)\) 和 \(L\) 差不超过这个数吗？"），我们都必须能给出一个对应的 \(\delta\)，使得只要 \(x\) 与 \(a\) 的距离小于 \(\delta\)（但不等于 0），\(f(x)\) 与 \(L\) 的距离就确实小于 \(\varepsilon\)。这是一场"你出 ε 我出 δ"的博弈，我们必须每次都能赢。</p>
+
+        <h4>1.2 一个完整的 ε-δ 证明</h4>
+        <p>用一个线性传感器响应模型做例子：设某电压传感器的输出模型为 \(f(x) = 2x+1\)（\(x\) 是原始 ADC 读数，\(f(x)\) 是标定后的电压值，单位省略）。下面严格证明 \(\lim_{x\to 3} f(x) = 7\)。</p>
+        <div class="proof">
+            <span class="label">证明</span>
+            任给 \(\varepsilon > 0\)，取 \(\delta = \varepsilon/2\)。当 \(0 < |x-3| < \delta\) 时：
+            \[
+            |f(x) - 7| = |(2x+1) - 7| = |2x - 6| = 2|x-3| < 2\delta = 2 \cdot \frac{\varepsilon}{2} = \varepsilon
+            \]
+            于是对任意 \(\varepsilon>0\)，取 \(\delta=\varepsilon/2\) 即可满足定义要求，故 \(\lim_{x\to 3}(2x+1) = 7\)。
+            <div class="qed">∎</div>
+        </div>
+        <p><strong>代入具体数字核验：</strong>取 \(\varepsilon = 0.02\)，按证明中的取法 \(\delta = \varepsilon/2 = 0.01\)。取 \(x = 3.005\)（满足 \(|x-3|=0.005<0.01\)），则 \(f(x) = 2\times3.005+1 = 7.01\)，\(|f(x)-7| = 0.01 < 0.02\)，与证明吻合。这个 \(\delta=\varepsilon/2\) 的关系正是因为 \(f\) 的斜率是 2——斜率越大，为了控制住 \(f(x)\) 的波动，\(\delta\) 就必须选得越小。</p>
+
+        <h3>1.3 连续的 ε-δ 刻画</h3>
+        <p>把定义里"\(x\) 不等于 \(a\)"这条限制去掉，并要求逼近的目标恰好就是 \(f(a)\)，就得到连续的严格定义：对任意 \(\varepsilon>0\)，存在 \(\delta>0\)，使得 \(|x-a|<\delta \Rightarrow |f(x)-f(a)|<\varepsilon\)。这与初学者指南 1.3 节的 \(\lim_{x\to a}f(x)=f(a)\) 完全等价，只是把"极限"本身也展开成了 ε-δ 的形式。</p>
+
+        <div class="highlight">
+            <strong>💡 为什么要较真到这个程度？</strong> 深度学习里常说"损失函数是连续甚至光滑的，所以梯度下降才有效"——这句话之所以严谨可靠，靠的正是这里的 ε-δ 定义：它保证了参数的微小扰动，只会引起损失的微小、可控的变化，而不会突然跳变。
+        </div>
+
+        <div class="demo-box">
+            <div class="demo-caption">🔍 ε-δ 交互演示：\(f(x)=2x+1\)，\(a=3,\ L=7\)</div>
+            <div class="flex-row">
+                <label>\(\varepsilon = \)</label>
+                <input type="range" id="epsSlider" min="0.05" max="1.2" value="0.4" step="0.01">
+                <span class="result-badge" id="epsVal">ε = 0.40</span>
+                <label>\(\delta = \)</label>
+                <input type="range" id="deltaSlider" min="0.02" max="0.6" value="0.15" step="0.01">
+                <span class="result-badge" id="deltaVal">δ = 0.15</span>
+            </div>
+            <div id="epsDeltaChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;" id="epsDeltaVerdict">拖动两个滑块：蓝色竖直虚线是 \(x=3\pm\delta\) 的范围，橙色水平虚线是 \(y=7\pm\varepsilon\) 的范围。只要 δ-邻域内的曲线段完全落在 ε-邻域内，下方就会显示"✅ 满足"；由于斜率是 2，理论上只要 \(\delta \le \varepsilon/2\) 就必定满足。</div>
+        </div>
+    </section>
+
+    <!-- 2. 导数与微分 -->
+    <section class="section" id="ch2">
+        <h2><span class="num">2</span> 导数与微分</h2>
+        <span class="advance-tag">进阶</span>
+        <p>初学者指南把导数定义为"平均变化率的极限"。这一节要问一个更深的问题：如果只知道区间两端点的平均变化率，能对区间内部的瞬时变化率说些什么？答案是中值定理（Mean Value Theorem, MVT）——微分学里最重要的定理之一，后面 FTC 的证明也要靠它。</p>
+
+        <h3>2.1 拉格朗日中值定理</h3>
+        <div class="theorem">
+            <span class="label">定理（拉格朗日中值定理，MVT）</span>
+            若函数 \(f\) 在闭区间 \([a,b]\) 上连续，在开区间 \((a,b)\) 内可导，则存在至少一点 \(c \in (a,b)\)，使得
+            \[
+            f'(c) = \frac{f(b)-f(a)}{b-a}
+            \]
+        </div>
+        <p>直白地说：无论一个函数在区间端点之间怎么"抖动"，只要它连续且处处可导，就一定存在某个内部时刻，瞬时变化率恰好等于整段区间的平均变化率——不可能整个过程都严格快于平均，也不可能整个过程都严格慢于平均。</p>
+
+        <h3>2.2 深入例子：设备累计能耗曲线</h3>
+        <p><span class="data-badge">示例数据（用于演示计算，非实际记录）</span> 设某 IoT 电能记录仪对一台设备的累计能耗建立了如下拟合模型：\(E(t) = 0.2t^2 + 1.5t\)（\(t\)：运行时长，单位小时；\(E\)：累计能耗，单位 kWh）。按小时采样得到：</p>
+        <div class="data-table-wrap">
+        <table class="data-table">
+            <tr><th>运行时长 \(t\)（h）</th><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td></tr>
+            <tr><th>累计能耗 \(E(t)\)（kWh）</th><td>1.7</td><td>3.8</td><td>6.3</td><td>9.2</td><td>12.5</td><td>16.2</td></tr>
+        </table>
+        </div>
+        <p>先计算区间 \([1,6]\) 上的<strong>平均</strong>能耗变化率（即两端点连线——割线——的斜率）：</p>
+        <div class="eq">
+            \[
+            \frac{E(6)-E(1)}{6-1} = \frac{16.2 - 1.7}{5} = \frac{14.5}{5} = 2.9 \ \text{kWh/h}
+            \]
+        </div>
+        <p>\(E(t)\) 是多项式函数，在 \([1,6]\) 上连续、在 \((1,6)\) 内处处可导，满足 MVT 的条件。故存在 \(c\in(1,6)\) 使 \(E'(c)=2.9\)。求导得 \(E'(t) = 0.4t+1.5\)，令其等于 2.9：</p>
+        <div class="eq">
+            \[
+            0.4c + 1.5 = 2.9 \ \Rightarrow\ 0.4c = 1.4 \ \Rightarrow\ c = 3.5
+            \]
+        </div>
+        <p>验证：\(c=3.5\) 确实落在 \((1,6)\) 内。这说明在 \(t=3.5\) 小时这一瞬间，设备的瞬时耗电速率恰好等于整个 5 小时区间的平均耗电速率——这不是巧合，是 MVT 保证一定存在这样的时刻。</p>
+
+        <div class="note">
+            💡 MVT 也是后面第 6 节证明微积分基本定理的关键工具：把"累积量的变化"和"瞬时速率"重新联系起来，靠的正是"平均值一定在某处被瞬时达到"这个事实。
+        </div>
+
+        <div class="demo-box">
+            <div class="demo-caption">📈 MVT 演示：割线（平均变化率）与切线（瞬时变化率）</div>
+            <div class="flex-row">
+                <label>试探点 \(t = \)</label>
+                <input type="range" id="mvtT" min="1" max="6" value="2" step="0.05">
+                <span class="result-badge" id="mvtTval">t = 2.00</span>
+                <span class="result-badge" id="mvtMatch">切线斜率 = 1.30，割线斜率 = 2.90（不相等）</span>
+            </div>
+            <div id="mvtChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">灰色虚线是连接 \((1,1.7)\) 与 \((6,16.2)\) 的割线，红色实线是在试探点 \(t\) 处的切线。拖动滑块寻找使两条线斜率相等（平行）的位置——理论上唯一解是 \(t=3.5\)。</div>
+        </div>
+    </section>
+
+    <!-- 3. 求导法则 -->
+    <section class="section" id="ch3">
+        <h2><span class="num">3</span> 求导法则</h2>
+        <span class="advance-tag">进阶</span>
+        <p>初学者指南直接给出了四则运算求导公式。这一节把乘法和除法的求导公式从极限定义严格推导出来，并给出链式法则成立所需要的精确条件——这个条件在后面第 9、10 节讨论反向传播时会重新出现。</p>
+
+        <h3>3.1 乘法法则的推导</h3>
+        <p>设 \(u(x)\)、\(v(x)\) 都在 \(x\) 处可导。按定义：</p>
+        <div class="eq">
+            \[
+            (uv)'(x) = \lim_{h\to 0} \frac{u(x+h)v(x+h) - u(x)v(x)}{h}
+            \]
+        </div>
+        <p>关键技巧是在分子中加、减同一项 \(u(x+h)v(x)\)（凑出两个可以分别处理的差）：</p>
+        <div class="eq">
+            \[
+            \begin{aligned}
+            &\phantom{=} u(x+h)v(x+h) - u(x)v(x) \\
+            &= u(x+h)v(x+h) - u(x+h)v(x) + u(x+h)v(x) - u(x)v(x) \\
+            &= u(x+h)\big[v(x+h)-v(x)\big] + \big[u(x+h)-u(x)\big]v(x)
+            \end{aligned}
+            \]
+        </div>
+        <p>两边除以 \(h\) 再取极限，并利用 \(u\) 在 \(x\) 处可导必连续（故 \(u(x+h)\to u(x)\)）：</p>
+        <div class="eq">
+            \[
+            (uv)'(x) = u(x)\cdot v'(x) + u'(x)\cdot v(x)
+            \]
+        </div>
+        <p>除法法则可以用同样手法对 \(u/v\) 展开，或者把 \(u/v\) 写成 \(u \cdot v^{-1}\) 再结合乘法法则和链式法则得到，这里不重复展开，结论仍是初学者指南给出的 \(\left(\frac{u}{v}\right)' = \frac{u'v-uv'}{v^2}\)（\(v(x)\neq 0\)）。</p>
+
+        <h3>3.2 链式法则的精确条件</h3>
+        <div class="theorem">
+            <span class="label">定理（链式法则）</span>
+            设 \(g\) 在 \(x_0\) 处可导，\(f\) 在 \(g(x_0)\) 处可导，则复合函数 \(f\circ g\) 在 \(x_0\) 处可导，且
+            \[
+            (f\circ g)'(x_0) = f'(g(x_0)) \cdot g'(x_0)
+            \]
+        </div>
+        <p>要点是：链式法则不是"总成立"的万能公式，它需要<strong>内层函数在这一点可导，且外层函数在内层的取值处也可导</strong>这两个条件同时满足。神经网络里如果某一层用了不可导的激活函数（比如 ReLU 在 0 点），从数学上讲那一点的链式法则并不严格成立，工程上是靠人为规定次梯度（例如令 ReLU 在 0 处的"导数"取 0 或 1）来绕过这个问题的。</p>
+
+        <h3>3.3 深入例子：功率对时间的变化率</h3>
+        <p><span class="data-badge">示例数据（用于演示计算，非实际记录）</span> 设备启动阶段，电压、电流随时间（\(t\)：分钟）近似线性变化：\(V(t) = 220 + 0.5t\)（V），\(I(t) = 5 - 0.02t\)（A）。瞬时功率 \(P(t) = V(t)I(t)\)，用乘法法则直接求导：</p>
+        <div class="eq">
+            \[
+            P'(t) = V'(t)I(t) + V(t)I'(t) = 0.5\cdot I(t) + V(t)\cdot(-0.02)
+            \]
+        </div>
+        <p>在 \(t=0\) 处代入：\(P'(0) = 0.5\times 5 + 220\times(-0.02) = 2.5 - 4.4 = -1.9\) W/min。</p>
+        <p><strong>直接展开验证：</strong>把 \(P(t)\) 完全展开：</p>
+        <div class="eq">
+            \[
+            P(t) = (220+0.5t)(5-0.02t) = 1100 - 4.4t + 2.5t - 0.01t^2 = 1100 - 1.9t - 0.01t^2
+            \]
+        </div>
+        <p>直接求导：\(P'(t) = -1.9 - 0.02t\)，在 \(t=0\) 处同样得到 \(-1.9\)——与乘法法则算出的结果完全一致。这说明设备刚启动时，尽管电压在缓慢上升，功率却在下降，原因是电流下降的效应（\(-4.4\)）超过了电压上升的效应（\(+2.5\)）。</p>
+
+        <div class="demo-box">
+            <div class="demo-caption">⚙️ 乘法法则演示：\(P(t)=V(t)I(t)\) 及其两种求导方式的一致性</div>
+            <div class="flex-row">
+                <label>\(t\)（分钟）\( = \)</label>
+                <input type="range" id="prodT" min="0" max="20" value="0" step="0.5">
+                <span class="result-badge" id="prodTval">t = 0.0</span>
+                <span class="result-badge">乘法法则 P' = <span id="prodRuleVal">-1.90</span></span>
+                <span class="result-badge">直接展开 P' = <span id="prodDirectVal">-1.90</span></span>
+            </div>
+            <div id="prodChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">蓝色曲线是功率 \(P(t)\)，橙色曲线是它的导数 \(P'(t)\)（两种算法给出的曲线完全重合）。可以看到功率先降后可能回升的走势由电压、电流两个相反效应共同决定。</div>
+        </div>
+    </section>
+
+    <!-- 4. 高阶导数与泰勒展开 -->
+    <section class="section" id="ch4">
+        <h2><span class="num">4</span> 高阶导数与泰勒展开</h2>
+        <span class="advance-tag">进阶</span>
+        <p>初学者指南只演示了"阶数越高、近似越准"这个现象。这一节补上关键的一环：泰勒展开只取有限项时，到底<strong>差多少</strong>？这个"差多少"有一个可以精确写出、甚至可以提前估计上界的表达式——拉格朗日余项。</p>
+
+        <h3>4.1 带拉格朗日余项的泰勒定理</h3>
+        <div class="theorem">
+            <span class="label">定理（泰勒定理，拉格朗日余项形式）</span>
+            设 \(f\) 在包含 \(a\) 的区间上具有直到 \(n+1\) 阶的连续导数，则对该区间内任意 \(x\)，存在介于 \(a\) 与 \(x\) 之间的 \(\xi\)，使得
+            \[
+            f(x) = \sum_{k=0}^{n} \frac{f^{(k)}(a)}{k!}(x-a)^k \;+\; \underbrace{\frac{f^{(n+1)}(\xi)}{(n+1)!}(x-a)^{n+1}}_{R_n(x)\ \text{（余项）}}
+            \]
+        </div>
+        <p>这个定理最大的价值在于：即使不知道 \(\xi\) 具体是哪一点，只要能对 \(|f^{(n+1)}|\) 在整个区间上找到一个上界 \(M\)，就能给出余项的<strong>确定性上界</strong> \(|R_n(x)| \le \dfrac{M}{(n+1)!}|x-a|^{n+1}\)——不需要知道真实值，也能保证近似误差不超过多少。</p>
+
+        <h3>4.2 深入例子：传感器标定曲线的线性近似</h3>
+        <p><span class="data-badge">示例数据（用于演示计算，非实际记录）</span> 某电流传感器的原始 ADC 读数 \(x\) 与标定后电压值之间，近似满足非线性标定曲线 \(f(x)=\sqrt{x}\)。工程上常用"在某个工作点附近做线性近似"来快速估算附近读数对应的电压，而不必每次都开方。取工作点 \(a=100\)（此时 \(f(100)=10\)）：</p>
+        <div class="eq">
+            \[
+            f'(x) = \frac{1}{2\sqrt{x}},\quad f'(100)=\frac{1}{20}=0.05, \qquad
+            f''(x) = -\frac{1}{4x^{3/2}},\quad f''(100) = -0.00025
+            \]
+        </div>
+        <p>一阶（线性）近似：\(f(100+\Delta x) \approx 10 + 0.05\,\Delta x\)。取 \(\Delta x = 4\)（即读数 \(x=104\)）：</p>
+        <div class="eq">
+            \[
+            f(104) \approx 10 + 0.05\times 4 = 10.2
+            \]
+        </div>
+        <p>真实值 \(\sqrt{104} = 10.198039\ldots\)，误差 \(\approx 0.001961\)。用拉格朗日余项估计这个误差的上界：由于 \(|f''(x)|=\frac{1}{4x^{3/2}}\) 在 \([100,104]\) 上单调递减，最大值在左端点取得，即 \(|f''(\xi)| \le |f''(100)| = 0.00025\)，于是</p>
+        <div class="eq">
+            \[
+            |R_1| \le \frac{0.00025}{2!}\times 4^2 = \frac{0.00025}{2}\times 16 = 0.002
+            \]
+        </div>
+        <p>实际误差 \(0.001961 \le 0.002\)，理论上界成立，且贴得很紧。下表列出了 \(x=100\) 附近几个读数的标定曲线示例数据、线性近似值与误差：</p>
+        <div class="data-table-wrap">
+        <table class="data-table">
+            <tr><th>原始读数 \(x\)</th><td>100</td><td>101</td><td>102</td><td>103</td><td>104</td><td>105</td></tr>
+            <tr><th>真实值 \(\sqrt{x}\)</th><td>10.0000</td><td>10.0499</td><td>10.0995</td><td>10.1489</td><td>10.1980</td><td>10.2470</td></tr>
+            <tr><th>线性近似</th><td>10.0000</td><td>10.0500</td><td>10.1000</td><td>10.1500</td><td>10.2000</td><td>10.2500</td></tr>
+            <tr><th>误差（真实-近似）</th><td>0</td><td>-0.00012</td><td>-0.00050</td><td>-0.00111</td><td>-0.00196</td><td>-0.00305</td></tr>
+        </table>
+        <div class="data-caption">示例数据（用于演示计算，非实际记录）</div>
+        </div>
+        <p>若再加上二阶项（泰勒二阶近似）\(f(104)\approx 10+0.05\times4+\frac{-0.00025}{2}\times4^2 = 10+0.2-0.002=10.198\)，与真实值 \(10.198039\) 已经精确到千分位——这正是"阶数越高、误差上界收缩得越快"的具体体现。</p>
+
+        <div class="highlight">
+            <strong>💡 与训练神经网络的联系：</strong> 优化算法（如牛顿法、二阶优化器）本质上就是在损失函数的泰勒展开上做文章：梯度下降只用到一阶项（4.3 节的线性近似），而二阶方法额外利用二阶项（Hessian 矩阵）来获得更快的收敛速度，代价是要计算和求逆一个庞大的二阶导数矩阵。
+        </div>
+
+        <div class="demo-box">
+            <div class="demo-caption">📐 泰勒近似 + 拉格朗日余项上界演示：\(f(x)=\sqrt{x}\)，\(a=100\)</div>
+            <div class="flex-row">
+                <label>偏移量 \(\Delta x = \)</label>
+                <input type="range" id="taylorDx" min="0" max="8" value="4" step="0.2">
+                <span class="result-badge" id="taylorDxVal">Δx = 4.0</span>
+                <span class="result-badge">真实误差 = <span id="taylorErrVal">0.00196</span></span>
+                <span class="result-badge">余项上界 = <span id="taylorBoundVal">0.00200</span></span>
+            </div>
+            <div id="taylorChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">蓝色是真实曲线 \(\sqrt{x}\)，橙色是一阶线性近似，浅橙色阴影是拉格朗日余项给出的理论误差带 \([f(x)-|R_1|,\,f(x)+|R_1|]\)。可以看到真实值始终落在这个理论误差带内。</div>
+        </div>
+    </section>
+
+    <!-- 5. 积分基础 -->
+    <section class="section" id="ch5">
+        <h2><span class="num">5</span> 积分基础</h2>
+        <span class="advance-tag">进阶</span>
+        <p>初学者指南把定积分直接理解为"曲线下方的面积"。这一节要问：这个"面积"到底是怎么<strong>被定义</strong>出来的？答案不是靠几何直觉，而是靠一个严格的极限过程——黎曼和的极限。</p>
+
+        <h3>5.1 黎曼积分的严格定义</h3>
+        <div class="theorem">
+            <span class="label">定义（黎曼积分）</span>
+            将 \([a,b]\) 等分为 \(n\) 份，\(\Delta x = \frac{b-a}{n}\)，取每个小区间的一个代表点 \(x_i^*\)（例如右端点），构造黎曼和
+            \[
+            S_n = \sum_{i=1}^{n} f(x_i^*)\,\Delta x
+            \]
+            若当 \(n\to\infty\)（\(\Delta x \to 0\)）时 \(S_n\) 收敛到一个与代表点选取方式无关的确定值，就称这个极限为 \(f\) 在 \([a,b]\) 上的定积分：
+            \[
+            \int_a^b f(x)\,dx = \lim_{n\to\infty} S_n
+            \]
+        </div>
+        <p>这比"求面积"严格得多：它把"面积"归约成了一个纯粹的数列极限问题，不再依赖几何直觉，因而也能推广到根本不是"面积"的场合（比如概率密度的积分、高维体积）。</p>
+
+        <h3>5.2 深入例子：精确计算一个黎曼和的极限</h3>
+        <p><span class="data-badge">示例数据（用于演示计算，非实际记录）</span> 延续第 2 节的设备能耗模型：瞬时功率（能耗速率）为 \(P(t) = 0.4t+1.5\)（kW），想知道从 \(t=0\) 到 \(t=6\) 小时的累计能耗。直接构造右端点黎曼和：\(\Delta x = 6/n\)，\(t_i = 6i/n\)：</p>
+        <div class="eq">
+            \[
+            S_n = \sum_{i=1}^{n} P(t_i)\,\Delta x = \sum_{i=1}^{n}\left(0.4\cdot\frac{6i}{n}+1.5\right)\frac{6}{n}
+            = \frac{6}{n}\left[\frac{2.4}{n}\sum_{i=1}^n i + 1.5n\right]
+            \]
+        </div>
+        <p>代入 \(\sum_{i=1}^n i = \frac{n(n+1)}{2}\)：</p>
+        <div class="eq">
+            \[
+            S_n = \frac{6}{n}\left[\frac{2.4}{n}\cdot\frac{n(n+1)}{2} + 1.5n\right]
+            = \frac{6}{n}\big[1.2(n+1) + 1.5n\big]
+            = \frac{6}{n}\big[2.7n + 1.2\big]
+            = 16.2 + \frac{7.2}{n}
+            \]
+        </div>
+        <p>这是一个<strong>精确的闭式表达式</strong>（不是数值近似）：当 \(n\to\infty\) 时，\(\frac{7.2}{n}\to 0\)，故</p>
+        <div class="eq">
+            \[
+            \int_0^6 (0.4t+1.5)\,dt = \lim_{n\to\infty} S_n = 16.2
+            \]
+        </div>
+        <p>用不定积分核对：\(\int_0^6(0.4t+1.5)dt = [0.2t^2+1.5t]_0^6 = 0.2\times36+1.5\times6 = 7.2+9=16.2\)，与黎曼和的精确极限完全一致——这正是设备 6 小时累计的总能耗，与第 2 节能耗模型 \(E(6)=16.2\) kWh 相符（因为 \(P=E'\)，这一点第 6 节会正式说明）。</p>
+
+        <div class="demo-box">
+            <div class="demo-caption">🧱 黎曼和精确收敛演示：\(S_n = 16.2 + 7.2/n \to 16.2\)</div>
+            <div class="flex-row">
+                <label>矩形数量 \(n = \)</label>
+                <input type="range" id="riemannN" min="1" max="60" value="4" step="1">
+                <span class="result-badge" id="riemannNval">n = 4</span>
+                <span class="result-badge">\(S_n = \)<span id="riemannSum">18.00</span></span>
+                <span class="result-badge">精确极限 = 16.2</span>
+            </div>
+            <div id="riemannBarChart" class="echart-box"></div>
+            <div id="riemannConvChart" class="echart-box" style="margin-top:1.5rem;"></div>
+            <div class="note" style="text-align:left;">上图是矩形近似（红点为当前 \(n\) 对应的 \(S_n\)）；下图是 \(S_n=16.2+7.2/n\) 随 \(n\) 增大而精确收敛到 16.2（虚线）的完整曲线——这条曲线是解析求出的精确公式，不是数值拟合。</div>
+        </div>
+    </section>
+
+    <!-- 6. 微积分基本定理 -->
+    <section class="section" id="ch6">
+        <h2><span class="num">6</span> 微积分基本定理</h2>
+        <span class="advance-tag">进阶</span>
+        <p>初学者指南展示了 FTC 成立的现象。这一节给出完整的证明骨架——它并不需要什么新工具，只需要把第 2 节的中值定理和第 5 节的黎曼积分定义组合起来。</p>
+
+        <h3>6.1 微积分基本定理（第一部分）与证明</h3>
+        <div class="theorem">
+            <span class="label">定理（FTC 第一部分）</span>
+            若 \(f\) 在 \([a,b]\) 上连续，定义 \(F(x) = \int_a^x f(t)\,dt\)，则 \(F\) 在 \((a,b)\) 内可导，且 \(F'(x) = f(x)\)。
+        </div>
+        <div class="proof">
+            <span class="label">证明骨架</span>
+            按导数定义，考察差商：
+            \[
+            \frac{F(x+h)-F(x)}{h} = \frac{1}{h}\int_x^{x+h} f(t)\,dt
+            \]
+            由积分中值定理（MVT 在积分上的推广版本：\(f\) 连续时，\(\int_x^{x+h}f(t)dt = f(\xi)\cdot h\) 对某个 \(\xi\) 介于 \(x\) 与 \(x+h\) 之间成立），上式等于 \(f(\xi)\)。当 \(h\to 0\) 时，\(\xi\) 被夹在 \(x\) 与 \(x+h\) 之间，必然 \(\xi \to x\)；又因为 \(f\) 连续，\(f(\xi)\to f(x)\)。故
+            \[
+            F'(x) = \lim_{h\to 0}\frac{F(x+h)-F(x)}{h} = \lim_{h\to 0} f(\xi) = f(x)
+            \]
+            <div class="qed">∎</div>
+        </div>
+        <p>再看它的推论——牛顿-莱布尼茨公式：若 \(F' = f\)，则 \(\int_a^b f(x)dx = F(b)-F(a)\)。这个推论直接由"\(F(x)-\int_a^x f(t)dt\) 的导数恒为 0，故它是常数"再代入 \(x=a\) 求出这个常数即可得到。</p>
+
+        <h3>6.2 深入例子：从功率到能耗，再验证回功率</h3>
+        <p><span class="data-badge">示例数据（用于演示计算，非实际记录）</span> 沿用第 2、5 节的设备模型：瞬时功率 \(P(t)=0.4t+1.5\)（kW），累计能耗 \(E(t)=\int_0^t P(s)\,ds\)。直接积分：</p>
+        <div class="eq">
+            \[
+            E(t) = \int_0^t (0.4s+1.5)\,ds = \big[0.2s^2+1.5s\big]_0^t = 0.2t^2+1.5t
+            \]
+        </div>
+        <p>这正是第 2 节一开始给出的能耗模型 \(E(t)=0.2t^2+1.5t\)——原来它就是功率曲线 \(P(t)\) 的累积。按 FTC，反过来对 \(E(t)\) 求导应该精确地还原出 \(P(t)\)：</p>
+        <div class="eq">
+            \[
+            E'(t) = 0.4t + 1.5 = P(t)
+            \]
+        </div>
+        <p>两者逐点相等（对任意 \(t\) 都成立，不只是某个特定点），这就是 FTC 在这个具体例子上的完整验证：先积分（功率→能耗）再求导（能耗→功率），精确地回到了出发点。</p>
+
+        <div class="demo-box">
+            <div class="demo-caption">📐 FTC 演示：\(P(t)=0.4t+1.5\) 与其累积函数 \(E(t)=0.2t^2+1.5t\)</div>
+            <div class="flex-row">
+                <label>\(t\)（小时）\( = \)</label>
+                <input type="range" id="ftcT" min="0" max="6" value="2" step="0.05">
+                <span class="result-badge">P(t) = <span id="ftcPval">2.30</span></span>
+                <span class="result-badge">E'(t) = <span id="ftcEprimeVal">2.30</span></span>
+            </div>
+            <div id="ftcChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">拖动滑块，观察 \(E(t)\) 曲线在该点切线的斜率始终精确等于当前 \(P(t)\) 的值——这就是 \(E'(t)=P(t)\) 的直观呈现。</div>
+        </div>
+    </section>
+
+    <!-- 7. 多元函数与偏导数 -->
+    <section class="section" id="ch7">
+        <h2><span class="num">7</span> 多元函数与偏导数</h2>
+        <span class="advance-tag">进阶</span>
+        <p>初学者指南说"偏导数就是固定其他变量、只对一个变量求导"。这一节要指出一个很多人会忽略、但极其重要的陷阱：<strong>所有偏导数都存在，并不能保证函数是"可微"的</strong>。这两者是不同的概念，下面用一个经典反例把差距具体展示出来。</p>
+
+        <h3>7.1 多元可微性的精确定义</h3>
+        <div class="theorem">
+            <span class="label">定义（可微）</span>
+            函数 \(f(x,y)\) 在点 \((a,b)\) 处<strong>可微</strong>，是指存在向量 \((A,B)\)（若可微，则必有 \(A=\partial f/\partial x,\ B=\partial f/\partial y\)），使得
+            \[
+            f(a+h,b+k) = f(a,b) + Ah + Bk + o\!\left(\sqrt{h^2+k^2}\right), \quad (h,k)\to(0,0)
+            \]
+            其中 \(o(\cdot)\) 表示这一项相对于 \(\sqrt{h^2+k^2}\) 是高阶小量，即 \(\lim_{(h,k)\to(0,0)} \frac{o(\sqrt{h^2+k^2})}{\sqrt{h^2+k^2}} = 0\)。
+        </div>
+        <p>直觉上，"可微"要求函数在这一点附近能被一个<strong>平面</strong>（而不只是两条独立的直线）很好地逼近——这比"沿 x 轴方向、沿 y 轴方向分别可导"严格得多，因为它还要求所有斜方向都能被同一个平面协调地逼近。</p>
+
+        <h3>7.2 经典反例：偏导数存在但不可微（甚至不连续）</h3>
+        <p>考虑函数：</p>
+        <div class="eq">
+            \[
+            f(x,y) = \begin{cases} \dfrac{xy}{x^2+y^2}, & (x,y)\neq(0,0) \\ 0, & (x,y)=(0,0)\end{cases}
+            \]
+        </div>
+        <p><strong>偏导数在原点确实存在：</strong>\(\frac{\partial f}{\partial x}(0,0) = \lim_{h\to0}\frac{f(h,0)-f(0,0)}{h} = \lim_{h\to0}\frac{0-0}{h}=0\)（因为 \(f(h,0)=\frac{h\times0}{h^2}=0\)）。同理 \(\frac{\partial f}{\partial y}(0,0)=0\)。两个偏导数都存在且等于 0。</p>
+        <p><strong>但函数在原点并不连续：</strong>沿任意一条经过原点、方向角为 \(\theta\) 的直线趋近原点（即 \(x=t\cos\theta,\ y=t\sin\theta,\ t\to0\)），代入化简：</p>
+        <div class="eq">
+            \[
+            f(t\cos\theta, t\sin\theta) = \frac{t^2\cos\theta\sin\theta}{t^2(\cos^2\theta+\sin^2\theta)} = \cos\theta\sin\theta = \frac12\sin(2\theta)
+            \]
+        </div>
+        <p>这个值<strong>与 \(t\) 无关，只与方向角 \(\theta\) 有关</strong>！沿 \(\theta=45°\) 方向趋近时极限是 \(\frac12\)，沿 \(\theta=0°\)（x 轴）趋近时极限是 \(0\)。不同方向趋近给出不同的极限值，说明 \(\lim_{(x,y)\to(0,0)}f(x,y)\) 根本不存在，函数在原点不连续。而可微必然蕴含连续，所以这个函数在原点<strong>不可微</strong>——尽管它的两个偏导数都老老实实地存在。这正是"偏导数存在 ≠ 可微"最直接的证据。</p>
+
+        <div class="highlight">
+            <strong>💡 工程含义：</strong> 在实现自定义神经网络层时，如果只检查了"对每个参数单独求导都有值"就断定这一层处处可微，是不够的——真正安全的做法是确认函数在感兴趣区域内是 \(C^1\)（偏导数存在且连续），这是一个能推出可微的、更容易验证的充分条件。
+        </div>
+
+        <h3>7.3 梯度与最速上升方向（预告）</h3>
+        <p>当函数确实可微时，把各个偏导数按顺序排成向量就得到梯度 \(\nabla f\)。利用柯西-施瓦茨不等式可以证明梯度方向就是函数值增长最快的方向——完整证明和数值演示放在下一节（8.2）里，与方向导数的形式化定义一起给出。</p>
+
+        <h3>7.4 深入例子：单神经元损失对参数的偏导数</h3>
+        <p><span class="data-badge">示例数据（用于演示计算，非实际记录）</span> 设一个最简单的线性神经元，用归一化后的电压 \(x_1\)、电流 \(x_2\) 预测归一化能耗 \(y\)：</p>
+        <div class="data-table-wrap">
+        <table class="data-table">
+            <tr><th>样本</th><th>电压 \(x_1\)（归一化）</th><th>电流 \(x_2\)（归一化）</th><th>实际能耗 \(y\)（归一化）</th></tr>
+            <tr><td>样本 A</td><td>2</td><td>3</td><td>1</td></tr>
+        </table>
+        </div>
+        <p>模型 \(\hat y = w_1x_1 + w_2x_2 + b\)，当前参数 \(w_1=0.5,\ w_2=-0.2,\ b=0.1\)。损失取平方误差的一半 \(L=\frac12(\hat y-y)^2\)（这个 \(\frac12\) 只是为了让求导后系数更干净）。</p>
+        <p><strong>前向计算：</strong></p>
+        <div class="eq">
+            \[
+            \hat y = 0.5\times2 + (-0.2)\times3 + 0.1 = 1.0 - 0.6 + 0.1 = 0.5, \qquad
+            L = \frac12(0.5-1)^2 = \frac12\times0.25 = 0.125
+            \]
+        </div>
+        <p><strong>偏导数（多元函数 \(L(w_1,w_2,b)\) 对各参数的偏导数）：</strong>把 \(x_2,b\) 固定不变、只令 \(w_1\) 变化，用链式法则（\(L\) 是 \(\hat y\) 的函数，\(\hat y\) 是 \(w_1\) 的函数）：</p>
+        <div class="eq">
+            \[
+            \frac{\partial L}{\partial w_1} = \frac{\partial L}{\partial \hat y}\cdot\frac{\partial \hat y}{\partial w_1} = (\hat y - y)\cdot x_1 = (0.5-1)\times2 = -1.0
+            \]
+        </div>
+        <p>同理：</p>
+        <div class="eq">
+            \[
+            \frac{\partial L}{\partial w_2} = (\hat y-y)\cdot x_2 = -0.5\times3 = -1.5, \qquad
+            \frac{\partial L}{\partial b} = (\hat y-y)\cdot 1 = -0.5
+            \]
+        </div>
+        <p>这三个偏导数将在第 8 节被拼成梯度向量 \(\nabla L = (-1.0,\,-1.5,\,-0.5)\)，并用来判断"往哪个方向调整参数，损失下降最快"。</p>
+
+        <div class="demo-box">
+            <div class="demo-caption">🧩 反例可视化：不同方向趋近原点时 \(f(t\cos\theta,t\sin\theta)\) 的极限值</div>
+            <div id="counterexChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">横轴是趋近方向角 \(\theta\)，纵轴是沿该方向趋近原点时 \(f\) 收敛到的值 \(\frac12\sin(2\theta)\)。它不是一条水平线——说明不同方向给出不同极限，函数在原点没有统一的极限（不连续），即使沿 \(\theta=0°\) 和 \(\theta=90°\)（对应两个偏导数）取值恰好都是 0。</div>
+        </div>
+    </section>
+
+    <!-- 8. 梯度与方向导数 -->
+    <section class="section" id="ch8">
+        <h2><span class="num">8</span> 梯度与方向导数</h2>
+        <span class="advance-tag">进阶</span>
+        <p>初学者指南直接断言"梯度方向是上升最快的方向"。这一节把方向导数写成严格定义，并用柯西-施瓦茨不等式完整证明这个断言，然后在第 7 节的神经元例子上验证一遍数字。</p>
+
+        <h3>8.1 方向导数的严格定义</h3>
+        <div class="theorem">
+            <span class="label">定义（方向导数）</span>
+            设 \(\mathbf{u}=(u_1,u_2)\) 是单位向量（\(\|\mathbf u\|=1\)）。函数 \(f\) 在点 \(\mathbf{p}\) 处沿方向 \(\mathbf u\) 的方向导数定义为
+            \[
+            D_{\mathbf u}f(\mathbf p) = \lim_{t\to 0}\frac{f(\mathbf p + t\mathbf u) - f(\mathbf p)}{t}
+            \]
+            若 \(f\) 在 \(\mathbf p\) 处可微，可以证明 \(D_{\mathbf u}f(\mathbf p) = \nabla f(\mathbf p)\cdot \mathbf u\)。
+        </div>
+        <p>（这条"若可微则方向导数等于梯度点乘方向"的结论，正是 7.2 节反例失效的地方——那个函数不可微，所以它的方向导数 \(\frac12\sin2\theta\) 无法写成任何固定向量 \(\mathbf g\) 与 \(\mathbf u=(\cos\theta,\sin\theta)\) 的点积 \(\mathbf g\cdot\mathbf u = g_1\cos\theta+g_2\sin\theta\)——因为后者只能是单一频率的正弦曲线，而 \(\sin2\theta\) 是双倍频率。）</p>
+
+        <h3>8.2 梯度是最速上升方向：柯西-施瓦茨证明</h3>
+        <div class="proof">
+            <span class="label">证明</span>
+            对任意单位向量 \(\mathbf u\)，由柯西-施瓦茨不等式：
+            \[
+            D_{\mathbf u}f = \nabla f\cdot \mathbf u \le \|\nabla f\|\,\|\mathbf u\| = \|\nabla f\|
+            \]
+            等号成立当且仅当 \(\mathbf u\) 与 \(\nabla f\) 方向相同，即 \(\mathbf u = \dfrac{\nabla f}{\|\nabla f\|}\)。此时 \(D_{\mathbf u}f = \|\nabla f\|\)，是所有方向中能取到的最大值。故梯度方向就是函数值增长最快的方向，其反方向（负梯度）就是下降最快的方向。
+            <div class="qed">∎</div>
+        </div>
+
+        <h3>8.3 深入例子：验证第 7 节神经元的最速方向</h3>
+        <p><span class="data-badge">示例数据（用于演示计算，非实际记录）</span> 沿用 7.4 节的梯度 \(\nabla L = (\partial L/\partial w_1,\ \partial L/\partial w_2) = (-1.0,\,-1.5)\)（这里只看 \(w_1,w_2\) 两个方向，暂不看 \(b\)）。梯度的模长：</p>
+        <div class="eq">
+            \[
+            \|\nabla L\| = \sqrt{(-1.0)^2+(-1.5)^2} = \sqrt{1+2.25} = \sqrt{3.25} \approx 1.802776
+            \]
+        </div>
+        <p>最速上升方向的单位向量：</p>
+        <div class="eq">
+            \[
+            \mathbf u^* = \frac{\nabla L}{\|\nabla L\|} \approx (-0.554700,\ -0.832050)
+            \]
+        </div>
+        <p>沿这个方向的方向导数应精确等于 \(\|\nabla L\|\)。直接代入验证：</p>
+        <div class="eq">
+            \[
+            D_{\mathbf u^*}L = \nabla L\cdot \mathbf u^* = (-1.0)(-0.554700) + (-1.5)(-0.832050) = 0.554700+1.248075 = 1.802775
+            \]
+        </div>
+        <p>（末位的 0.000001 误差来自四舍五入）与 \(\|\nabla L\|\) 完全吻合。再对比另一个方向，例如 \(\mathbf u=(1,0)\)（只调 \(w_1\)）：\(D_{(1,0)}L = -1.0\)，明显小于 \(1.802776\)——说明只沿单个坐标轴方向调整，不如沿梯度方向调整下降（或上升）得快，这正是梯度下降沿<strong>负梯度整体方向</strong>而不是"每次只调一个参数"的原因。</p>
+
+        <div class="demo-box">
+            <div class="demo-caption">🧭 方向导数 vs. 角度：与 7 节反例的鲜明对比</div>
+            <div id="dirDerivChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">这条曲线是 \(D_{\mathbf u}L(\theta) = -1.0\cos\theta - 1.5\sin\theta\)，是单一频率的正弦曲线（可以写成 \(\|\nabla L\|\cos(\theta-\varphi)\) 的形式），峰值恰好出现在梯度方向角处，峰值高度正好是 \(\|\nabla L\|\approx1.8028\)。与 7 节反例中双倍频率、无法写成这种形式的 \(\frac12\sin2\theta\) 形成对照——这正是"可微"与"不可微"在方向导数图像上的直接区别。</div>
+        </div>
+    </section>
+
+    <!-- 9. 链式法则与自动微分 -->
+    <section class="section" id="ch9">
+        <h2><span class="num">9</span> 链式法则与自动微分</h2>
+        <span class="advance-tag">进阶</span>
+        <p>初学者指南给出了多元链式法则的公式和计算图的直觉图示。这一节补上两件事：多元链式法则的证明思路，以及反向传播为什么在计算复杂度上远胜"暴力对每个参数分别求导"的前向模式——这是自动微分能撑起千万参数模型的根本原因。</p>
+
+        <h3>9.1 多元链式法则的证明思路</h3>
+        <p>设 \(z=f(u,v)\)，\(u=g(x,y)\)，\(v=h(x,y)\)，且 \(f,g,h\) 都可微。利用 7.1 节可微性的定义展开 \(z\) 关于 \(x\) 的微小扰动 \(\Delta x\)（保持 \(y\) 不变）：\(u\) 的变化量 \(\Delta u = \frac{\partial u}{\partial x}\Delta x + o(\Delta x)\)，\(v\) 的变化量同理。再把这两个变化量代入 \(z=f(u,v)\) 的可微性展开式：</p>
+        <div class="eq">
+            \[
+            \Delta z = \frac{\partial f}{\partial u}\Delta u + \frac{\partial f}{\partial v}\Delta v + o(\sqrt{\Delta u^2+\Delta v^2})
+            \]
+        </div>
+        <p>把 \(\Delta u,\Delta v\) 的展开式代入并整理高阶小量项（因为 \(g,h\) 可微，\(\Delta u,\Delta v\) 本身是 \(\Delta x\) 的一阶量，所以那些 \(o(\cdot)\) 项在除以 \(\Delta x\) 后仍趋于 0），两边除以 \(\Delta x\) 并令 \(\Delta x\to0\)，就得到初学者指南 9.1 节给出的公式：</p>
+        <div class="eq">
+            \[
+            \frac{\partial z}{\partial x} = \frac{\partial z}{\partial u}\frac{\partial u}{\partial x} + \frac{\partial z}{\partial v}\frac{\partial v}{\partial x}
+            \]
+        </div>
+        <p>这个推导也说明了为什么链式法则需要每一环都<strong>可微</strong>：只有可微性提供的"线性近似 + 高阶小量可忽略"这个结构，才能保证上面凑高阶小量的步骤真正成立。</p>
+
+        <h3>9.2 用第 7 节的例子验证链式法则</h3>
+        <p>回顾 7.4 节：\(\hat y = w_1x_1+w_2x_2+b\)，\(L=\frac12(\hat y-y)^2\)。链式法则说 \(\frac{\partial L}{\partial w_1}=\frac{\partial L}{\partial \hat y}\cdot\frac{\partial \hat y}{\partial w_1}\)。分别算出两段：\(\frac{\partial L}{\partial \hat y}=\hat y-y=0.5-1=-0.5\)，\(\frac{\partial \hat y}{\partial w_1}=x_1=2\)。相乘：</p>
+        <div class="eq">
+            \[
+            \frac{\partial L}{\partial w_1} = (-0.5)\times 2 = -1.0
+            \]
+        </div>
+        <p>与 7.4 节直接算出的 \(-1.0\) 完全一致——链式法则"分段算、再相乘"给出的结果，和把 \(L\) 写成 \(w_1\) 的显式函数直接求导，得到的是同一个数。</p>
+
+        <h3>9.3 前向模式 vs. 反向模式：复杂度权衡</h3>
+        <p>自动微分沿着计算图传播导数信息有两种方式：<strong>前向模式</strong>从输入出发，随着前向计算同步传播"每个中间量对某一个固定输入的导数"；<strong>反向模式</strong>（也就是反向传播）从输出出发，反向传播"损失对每个中间量的导数"。两者的计算代价有本质区别：</p>
+        <ul>
+            <li>若函数有 \(n\) 个输入、\(m\) 个输出，前向模式每一遍只能求出"全部输出对<strong>一个</strong>输入"的导数（雅可比矩阵的一列），要得到完整的梯度信息需要跑 \(n\) 遍。</li>
+            <li>反向模式每一遍只能求出"<strong>一个</strong>输出对全部输入"的导数（雅可比矩阵的一行），要得到完整信息需要跑 \(m\) 遍。</li>
+        </ul>
+        <p>神经网络训练中，参数个数 \(n\) 可能有数百万甚至上亿，而损失函数的输出 \(m\) 永远是 1（一个标量）。所以反向模式只需要<strong>一次反向传播</strong>就能拿到损失对每一个参数的梯度，而前向模式理论上需要对每个参数各跑一遍、共 \(n\) 遍——这就是为什么 PyTorch、TensorFlow 的自动微分（autograd）都以反向模式为核心实现的根本原因。</p>
+
+        <div class="note">
+            💡 反向模式的代价是需要在前向计算时缓存下所有中间结果（用于反向时计算局部导数），这带来了额外的内存开销——这正是显存往往成为训练大模型瓶颈的原因之一。
+        </div>
+
+        <div class="demo-box">
+            <div class="demo-caption">⚖️ 前向模式 vs. 反向模式：达到完整梯度所需的传播遍数</div>
+            <div class="flex-row">
+                <label>参数个数 \(n = \)</label>
+                <input type="range" id="admodeN" min="1" max="2000" value="500" step="1">
+                <span class="result-badge" id="admodeNval">n = 500</span>
+            </div>
+            <div id="admodeChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">损失函数的输出恒为 \(m=1\)。前向模式所需遍数随参数个数线性增长（灰色柱），反向模式恒为 1 遍（紫色柱）——参数越多，反向模式的优势就越夸张，这正是深度学习必须依赖反向传播的现实原因。</div>
+        </div>
+    </section>
+
+    <!-- 10. MLP 应用 —— 反向传播 -->
+    <section class="section" id="ch10">
+        <h2><span class="num">10</span> MLP 应用 —— 反向传播</h2>
+        <span class="advance-tag">进阶</span>
+        <p>初学者指南给出了一次前向传播的数值例子。这一节补上完整的反向传播——对一个真实的两层网络，手工算出损失对<strong>每一个</strong>权重的梯度，做几步真正的梯度下降，并验证损失确实在下降。</p>
+
+        <h3>10.1 网络结构与示例数据</h3>
+        <p><span class="data-badge">示例数据（用于演示计算，非实际记录）</span> 用归一化后的电压 \(x_1\)、电流 \(x_2\) 预测归一化能耗 \(y\)，网络结构为 \(2 \to 2(\text{ReLU}) \to 1\)：</p>
+        <div class="data-table-wrap">
+        <table class="data-table">
+            <tr><th>样本</th><th>电压 \(x_1\)</th><th>电流 \(x_2\)</th><th>实际能耗 \(y\)</th></tr>
+            <tr><td>样本 B</td><td>1</td><td>2</td><td>1.5</td></tr>
+        </table>
+        </div>
+        <p>初始参数：</p>
+        <div class="eq">
+            \[
+            W^{[1]} = \begin{bmatrix}0.3 & -0.1\\ 0.2 & 0.4\end{bmatrix}, \quad
+            \mathbf b^{[1]} = \begin{bmatrix}0.1\\-0.2\end{bmatrix}, \qquad
+            W^{[2]} = \begin{bmatrix}0.5 & -0.3\end{bmatrix}, \quad b^{[2]} = 0.05
+            \]
+        </div>
+
+        <h3>10.2 前向传播（逐步数值计算）</h3>
+        <div class="eq">
+            \[
+            \mathbf z^{[1]} = W^{[1]}\mathbf x + \mathbf b^{[1]}
+            = \begin{bmatrix}0.3\times1 -0.1\times2 + 0.1\\ 0.2\times1+0.4\times2-0.2\end{bmatrix}
+            = \begin{bmatrix}0.2\\0.8\end{bmatrix}
+            \]
+        </div>
+        <p>经过 ReLU（两个分量都为正，ReLU 不改变数值）：\(\mathbf a^{[1]} = \text{ReLU}(\mathbf z^{[1]}) = (0.2,\ 0.8)\)。</p>
+        <div class="eq">
+            \[
+            \hat y = W^{[2]}\mathbf a^{[1]} + b^{[2]} = 0.5\times0.2 + (-0.3)\times0.8 + 0.05 = 0.1 - 0.24 + 0.05 = -0.09
+            \]
+        </div>
+        <p>损失（平方误差的一半）：</p>
+        <div class="eq">
+            \[
+            L = \frac12(\hat y-y)^2 = \frac12(-0.09-1.5)^2 = \frac12\times(1.59)^2 = \frac12\times2.5281 = 1.26405
+            \]
+        </div>
+
+        <h3>10.3 反向传播（逐层手算全部梯度）</h3>
+        <p>输出层误差项：</p>
+        <div class="eq">
+            \[
+            \delta^{[2]} = \frac{\partial L}{\partial \hat y} = \hat y - y = -0.09-1.5 = -1.59
+            \]
+        </div>
+        <p>输出层权重、偏置的梯度：</p>
+        <div class="eq">
+            \[
+            \frac{\partial L}{\partial W^{[2]}_1} = \delta^{[2]}\cdot a^{[1]}_1 = -1.59\times0.2 = -0.318, \quad
+            \frac{\partial L}{\partial W^{[2]}_2} = \delta^{[2]}\cdot a^{[1]}_2 = -1.59\times0.8 = -1.272
+            \]
+            \[
+            \frac{\partial L}{\partial b^{[2]}} = \delta^{[2]} = -1.59
+            \]
+        </div>
+        <p>反向传播到隐藏层：先把误差沿 \(W^{[2]}\) 传回去，再逐元素乘上 ReLU 的导数（两个 \(z^{[1]}\) 分量都 \(>0\)，故 \(\text{ReLU}'=1\)）：</p>
+        <div class="eq">
+            \[
+            \frac{\partial L}{\partial a^{[1]}_1} = \delta^{[2]}\cdot W^{[2]}_1 = -1.59\times0.5=-0.795, \quad
+            \frac{\partial L}{\partial a^{[1]}_2} = \delta^{[2]}\cdot W^{[2]}_2 = -1.59\times(-0.3)=0.477
+            \]
+            \[
+            \delta^{[1]}_1 = -0.795\times1 = -0.795, \qquad \delta^{[1]}_2 = 0.477\times1 = 0.477
+            \]
+        </div>
+        <p>第一层权重、偏置的梯度：</p>
+        <div class="eq">
+            \[
+            \frac{\partial L}{\partial W^{[1]}_{11}} = \delta^{[1]}_1 x_1 = -0.795, \quad
+            \frac{\partial L}{\partial W^{[1]}_{12}} = \delta^{[1]}_1 x_2 = -1.59, \quad
+            \frac{\partial L}{\partial b^{[1]}_1} = \delta^{[1]}_1 = -0.795
+            \]
+            \[
+            \frac{\partial L}{\partial W^{[1]}_{21}} = \delta^{[1]}_2 x_1 = 0.477, \quad
+            \frac{\partial L}{\partial W^{[1]}_{22}} = \delta^{[1]}_2 x_2 = 0.954, \quad
+            \frac{\partial L}{\partial b^{[1]}_2} = \delta^{[1]}_2 = 0.477
+            \]
+        </div>
+        <p>至此，损失对全部 9 个参数（6 个第一层权重、2 个第一层偏置、2 个第二层权重、1 个第二层偏置——共 9 个数值）的梯度都已算出。</p>
+
+        <h3>10.4 梯度下降更新一步，验证损失下降</h3>
+        <p>取学习率 \(\eta=0.05\)，按 \(w \leftarrow w-\eta\frac{\partial L}{\partial w}\) 更新全部参数，例如：</p>
+        <div class="eq">
+            \[
+            W^{[2]}_1 \leftarrow 0.5 - 0.05\times(-0.318) = 0.5159, \qquad
+            b^{[2]} \leftarrow 0.05 - 0.05\times(-1.59) = 0.1295
+            \]
+        </div>
+        <p>其余参数按同样方式更新后为：\(W^{[1]}=\begin{bmatrix}0.33975 & -0.02050\\0.17615 & 0.35230\end{bmatrix}\)，\(\mathbf b^{[1]}=(0.13975,\,-0.22385)\)，\(W^{[2]}=(0.5159,\,-0.2364)\)。用新参数重新做一次前向传播：</p>
+        <div class="eq">
+            \[
+            \mathbf z^{[1]}_{\text{new}} = (0.4385,\ 0.6569), \quad \mathbf a^{[1]}_{\text{new}} = (0.4385,\ 0.6569)
+            \]
+            \[
+            \hat y_{\text{new}} = 0.5159\times0.4385 + (-0.2364)\times0.6569 + 0.1295 \approx 0.20043
+            \]
+            \[
+            L_{\text{new}} = \frac12(0.20043-1.5)^2 \approx 0.84444
+            \]
+        </div>
+        <p>损失从 \(1.26405\) 降到了 \(0.84444\)——仅仅一步梯度下降，损失就下降了约 33%。这正是梯度下降"沿负梯度方向走一小步、损失必定（在学习率合适时）下降"这一理论保证的真实数值体现，其数学依据正是第 4 节的线性近似：\(L(\mathbf w-\eta\nabla L)\approx L(\mathbf w) - \eta\|\nabla L\|^2 < L(\mathbf w)\)（只要 \(\eta\) 不太大、梯度不为零）。</p>
+
+        <div class="highlight">
+            <strong>🎯 收敛性：</strong> 反复重复"前向传播 → 反向传播求梯度 → 按学习率更新参数"这一循环，损失会持续下降；下方演示区用同一组样本数据实际跑了这个循环（并非凭空模拟的示意曲线），可以看到损失从 1.26 一路下降、逐渐逼近 0——因为该样本本身可以被这个网络精确拟合。真实训练中，损失通常不会精确到 0（受限于数据噪声、模型容量、正则化等），但"沿负梯度方向持续下降直到梯度接近 0（收敛到驻点）"的机制是完全一样的。
+        </div>
+
+        <div class="demo-box">
+            <div class="demo-caption">📉 真实反向传播训练曲线：在样本 B 上重复"前向 + 反向 + 梯度下降"</div>
+            <div class="flex-row">
+                <button class="btn" id="trainStart">开始训练</button>
+                <span class="result-badge">当前损失 = <span id="trainLossVal">--</span></span>
+                <span class="result-badge">迭代次数 = <span id="trainIterVal">0</span></span>
+            </div>
+            <div id="trainChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">这条曲线由 JavaScript 按 10.2、10.3 节完全相同的前向 / 反向传播公式逐轮真实计算得出（学习率 \(\eta=0.05\)），不是预先画好的示意图——第一步的损失值应与上面手算的 1.26405 → 0.84444 完全吻合。</div>
+        </div>
+
+        <h3>10.5 十章回顾</h3>
+        <ul>
+            <li><strong>第 1 节</strong>的 ε-δ 定义保证了损失函数的连续性是可以严格验证的；</li>
+            <li><strong>第 2、6 节</strong>的中值定理与 FTC 说明了"瞬时变化率"与"累积量"之间可以互相精确换算；</li>
+            <li><strong>第 3 节</strong>的乘法法则与链式法则的可导性条件，是本节反向传播每一步都能合法展开的前提；</li>
+            <li><strong>第 4 节</strong>的泰勒线性近似，正是"梯度下降一步必定下降"这句话的证明依据；</li>
+            <li><strong>第 5 节</strong>的黎曼和严格定义，让"累积"这件事有了不依赖几何直觉的数学基础；</li>
+            <li><strong>第 7、8 节</strong>的可微性陷阱与柯西-施瓦茨证明，说明了为什么梯度方向确实是最优的参数调整方向；</li>
+            <li><strong>第 9 节</strong>的多元链式法则与反向模式复杂度分析，正是本节能够一次反向传播算出全部 9 个梯度的根本原因。</li>
+        </ul>
+
+        <div class="note">
+            💡 进一步学习：Hessian 矩阵与二阶优化、softmax + 交叉熵梯度的推导、批量归一化的反向传播、Adam / RMSProp 等自适应学习率方法背后的数学。
+        </div>
+    </section>
+
+    <footer>
+        ⚡ 高等数学 · 导数与微积分 · 进阶版
+    </footer>
+</main>
+
+<script>
+    // ===== KaTeX 渲染 =====
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+            delimiters: [
+                {left: '\\[', right: '\\]', display: true},
+                {left: '\\(', right: '\\)', display: false}
+            ],
+            throwOnError: false
+        });
+    });
+
+    // ================= ECharts / 交互演示 =================
+    window.addEventListener('load', function() {
+
+        // ---------- ch1: ε-δ 交互演示 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('epsDeltaChart'));
+            const f = x => 2 * x + 1;
+            const a = 3, L = 7;
+            const xs = [];
+            for (let i = -100; i <= 100; i++) xs.push(a + i / 100 * 1.5); // a±1.5
+            const lineData = xs.map(x => [x, f(x)]);
+
+            const epsSlider = document.getElementById('epsSlider');
+            const deltaSlider = document.getElementById('deltaSlider');
+            const epsVal = document.getElementById('epsVal');
+            const deltaVal = document.getElementById('deltaVal');
+            const verdict = document.getElementById('epsDeltaVerdict');
+
+            function render() {
+                const eps = parseFloat(epsSlider.value);
+                const delta = parseFloat(deltaSlider.value);
+                epsVal.textContent = 'ε = ' + eps.toFixed(2);
+                deltaVal.textContent = 'δ = ' + delta.toFixed(2);
+
+                const segXs = [];
+                for (let i = -50; i <= 50; i++) segXs.push(a - delta + i / 50 * delta);
+                const segData = segXs.map(x => [x, f(x)]);
+
+                chart.setOption({
+                    grid: { left: 45, right: 20, top: 20, bottom: 30 },
+                    xAxis: { type: 'value', min: a - 1.5, max: a + 1.5, name: 'x' },
+                    yAxis: { type: 'value', min: L - 3, max: L + 3, name: 'f(x)' },
+                    series: [
+                        { type: 'line', data: lineData, showSymbol: false, lineStyle: { color: '#94a3b8', width: 1.5 } },
+                        { type: 'line', data: segData, showSymbol: false, lineStyle: { color: '#ef4444', width: 3 } },
+                        {
+                            type: 'line', data: [[a - delta, L - 3], [a - delta, L + 3]], showSymbol: false,
+                            lineStyle: { color: '#3b82f6', type: 'dashed', width: 1.5 }
+                        },
+                        {
+                            type: 'line', data: [[a + delta, L - 3], [a + delta, L + 3]], showSymbol: false,
+                            lineStyle: { color: '#3b82f6', type: 'dashed', width: 1.5 }
+                        },
+                        {
+                            type: 'line', data: [[a - 1.5, L - eps], [a + 1.5, L - eps]], showSymbol: false,
+                            lineStyle: { color: '#f59e0b', type: 'dashed', width: 1.5 }
+                        },
+                        {
+                            type: 'line', data: [[a - 1.5, L + eps], [a + 1.5, L + eps]], showSymbol: false,
+                            lineStyle: { color: '#f59e0b', type: 'dashed', width: 1.5 }
+                        }
+                    ]
+                });
+
+                const maxDev = Math.abs(f(a + delta) - L); // 线性函数，端点偏差最大
+                const ok = maxDev <= eps;
+                verdict.innerHTML = (ok
+                    ? '✅ 满足：当前 δ 邻域内的曲线段完全落在 ε 邻域内（δ ≤ ε/2 = ' + (eps/2).toFixed(3) + '）。'
+                    : '❌ 不满足：δ 太大，曲线段在 δ 邻域端点处已超出 ε 邻域（需要 δ ≤ ε/2 = ' + (eps/2).toFixed(3) + '，当前 δ=' + delta.toFixed(2) + '）。')
+                    + ' 拖动滑块观察边界情况。';
+            }
+            epsSlider.addEventListener('input', render);
+            deltaSlider.addEventListener('input', render);
+            render();
+        })();
+
+        // ---------- ch2: MVT 演示 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('mvtChart'));
+            const E = t => 0.2 * t * t + 1.5 * t;
+            const Eprime = t => 0.4 * t + 1.5;
+            const xs = [];
+            for (let i = 0; i <= 100; i++) xs.push(i / 100 * 7); // 0..7
+            const curveData = xs.map(t => [t, E(t)]);
+            const secantSlope = (E(6) - E(1)) / (6 - 1);
+            const secantData = [[1, E(1)], [6, E(6)]];
+
+            const mvtT = document.getElementById('mvtT');
+            const mvtTval = document.getElementById('mvtTval');
+            const mvtMatch = document.getElementById('mvtMatch');
+
+            function render(t) {
+                const y0 = E(t);
+                const k = Eprime(t);
+                const tanXs = [];
+                for (let i = -20; i <= 20; i++) tanXs.push(t + i / 20 * 1.2);
+                const tangentData = tanXs.map(x => [x, y0 + k * (x - t)]);
+                chart.setOption({
+                    grid: { left: 45, right: 20, top: 20, bottom: 30 },
+                    xAxis: { type: 'value', min: 0, max: 7, name: 't (h)' },
+                    yAxis: { type: 'value', min: 0, max: 20, name: 'E(t) kWh' },
+                    series: [
+                        { type: 'line', data: curveData, showSymbol: false, lineStyle: { color: '#7c3aed', width: 2 } },
+                        { type: 'line', data: secantData, showSymbol: true, symbolSize: 8, lineStyle: { color: '#94a3b8', type: 'dashed', width: 2 } },
+                        { type: 'line', data: tangentData, showSymbol: false, lineStyle: { color: '#ef4444', width: 2 } },
+                        { type: 'scatter', data: [[t, y0]], symbolSize: 10, itemStyle: { color: '#ef4444' } }
+                    ]
+                });
+                mvtTval.textContent = 't = ' + t.toFixed(2);
+                const close = Math.abs(k - secantSlope) < 0.02;
+                mvtMatch.textContent = '切线斜率 = ' + k.toFixed(2) + '，割线斜率 = ' + secantSlope.toFixed(2) + (close ? '（≈相等！）' : '（不相等）');
+            }
+            mvtT.addEventListener('input', function() { render(parseFloat(this.value)); });
+            render(parseFloat(mvtT.value));
+        })();
+
+        // ---------- ch3: 乘法法则演示 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('prodChart'));
+            const V = t => 220 + 0.5 * t;
+            const I = t => 5 - 0.02 * t;
+            const P = t => V(t) * I(t);
+            const Pprime = t => -1.9 - 0.02 * t; // 直接展开结果
+            const PprimeRule = t => 0.5 * I(t) + V(t) * (-0.02); // 乘法法则结果
+            const xs = [];
+            for (let i = 0; i <= 100; i++) xs.push(i / 100 * 20);
+            const Pdata = xs.map(t => [t, P(t)]);
+            const PprimeData = xs.map(t => [t, Pprime(t) * 50 + 1090]); // 缩放便于同图显示
+
+            const prodT = document.getElementById('prodT');
+            const prodTval = document.getElementById('prodTval');
+            const prodRuleVal = document.getElementById('prodRuleVal');
+            const prodDirectVal = document.getElementById('prodDirectVal');
+
+            function render(t) {
+                prodTval.textContent = 't = ' + t.toFixed(1);
+                prodRuleVal.textContent = PprimeRule(t).toFixed(2);
+                prodDirectVal.textContent = Pprime(t).toFixed(2);
+                chart.setOption({
+                    grid: { left: 50, right: 50, top: 20, bottom: 30 },
+                    xAxis: { type: 'value', min: 0, max: 20, name: 't (min)' },
+                    yAxis: { type: 'value', min: 1050, max: 1105, name: 'P(t) W' },
+                    series: [
+                        { name: 'P(t)', type: 'line', data: Pdata, showSymbol: false, lineStyle: { color: '#3b82f6', width: 2 } },
+                        { name: "P'(t)（已缩放平移显示趋势）", type: 'line', data: PprimeData, showSymbol: false, lineStyle: { color: '#f59e0b', width: 2 } },
+                        { type: 'scatter', data: [[t, P(t)]], symbolSize: 10, itemStyle: { color: '#ef4444' } }
+                    ]
+                });
+            }
+            prodT.addEventListener('input', function() { render(parseFloat(this.value)); });
+            render(parseFloat(prodT.value));
+        })();
+
+        // ---------- ch4: 泰勒 + 拉格朗日余项 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('taylorChart'));
+            const a = 100;
+            const f = x => Math.sqrt(x);
+            const fpa = 1 / (2 * Math.sqrt(a)); // 0.05
+            const fppa_abs = 1 / (4 * Math.pow(a, 1.5)); // 0.00025 (取绝对值上界)
+            const xs = [];
+            for (let i = 0; i <= 100; i++) xs.push(a + i / 100 * 8);
+            const trueData = xs.map(x => [x, f(x)]);
+            const linData = xs.map(x => [x, a === a ? (10 + fpa * (x - a)) : 0]);
+            const upperData = xs.map(x => {
+                const dx = x - a;
+                const bound = fppa_abs / 2 * dx * dx;
+                return [x, 10 + fpa * dx + bound];
+            });
+            const lowerData = xs.map(x => {
+                const dx = x - a;
+                const bound = fppa_abs / 2 * dx * dx;
+                return [x, 10 + fpa * dx - bound];
+            });
+
+            const taylorDx = document.getElementById('taylorDx');
+            const taylorDxVal = document.getElementById('taylorDxVal');
+            const taylorErrVal = document.getElementById('taylorErrVal');
+            const taylorBoundVal = document.getElementById('taylorBoundVal');
+
+            function render(dx) {
+                const x = a + dx;
+                const lin = 10 + fpa * dx;
+                const actual = f(x);
+                const bound = fppa_abs / 2 * dx * dx;
+                taylorDxVal.textContent = 'Δx = ' + dx.toFixed(1);
+                taylorErrVal.textContent = Math.abs(actual - lin).toFixed(5);
+                taylorBoundVal.textContent = bound.toFixed(5);
+                chart.setOption({
+                    grid: { left: 50, right: 20, top: 20, bottom: 30 },
+                    xAxis: { type: 'value', min: 100, max: 108, name: 'x' },
+                    yAxis: { type: 'value', min: 9.9, max: 10.5, name: 'f(x)' },
+                    series: [
+                        { name: '误差上界带', type: 'line', data: upperData, showSymbol: false, lineStyle: { opacity: 0 }, areaStyle: { color: 'rgba(245,158,11,0.15)' }, stack: 'band' },
+                        { name: '误差上界带下', type: 'line', data: lowerData, showSymbol: false, lineStyle: { opacity: 0 } },
+                        { name: '真实 √x', type: 'line', data: trueData, showSymbol: false, lineStyle: { color: '#3b82f6', width: 2 } },
+                        { name: '线性近似', type: 'line', data: linData, showSymbol: false, lineStyle: { color: '#f59e0b', width: 2, type: 'dashed' } },
+                        { type: 'scatter', data: [[x, actual]], symbolSize: 10, itemStyle: { color: '#ef4444' } }
+                    ]
+                });
+            }
+            taylorDx.addEventListener('input', function() { render(parseFloat(this.value)); });
+            render(parseFloat(taylorDx.value));
+        })();
+
+        // ---------- ch5: 黎曼和精确收敛 ----------
+        (function() {
+            const barChart = echarts.init(document.getElementById('riemannBarChart'));
+            const convChart = echarts.init(document.getElementById('riemannConvChart'));
+            const P = t => 0.4 * t + 1.5;
+            const curveXs = [];
+            for (let i = 0; i <= 100; i++) curveXs.push(i / 100 * 6);
+            const curveData = curveXs.map(t => [t, P(t)]);
+
+            const riemannN = document.getElementById('riemannN');
+            const riemannNval = document.getElementById('riemannNval');
+            const riemannSum = document.getElementById('riemannSum');
+
+            function sumN(n) {
+                const dx = 6 / n;
+                let s = 0;
+                const bars = [];
+                for (let i = 1; i <= n; i++) {
+                    const ti = i * dx;
+                    const h = P(ti);
+                    s += h * dx;
+                    bars.push([ti - dx / 2, h]);
+                }
+                return { s, bars, dx };
+            }
+
+            // 收敛曲线：n=1..60 的精确公式 S_n = 16.2 + 7.2/n
+            const convData = [];
+            for (let n = 1; n <= 60; n++) convData.push([n, 16.2 + 7.2 / n]);
+
+            function renderConv(n) {
+                convChart.setOption({
+                    grid: { left: 50, right: 20, top: 20, bottom: 30 },
+                    xAxis: { type: 'value', min: 1, max: 60, name: 'n' },
+                    yAxis: { type: 'value', min: 16, max: 24, name: 'S_n' },
+                    series: [
+                        { name: 'S_n = 16.2 + 7.2/n', type: 'line', data: convData, showSymbol: false, lineStyle: { color: '#7c3aed', width: 2 } },
+                        { name: '精确极限 16.2', type: 'line', data: [[1, 16.2], [60, 16.2]], showSymbol: false, lineStyle: { color: '#ef4444', type: 'dashed', width: 1.5 } },
+                        { type: 'scatter', data: [[n, 16.2 + 7.2 / n]], symbolSize: 10, itemStyle: { color: '#ef4444' } }
+                    ]
+                });
+            }
+
+            function render(n) {
+                const { s, bars, dx } = sumN(n);
+                riemannNval.textContent = 'n = ' + n;
+                riemannSum.textContent = s.toFixed(3);
+                barChart.setOption({
+                    grid: { left: 50, right: 20, top: 20, bottom: 30 },
+                    xAxis: { type: 'value', min: 0, max: 6, name: 't (h)' },
+                    yAxis: { type: 'value', min: 0, max: 4, name: 'P(t) kW' },
+                    series: [
+                        { type: 'bar', data: bars, barWidth: (dx / 6) * 100 + '%', itemStyle: { color: 'rgba(124,58,237,0.3)', borderColor: '#7c3aed' }, barGap: '0%' },
+                        { type: 'line', data: curveData, showSymbol: false, lineStyle: { color: '#4c1d95', width: 2 } }
+                    ]
+                });
+                renderConv(n);
+            }
+            riemannN.addEventListener('input', function() { render(parseInt(this.value)); });
+            render(parseInt(riemannN.value));
+        })();
+
+        // ---------- ch6: FTC 演示 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('ftcChart'));
+            const P = t => 0.4 * t + 1.5;
+            const E = t => 0.2 * t * t + 1.5 * t;
+            const xs = [];
+            for (let i = 0; i <= 100; i++) xs.push(i / 100 * 6);
+            const Pdata = xs.map(t => [t, P(t)]);
+            const Edata = xs.map(t => [t, E(t)]);
+            const ftcT = document.getElementById('ftcT');
+            const ftcPval = document.getElementById('ftcPval');
+            const ftcEprimeVal = document.getElementById('ftcEprimeVal');
+
+            function render(t) {
+                const pt = P(t);
+                chart.setOption({
+                    grid: { left: 50, right: 20, top: 20, bottom: 30 },
+                    xAxis: { type: 'value', min: 0, max: 6, name: 't' },
+                    yAxis: { type: 'value', min: 0, max: 18 },
+                    series: [
+                        { name: 'P(t)', type: 'line', data: Pdata, showSymbol: false, lineStyle: { color: '#94a3b8', width: 2 } },
+                        {
+                            name: 'E(t)', type: 'line', data: Edata, showSymbol: false, lineStyle: { color: '#7c3aed', width: 2 },
+                            markPoint: { symbolSize: 12, data: [{ coord: [t, E(t)], itemStyle: { color: '#ef4444' } }] }
+                        }
+                    ]
+                });
+                ftcPval.textContent = pt.toFixed(2);
+                ftcEprimeVal.textContent = pt.toFixed(2);
+            }
+            ftcT.addEventListener('input', function() { render(parseFloat(this.value)); });
+            render(parseFloat(ftcT.value));
+        })();
+
+        // ---------- ch7: 反例可视化 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('counterexChart'));
+            const thetas = [];
+            for (let i = 0; i <= 360; i++) thetas.push(i / 180 * Math.PI);
+            const data = thetas.map(th => [th * 180 / Math.PI, 0.5 * Math.sin(2 * th)]);
+            chart.setOption({
+                grid: { left: 50, right: 20, top: 20, bottom: 30 },
+                xAxis: { type: 'value', min: 0, max: 360, name: 'θ (度)' },
+                yAxis: { type: 'value', min: -0.6, max: 0.6, name: '极限值' },
+                series: [
+                    { type: 'line', data: data, showSymbol: false, lineStyle: { color: '#ef4444', width: 2 } },
+                    { type: 'scatter', data: [[0, 0], [90, 0], [180, 0], [270, 0]], symbolSize: 9, itemStyle: { color: '#3b82f6' } }
+                ]
+            });
+        })();
+
+        // ---------- ch8: 方向导数 vs 角度 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('dirDerivChart'));
+            const g1 = -1.0, g2 = -1.5;
+            const gnorm = Math.sqrt(g1 * g1 + g2 * g2);
+            const thetas = [];
+            for (let i = 0; i <= 360; i++) thetas.push(i / 180 * Math.PI);
+            const data = thetas.map(th => [th * 180 / Math.PI, g1 * Math.cos(th) + g2 * Math.sin(th)]);
+            const thetaStar = Math.atan2(g2, g1) * 180 / Math.PI;
+            const thetaStarNorm = ((thetaStar % 360) + 360) % 360;
+            chart.setOption({
+                grid: { left: 50, right: 20, top: 20, bottom: 30 },
+                xAxis: { type: 'value', min: 0, max: 360, name: 'θ (度)' },
+                yAxis: { type: 'value', min: -2, max: 2, name: 'D_u L' },
+                series: [
+                    { type: 'line', data: data, showSymbol: false, lineStyle: { color: '#7c3aed', width: 2 } },
+                    { type: 'line', data: [[0, gnorm], [360, gnorm]], showSymbol: false, lineStyle: { color: '#ef4444', type: 'dashed', width: 1.5 } },
+                    { type: 'scatter', data: [[thetaStarNorm, gnorm]], symbolSize: 12, itemStyle: { color: '#ef4444' } }
+                ]
+            });
+        })();
+
+        // ---------- ch9: 前向/反向模式复杂度 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('admodeChart'));
+            const admodeN = document.getElementById('admodeN');
+            const admodeNval = document.getElementById('admodeNval');
+            function render(n) {
+                admodeNval.textContent = 'n = ' + n;
+                chart.setOption({
+                    grid: { left: 60, right: 20, top: 20, bottom: 30 },
+                    xAxis: { type: 'category', data: ['前向模式（需 n 遍）', '反向模式（恒为 1 遍）'] },
+                    yAxis: { type: 'value', name: '所需传播遍数' },
+                    series: [{
+                        type: 'bar',
+                        data: [
+                            { value: n, itemStyle: { color: '#94a3b8' } },
+                            { value: 1, itemStyle: { color: '#7c3aed' } }
+                        ],
+                        barWidth: '50%',
+                        label: { show: true, position: 'top' }
+                    }]
+                });
+            }
+            admodeN.addEventListener('input', function() { render(parseInt(this.value)); });
+            render(parseInt(admodeN.value));
+        })();
+
+        // ---------- ch10: 真实反向传播训练曲线 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('trainChart'));
+            const lossVal = document.getElementById('trainLossVal');
+            const iterVal = document.getElementById('trainIterVal');
+            chart.setOption({
+                grid: { left: 55, right: 20, top: 20, bottom: 30 },
+                xAxis: { type: 'value', name: '迭代次数', min: 0, max: 60 },
+                yAxis: { type: 'value', name: 'Loss', min: 0, max: 1.4 },
+                series: [{ type: 'line', data: [], showSymbol: false, lineStyle: { color: '#7c3aed', width: 2 } }]
+            });
+
+            function relu(z) { return Math.max(0, z); }
+            function reluGrad(z) { return z > 0 ? 1 : 0; }
+
+            document.getElementById('trainStart').addEventListener('click', function() {
+                const x1 = 1, x2 = 2, y = 1.5;
+                let W1 = [[0.3, -0.1], [0.2, 0.4]];
+                let b1 = [0.1, -0.2];
+                let W2 = [0.5, -0.3];
+                let b2 = 0.05;
+                const lr = 0.05;
+                const data = [];
+                for (let t = 0; t <= 60; t++) {
+                    const zpre1 = W1[0][0] * x1 + W1[0][1] * x2 + b1[0];
+                    const zpre2 = W1[1][0] * x1 + W1[1][1] * x2 + b1[1];
+                    const h1 = relu(zpre1), h2 = relu(zpre2);
+                    const yhat = W2[0] * h1 + W2[1] * h2 + b2;
+                    const loss = 0.5 * Math.pow(yhat - y, 2);
+                    data.push([t, loss]);
+
+                    const dL_dyhat = yhat - y;
+                    const dW2_1 = dL_dyhat * h1, dW2_2 = dL_dyhat * h2, db2 = dL_dyhat;
+                    const dL_dh1 = dL_dyhat * W2[0], dL_dh2 = dL_dyhat * W2[1];
+                    const dz1 = dL_dh1 * reluGrad(zpre1), dz2 = dL_dh2 * reluGrad(zpre2);
+                    const dW1_11 = dz1 * x1, dW1_12 = dz1 * x2, db1_1 = dz1;
+                    const dW1_21 = dz2 * x1, dW1_22 = dz2 * x2, db1_2 = dz2;
+
+                    W2[0] -= lr * dW2_1; W2[1] -= lr * dW2_2; b2 -= lr * db2;
+                    W1[0][0] -= lr * dW1_11; W1[0][1] -= lr * dW1_12; b1[0] -= lr * db1_1;
+                    W1[1][0] -= lr * dW1_21; W1[1][1] -= lr * dW1_22; b1[1] -= lr * db1_2;
+                }
+                let i = 0;
+                const partial = [];
+                const timer = setInterval(function() {
+                    if (i < data.length) {
+                        partial.push(data[i]);
+                        chart.setOption({ series: [{ data: partial.slice() }] });
+                        lossVal.textContent = data[i][1].toFixed(5);
+                        iterVal.textContent = data[i][0];
+                        i++;
+                    } else {
+                        clearInterval(timer);
+                    }
+                }, 60);
+            });
+        })();
+
+    });
+
+    // ===== 目录高亮 =====
+    const sections = document.querySelectorAll('.section');
+    const tocLinks = document.querySelectorAll('.toc a');
+
+    function updateActiveToc() {
+        let current = '';
+        const scrollPos = window.scrollY + 120;
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            if (scrollPos >= sectionTop) {
+                current = section.getAttribute('id');
+            }
+        });
+        tocLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${current}`) {
+                link.classList.add('active');
+            }
+        });
+    }
+
+    window.addEventListener('scroll', updateActiveToc);
+    window.addEventListener('load', updateActiveToc);
+
+    tocLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) {
+                targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                setTimeout(updateActiveToc, 100);
+            }
+        });
+    });
+</script>
+</body>
+</html>

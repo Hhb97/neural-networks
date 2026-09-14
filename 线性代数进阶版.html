@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>线性代数 · 大学全量 · 进阶版</title>
+    <!-- KaTeX for math rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+    <!-- ECharts（不加 defer，保证底部内联脚本执行时已可用） -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', system-ui, -apple-system, sans-serif;
+            background: #f6f8fc;
+            color: #1e293b;
+            line-height: 1.65;
+            padding: 1.5rem 1rem;
+            display: flex;
+            gap: 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* 侧边目录 */
+        .toc {
+            width: 280px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 1.5rem;
+            height: calc(100vh - 3rem);
+            overflow-y: auto;
+            background: white;
+            border-radius: 24px;
+            padding: 1.5rem 1rem 1.5rem 1.5rem;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.02);
+            border: 1px solid #e9eef3;
+            transition: all 0.1s;
+        }
+
+        .toc h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 1.2rem;
+            padding-left: 0.75rem;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .toc ul {
+            list-style: none;
+        }
+
+        .toc li {
+            margin-bottom: 0.35rem;
+        }
+
+        .toc a {
+            text-decoration: none;
+            color: #334155;
+            font-size: 0.94rem;
+            display: block;
+            padding: 0.5rem 0.75rem;
+            border-radius: 12px;
+            transition: 0.12s;
+            font-weight: 450;
+            border-left: 3px solid transparent;
+        }
+
+        .toc a:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        .toc a.active {
+            background: #eef6ff;
+            color: #2563eb;
+            font-weight: 500;
+            border-left-color: #3b82f6;
+        }
+
+        .toc .sub {
+            padding-left: 1.5rem;
+            font-size: 0.88rem;
+        }
+
+        .toc .sub a {
+            padding: 0.35rem 0.75rem;
+            font-weight: 400;
+        }
+
+        /* 主内容 */
+        .main {
+            flex: 1;
+            min-width: 0;
+            max-width: 1000px;
+        }
+
+        .main h1 {
+            font-size: 2.4rem;
+            font-weight: 650;
+            letter-spacing: -0.02em;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .main h1 small {
+            font-size: 1rem;
+            font-weight: 400;
+            color: #64748b;
+            margin-left: 1rem;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #475569;
+            margin-bottom: 2.5rem;
+            border-left: 4px solid #94a3b8;
+            padding-left: 1.2rem;
+        }
+
+        .section {
+            background: white;
+            border-radius: 24px;
+            padding: 2rem 2rem 2rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.015), 0 2px 6px rgba(0, 0, 0, 0.02);
+            border: 1px solid #eef2f6;
+            scroll-margin-top: 1.5rem;
+        }
+
+        .section h2 {
+            font-size: 1.8rem;
+            font-weight: 550;
+            margin-bottom: 1.5rem;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #e9eef3;
+        }
+
+        .section h2 .num {
+            background: #3b82f6;
+            color: white;
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .section h3 {
+            font-size: 1.3rem;
+            font-weight: 550;
+            margin: 1.5rem 0 0.8rem 0;
+            color: #1e293b;
+        }
+
+        .section h4 {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin: 1.2rem 0 0.6rem 0;
+            color: #334155;
+        }
+
+        .section p {
+            margin: 0.8rem 0;
+            color: #334155;
+        }
+
+        .section ul, .section ol {
+            margin: 0.8rem 0 0.8rem 1.5rem;
+            color: #334155;
+        }
+
+        .section li {
+            margin-bottom: 0.35rem;
+        }
+
+        .highlight {
+            background: #f0f7ff;
+            border-radius: 16px;
+            padding: 1.2rem 1.5rem;
+            margin: 1.2rem 0;
+            border-left: 5px solid #3b82f6;
+        }
+
+        .note {
+            background: #f8fafc;
+            border-radius: 14px;
+            padding: 1rem 1.3rem;
+            margin: 1rem 0;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            font-size: 0.98rem;
+        }
+
+        .proof {
+            background: #fdf9f2;
+            border-radius: 14px;
+            padding: 1.1rem 1.4rem;
+            margin: 1rem 0;
+            border: 1px solid #f1e3c6;
+            color: #57534e;
+        }
+
+        .proof .tag {
+            display: inline-block;
+            background: #d97706;
+            color: white;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 0.15rem 0.6rem;
+            border-radius: 20px;
+            margin-bottom: 0.5rem;
+        }
+
+        .eq {
+            text-align: center;
+            margin: 1.2rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+        }
+
+        .katex {
+            font-size: 1.15rem !important;
+        }
+
+        .matrix-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: center;
+            align-items: center;
+            margin: 1.5rem 0;
+        }
+
+        .matrix-vis {
+            background: #f8fafc;
+            border-radius: 18px;
+            padding: 1.5rem 2rem;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .matrix-bracket {
+            display: inline-flex;
+            align-items: center;
+            font-size: 2.6rem;
+            font-weight: 200;
+            color: #64748b;
+        }
+
+        .matrix-inner {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.4rem 1.2rem;
+            font-size: 1.4rem;
+            font-weight: 400;
+            font-family: 'Courier New', monospace;
+            padding: 0 0.6rem;
+        }
+
+        .matrix-inner span {
+            text-align: right;
+        }
+
+        .btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.7rem 1.6rem;
+            border-radius: 40px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.15s;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+            margin: 0.3rem 0.3rem 0.3rem 0;
+        }
+
+        .btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn.secondary {
+            background: #64748b;
+            box-shadow: 0 4px 12px rgba(100, 116, 139, 0.2);
+        }
+
+        .btn.secondary:hover {
+            background: #475569;
+        }
+
+        .demo-box {
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+            margin: 1.2rem 0;
+        }
+
+        .flex-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .result-badge {
+            background: #dbeafe;
+            padding: 0.4rem 1rem;
+            border-radius: 30px;
+            font-family: monospace;
+            font-size: 1.2rem;
+            color: #1e3a8a;
+            font-weight: 500;
+        }
+
+        /* ===== ECharts / 动画演示通用样式 ===== */
+        .echart-box {
+            width: 100%;
+            max-width: 640px;
+            height: 360px;
+            margin: 0 auto;
+        }
+
+        .demo-caption {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .la-grid-table {
+            display: inline-grid;
+            gap: 0.3rem;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            margin: 0.6rem;
+        }
+
+        .la-grid-table span {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 0.4rem 0.8rem;
+            text-align: center;
+            min-width: 2.4rem;
+        }
+
+        .la-grid-table span.pivot {
+            background: #dbeafe;
+            border-color: #3b82f6;
+            font-weight: 600;
+        }
+
+        /* 数据表格 */
+        .data-table-wrap {
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        table.data-table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 480px;
+            font-size: 0.96rem;
+        }
+
+        table.data-table th, table.data-table td {
+            border: 1px solid #e2e8f0;
+            padding: 0.55rem 0.9rem;
+            text-align: center;
+        }
+
+        table.data-table th {
+            background: #f1f5f9;
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        table.data-table td {
+            font-family: 'Courier New', monospace;
+            color: #334155;
+        }
+
+        .data-tag {
+            display: inline-block;
+            background: #fef3c7;
+            color: #92400e;
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 0.2rem 0.7rem;
+            border-radius: 20px;
+            margin-bottom: 0.6rem;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 2.5rem;
+            color: #94a3b8;
+            font-size: 0.9rem;
+            padding: 1rem 0;
+        }
+
+        /* 响应式 */
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column;
+                padding: 1rem;
+            }
+            .toc {
+                width: 100%;
+                height: auto;
+                position: static;
+                max-height: 300px;
+                margin-bottom: 1rem;
+            }
+        }
+
+        /* 滚动条美化 */
+        .toc::-webkit-scrollbar {
+            width: 5px;
+        }
+        .toc::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        .toc::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .toc::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ========= 侧边目录 ========= -->
+<nav class="toc" id="toc">
+    <h3>📚 线性代数 · 进阶版目录</h3>
+    <ul>
+        <li><a href="#ch1" class="active">1. 向量与空间</a></li>
+        <li><a href="#ch2">2. 矩阵基础</a></li>
+        <li><a href="#ch3">3. 矩阵乘法与线性变换</a></li>
+        <li><a href="#ch4">4. 行列式</a></li>
+        <li><a href="#ch5">5. 逆矩阵与初等变换</a></li>
+        <li><a href="#ch6">6. 向量空间与子空间</a></li>
+        <li><a href="#ch7">7. 特征值与特征向量</a></li>
+        <li><a href="#ch8">8. 正交性与投影</a></li>
+        <li><a href="#ch9">9. 对角化与SVD</a></li>
+        <li><a href="#ch10">10. MLP应用</a></li>
+    </ul>
+</nav>
+
+<!-- ========= 主内容 ========= -->
+<main class="main">
+    <h1>线性代数 <small>大学全量 · 进阶版</small></h1>
+    <div class="subtitle">承接初学者版的直觉，补上严格定义、完整证明，以及贯穿全书的电力监测数据实战</div>
+
+    <div class="note">
+        📘 本页是《线性代数 · 大学全量 · 初学者指南》的进阶续篇，默认你已经读过那一版、建立了向量、矩阵、行列式、特征值等概念的直观图像。这里不再重复"是什么"，而是聚焦"为什么成立"（严格证明）与"在深度学习里到底怎么用"（真实的多步数值演算）。全文用一套贯穿始终的示例数据——一组模拟的电力物联网监测读数（电压、电流、功率因数、功率）——从向量、矩阵、变换、秩、特征值、SVD 一路用到 MLP 反向传播。<br><br>
+        ⚠️ <strong>再次强调：文中出现的所有数据表格均为示例数据（用于演示计算，非实际记录），不代表任何真实设备、真实企业或真实场地的实测值。</strong>
+    </div>
+
+    <!-- 1. 向量与空间 -->
+    <section class="section" id="ch1">
+        <h2><span class="num">1</span> 向量与空间</h2>
+        <p><strong>进阶：</strong> 初学者版 1 节把向量讲成"带方向的箭头"，把线性无关讲成"谁也拼不出谁"。这一节把这两个说法换成严格定义和一个可以真正手算验证的证明。</p>
+
+        <h3>1.1 向量空间的公理化定义</h3>
+        <p>严格地说，一个<strong>向量空间</strong>（在实数域 \(\mathbb{R}\) 上）是一个集合 \(V\)，配备加法 \(+\) 和数乘运算，并且满足下面 8 条公理（对任意 \(\mathbf{u},\mathbf{v},\mathbf{w}\in V\) 和标量 \(c,d\in\mathbb{R}\)）：</p>
+        <ol>
+            <li><strong>加法封闭性：</strong> \(\mathbf{u}+\mathbf{v}\in V\)。</li>
+            <li><strong>加法交换律：</strong> \(\mathbf{u}+\mathbf{v}=\mathbf{v}+\mathbf{u}\)。</li>
+            <li><strong>加法结合律：</strong> \((\mathbf{u}+\mathbf{v})+\mathbf{w}=\mathbf{u}+(\mathbf{v}+\mathbf{w})\)。</li>
+            <li><strong>零元存在：</strong> 存在 \(\mathbf{0}\in V\)，使 \(\mathbf{v}+\mathbf{0}=\mathbf{v}\)。</li>
+            <li><strong>加法逆元存在：</strong> 对每个 \(\mathbf{v}\)，存在 \(-\mathbf{v}\)，使 \(\mathbf{v}+(-\mathbf{v})=\mathbf{0}\)。</li>
+            <li><strong>数乘封闭性：</strong> \(c\mathbf{v}\in V\)。</li>
+            <li><strong>分配律（两条）：</strong> \(c(\mathbf{u}+\mathbf{v})=c\mathbf{u}+c\mathbf{v}\)，且 \((c+d)\mathbf{v}=c\mathbf{v}+d\mathbf{v}\)；此外 \(c(d\mathbf{v})=(cd)\mathbf{v}\)，\(1\cdot\mathbf{v}=\mathbf{v}\)。</li>
+        </ol>
+        <p>\(\mathbb{R}^n\) 配上逐分量加法和数乘，可以直接逐条验证满足以上公理，因此是向量空间的"标准范例"——之后所有子空间、列空间、零空间，都是先证明"满足封闭性 + 含零向量"，本质上就是在验证公理 1、4、6 的一个子集（结合律等自动从大空间继承）。</p>
+
+        <h3>1.2 严格证明一组具体向量线性无关</h3>
+        <p>下面引入贯穿全书的示例数据集——表 A，来自一组模拟的电力监测巡检（示例数据，用于演示计算，非实际记录）：</p>
+        <div class="data-tag">表 A · 示例数据（用于演示计算，非实际记录）</div>
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <tr><th>编号</th><th>电压 V (V)</th><th>电流 I (A)</th><th>功率因数 pf</th><th>功率 P (kW)</th></tr>
+                <tr><td>①</td><td>218</td><td>10.2</td><td>0.91</td><td>2.023</td></tr>
+                <tr><td>②</td><td>221</td><td>15.5</td><td>0.88</td><td>3.014</td></tr>
+                <tr><td>③</td><td>219</td><td>8.1</td><td>0.93</td><td>1.650</td></tr>
+                <tr><td>④</td><td>222</td><td>20.3</td><td>0.86</td><td>3.876</td></tr>
+                <tr><td>⑤</td><td>220</td><td>12.4</td><td>0.90</td><td>2.455</td></tr>
+            </table>
+        </div>
+        <p>其中功率列由物理公式精确算出：\(P = V \times I \times \text{pf} / 1000\)（单位 kW）。取前三条巡检记录，把每条记录的 (电压, 电流, 功率因数) 看成 \(\mathbb{R}^3\) 中的一个向量：</p>
+        <div class="eq">
+            \[
+            \mathbf{v}_1=(218,\ 10.2,\ 0.91),\quad
+            \mathbf{v}_2=(221,\ 15.5,\ 0.88),\quad
+            \mathbf{v}_3=(219,\ 8.1,\ 0.93)
+            \]
+        </div>
+        <p><strong>命题：</strong> \(\mathbf{v}_1,\mathbf{v}_2,\mathbf{v}_3\) 线性无关。</p>
+        <div class="proof">
+            <span class="tag">证明</span>
+            <p>把三个向量作为行，排成方阵 \(M\)：</p>
+            <div class="eq">
+                \[
+                M=\begin{bmatrix} 218 & 10.2 & 0.91 \\ 221 & 15.5 & 0.88 \\ 219 & 8.1 & 0.93 \end{bmatrix}
+                \]
+            </div>
+            <p>一个标准事实是：\(n\) 个 \(n\) 维向量线性无关，当且仅当以它们为行（或列）排成的方阵行列式非零（这是 4 节要证明的核心结论之一，这里先借用）。按第一行做余子式展开：</p>
+            <div class="eq">
+                \[
+                \det M = 218\begin{vmatrix}15.5&0.88\\8.1&0.93\end{vmatrix} - 10.2\begin{vmatrix}221&0.88\\219&0.93\end{vmatrix} + 0.91\begin{vmatrix}221&15.5\\219&8.1\end{vmatrix}
+                \]
+            </div>
+            <p>逐项算出三个 2×2 子行列式：</p>
+            <ul>
+                <li>\(15.5\times0.93 - 0.88\times8.1 = 14.415 - 7.128 = 7.287\)</li>
+                <li>\(221\times0.93 - 0.88\times219 = 205.53 - 192.72 = 12.81\)</li>
+                <li>\(221\times8.1 - 15.5\times219 = 1790.1 - 3394.5 = -1604.4\)</li>
+            </ul>
+            <p>代回去：</p>
+            <div class="eq">
+                \[
+                \det M = 218(7.287) - 10.2(12.81) + 0.91(-1604.4) = 1588.566 - 130.662 - 1460.004 = -2.1
+                \]
+            </div>
+            <p>\(\det M = -2.1 \neq 0\)，因此 \(M\) 的三行线性无关，即 \(\mathbf{v}_1,\mathbf{v}_2,\mathbf{v}_3\) 线性无关。\(\blacksquare\)</p>
+        </div>
+        <div class="note">
+            💡 <strong>为什么这条证明有意义：</strong> 三条真实巡检记录之所以线性无关，是因为电压、功率因数在不同时刻有独立的微小波动——如果电压和功率因数在所有记录里都固定不变（下面 6 节会构造这样一个理想化子数据集），这三个向量就会退化到一个二维子空间里，必然线性相关。"是否线性无关"直接对应"这批传感器读数里到底有几个独立的自由度"，这是 6 节秩的核心问题的雏形。
+        </div>
+    </section>
+
+    <!-- 2. 矩阵基础 -->
+    <section class="section" id="ch2">
+        <h2><span class="num">2</span> 矩阵基础</h2>
+        <p><strong>进阶：</strong> 初学者版 2.3 节把矩阵比喻成"变换机器"。这一节把这个比喻写成正式定义，并证明一条最常用的恒等式：转置会反转乘法的顺序。</p>
+
+        <h3>2.1 线性映射的正式定义与维度匹配条件</h3>
+        <p>一个函数 \(T:\mathbb{R}^n\to\mathbb{R}^m\) 称为<strong>线性映射</strong>，当且仅当对任意 \(\mathbf{u},\mathbf{v}\in\mathbb{R}^n\) 和标量 \(c\)：</p>
+        <div class="eq">
+            \[
+            T(\mathbf{u}+\mathbf{v})=T(\mathbf{u})+T(\mathbf{v}), \qquad T(c\mathbf{v})=cT(\mathbf{v})
+            \]
+        </div>
+        <p><strong>定理（矩阵表示定理）：</strong> \(T\) 是线性映射，当且仅当存在唯一矩阵 \(A\in\mathbb{R}^{m\times n}\)，使 \(T(\mathbf{x})=A\mathbf{x}\) 对一切 \(\mathbf{x}\) 成立；且 \(A\) 的第 \(j\) 列恰好等于 \(T(\mathbf{e}_j)\)（\(\mathbf{e}_j\) 是标准基向量）。这就是为什么"矩阵"和"线性映射"可以互换使用——每一个都唯一决定另一个。</p>
+        <p>矩阵运算什么时候"合法"，也有精确、不能通融的条件：</p>
+        <ul>
+            <li><strong>加法：</strong> \(A+B\) 有定义，当且仅当 \(A,B\) 形状完全相同（同为 \(m\times n\)）。</li>
+            <li><strong>乘法：</strong> \(AB\) 有定义，当且仅当 \(A\) 的列数等于 \(B\) 的行数——本质原因是：\(B\) 的每一列要作为向量喂进 \(A\) 这台"变换机器"，输入向量的维数必须匹配机器的输入接口。</li>
+        </ul>
+
+        <h3>2.2 证明 \((AB)^T = B^T A^T\)</h3>
+        <div class="proof">
+            <span class="tag">证明</span>
+            <p>设 \(A\in\mathbb{R}^{m\times n}\)，\(B\in\mathbb{R}^{n\times p}\)。按定义，\((AB)_{ij}=\sum_{k=1}^n A_{ik}B_{kj}\)，所以：</p>
+            <div class="eq">
+                \[
+                \big[(AB)^T\big]_{ji} = (AB)_{ij} = \sum_{k=1}^n A_{ik}B_{kj}
+                \]
+            </div>
+            <p>另一方面，\((B^T)_{jk}=B_{kj}\)，\((A^T)_{ki}=A_{ik}\)，所以：</p>
+            <div class="eq">
+                \[
+                (B^T A^T)_{ji} = \sum_{k=1}^n (B^T)_{jk}(A^T)_{ki} = \sum_{k=1}^n B_{kj}A_{ik}
+                \]
+            </div>
+            <p>两式右边只是求和顺序不同，数值完全相同，因此 \([(AB)^T]_{ji} = (B^TA^T)_{ji}\) 对所有 \(i,j\) 成立，即 \((AB)^T = B^TA^T\)。\(\blacksquare\)</p>
+        </div>
+        <p>用初学者版 3.2 节的具体数字验证一遍：\(A=\begin{bmatrix}1&2\\3&4\end{bmatrix}\)，\(B=\begin{bmatrix}5&6\\7&8\end{bmatrix}\)，已知 \(AB=\begin{bmatrix}19&22\\43&50\end{bmatrix}\)，所以 \((AB)^T=\begin{bmatrix}19&43\\22&50\end{bmatrix}\)。另一边 \(B^T=\begin{bmatrix}5&7\\6&8\end{bmatrix}\)，\(A^T=\begin{bmatrix}1&3\\2&4\end{bmatrix}\)，算出 \(B^TA^T=\begin{bmatrix}5\times1+7\times2 & 5\times3+7\times4\\6\times1+8\times2 & 6\times3+8\times4\end{bmatrix}=\begin{bmatrix}19&43\\22&50\end{bmatrix}\)，两边完全一致。</p>
+
+        <h3>2.3 数据例子：把表 A 写成矩阵</h3>
+        <p>1 节的表 A 本身就是一个矩阵：每一行是一次巡检记录，每一列是一种物理量。取电压、电流、功率因数三列（暂不含功率列，功率是另外三列的乘积，不是"独立测量量"），得到示例数据矩阵：</p>
+        <div class="eq">
+            \[
+            X = \begin{bmatrix}
+            218 & 10.2 & 0.91 \\
+            221 & 15.5 & 0.88 \\
+            219 & 8.1 & 0.93 \\
+            222 & 20.3 & 0.86 \\
+            220 & 12.4 & 0.90
+            \end{bmatrix} \in \mathbb{R}^{5\times 3}
+            \]
+        </div>
+        <p>这正是数据科学里最常见的"样本 × 特征"矩阵：5 行代表 5 次巡检（样本），3 列代表 3 个测得的物理量（特征）。第 3 节会把这个矩阵当作变换的对象来处理，第 6 节会分析它（连同功率列一起）的秩。</p>
+    </section>
+
+    <!-- 3. 矩阵乘法与线性变换 -->
+    <section class="section" id="ch3">
+        <h2><span class="num">3</span> 矩阵乘法与线性变换</h2>
+        <p><strong>进阶：</strong> 初学者版 3.3 节说"矩阵乘法就是变换的复合"，这里给出严格证明，并用一个带清晰几何含义的例子，把"矩阵乘法不满足交换律"这件事讲透。</p>
+
+        <h3>3.1 严格证明：矩阵乘法就是线性映射的复合</h3>
+        <p>设 \(A\in\mathbb{R}^{m\times n}\)，\(B\in\mathbb{R}^{n\times p}\)，对应线性映射 \(T_A(\mathbf{y})=A\mathbf{y}\)（\(\mathbb{R}^n\to\mathbb{R}^m\)）和 \(T_B(\mathbf{x})=B\mathbf{x}\)（\(\mathbb{R}^p\to\mathbb{R}^n\)）。</p>
+        <div class="proof">
+            <span class="tag">证明</span>
+            <p>对任意 \(\mathbf{x}\in\mathbb{R}^p\)，先算复合映射 \((T_A\circ T_B)(\mathbf{x}) = T_A(T_B(\mathbf{x})) = A(B\mathbf{x})\)。由矩阵乘法的结合律（可逐分量验证：\([A(B\mathbf{x})]_i=\sum_k A_{ik}(B\mathbf{x})_k=\sum_k A_{ik}\sum_j B_{kj}x_j=\sum_j\big(\sum_k A_{ik}B_{kj}\big)x_j=\sum_j (AB)_{ij}x_j=[(AB)\mathbf{x}]_i\)），得到：</p>
+            <div class="eq">
+                \[
+                A(B\mathbf{x}) = (AB)\mathbf{x}
+                \]
+            </div>
+            <p>也就是说 \(T_A\circ T_B = T_{AB}\)：先做 \(B\) 对应的变换、再做 \(A\) 对应的变换，效果和直接做"矩阵 \(AB\)对应的变换"完全一样。\(\blacksquare\)</p>
+        </div>
+
+        <h3>3.2 不可交换性的几何解读：先旋转再缩放 ≠ 先缩放再旋转</h3>
+        <p>取旋转矩阵 \(R\)（逆时针转 45°）和缩放矩阵 \(S\)（\(x\) 方向拉伸 2 倍，\(y\) 方向不变）：</p>
+        <div class="eq">
+            \[
+            R=\begin{bmatrix}\cos45^\circ & -\sin45^\circ\\ \sin45^\circ & \cos45^\circ\end{bmatrix}
+            =\begin{bmatrix}0.7071 & -0.7071\\ 0.7071 & 0.7071\end{bmatrix},\qquad
+            S=\begin{bmatrix}2&0\\0&1\end{bmatrix}
+            \]
+        </div>
+        <p>算出两种顺序的复合矩阵：</p>
+        <div class="eq">
+            \[
+            RS = \begin{bmatrix}1.4142 & -0.7071\\ 1.4142 & 0.7071\end{bmatrix}, \qquad
+            SR = \begin{bmatrix}1.4142 & -1.4142\\ 0.7071 & 0.7071\end{bmatrix}
+            \]
+        </div>
+        <p>两个矩阵明显不同，说明 \(RS\neq SR\)。几何上：</p>
+        <ul>
+            <li><strong>\(SR\)（先旋转，再缩放）：</strong> 单位圆先被旋转 45°（形状不变，只是转个方向），再沿 \(x\) 轴拉伸 2 倍——得到的椭圆，长轴方向是"旋转后的 45° 方向再被 \(x\) 轴拉伸"，是一个倾斜的椭圆。</li>
+            <li><strong>\(RS\)（先缩放，再旋转）：</strong> 单位圆先沿 \(x\) 轴拉伸成一个长轴对齐坐标轴的椭圆，再整体旋转 45°——得到的椭圆和上面那个形状一样（长短轴比例相同），但朝向不同。</li>
+        </ul>
+        <p>下方演示区把这两种顺序作用在同一个单位圆上，可以直接看到两个椭圆朝向不一样。</p>
+        <div class="demo-box">
+            <div class="demo-caption">🔁 非交换性演示：\(RS\) vs \(SR\) 作用在单位圆上</div>
+            <div id="commuteChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">灰色虚线是原始单位圆；蓝色实线是先缩放、再旋转（\(RS\) 作用结果）；红色实线是先旋转、再缩放（\(SR\) 作用结果）。两条椭圆形状相同（面积相同，因为 \(\det(RS)=\det(SR)=\det R\det S\)），但朝向不同——这正是矩阵乘法不满足交换律的几何体现。</div>
+        </div>
+
+        <h3>3.3 数据例子：把变换用在传感器数据上</h3>
+        <p>2.3 节把表 A 写成了矩阵 \(X\)（5 个样本 × 3 个特征）。假设要把"电流"这一列换算成毫安（乘以 1000）、"功率因数"保持不动、"电压"保持不动，这是一个对每一列独立缩放的线性变换，对应右乘一个对角矩阵：</p>
+        <div class="eq">
+            \[
+            X' = X\, \text{diag}(1,\ 1000,\ 1)
+            \]
+        </div>
+        <p>这说明"单位换算"这类看似琐碎的数据预处理操作，本质上也是矩阵乘法（线性变换）——这也是为什么第 9 节做 PCA/SVD 前，通常要先对数据做标准化：不同量纲的列如果不统一缩放，协方差矩阵会被数值大的列"主导"，特征值/奇异值也会被扭曲。</p>
+    </section>
+
+    <!-- 4. 行列式 -->
+    <section class="section" id="ch4">
+        <h2><span class="num">4</span> 行列式</h2>
+        <p><strong>进阶：</strong> 初学者版把 \(\det(A)\) 讲成"面积/体积的放大倍数"。这一节给出行列式的严格递归定义、证明 \(\det(AB)=\det(A)\det(B)\)，并证明"行列式非零 ⟺ 可逆"这条关键等价关系。</p>
+
+        <h3>4.1 行列式的严格定义（余子式展开）</h3>
+        <p>对 \(n\times n\) 矩阵 \(A\)，行列式按第一行余子式展开递归定义：</p>
+        <div class="eq">
+            \[
+            \det(A) = \sum_{j=1}^n (-1)^{1+j} A_{1j}\, M_{1j}
+            \]
+        </div>
+        <p>其中 \(M_{1j}\) 是删去第 1 行、第 \(j\) 列后剩下的 \((n-1)\times(n-1)\) 子矩阵的行列式（递归到 \(1\times1\) 矩阵时，\(\det[a]=a\)）。这个定义等价于按符号排列展开的定义 \(\det(A)=\sum_{\sigma}\text{sgn}(\sigma)\prod_{i=1}^n A_{i,\sigma(i)}\)（对所有 \(n\) 阶排列 \(\sigma\) 求和），但余子式版本更便于手算和归纳证明。</p>
+        <p><strong>行列式即有向体积：</strong> 若把 \(A\) 的列向量 \(\mathbf{a}_1,\dots,\mathbf{a}_n\) 看作 \(\mathbb{R}^n\) 中从原点出发的边，它们张成一个平行多面体（2 维时是平行四边形，3 维时是平行六面体），则 \(|\det(A)|\) 恰好等于这个平行多面体的体积，符号则记录了 \((\mathbf{a}_1,\dots,\mathbf{a}_n)\) 相对标准基是否发生了"定向翻转"。</p>
+
+        <h3>4.2 证明 \(\det(AB) = \det(A)\det(B)\)</h3>
+        <div class="proof">
+            <span class="tag">证明思路</span>
+            <p>分两种情况：</p>
+            <p><strong>情况一：\(A\) 不可逆。</strong> 此时 \(A\) 的列线性相关，故 \(AB\) 的列也线性相关（\(AB\) 的每一列都是 \(A\) 的列的线性组合），所以 \(AB\) 也不可逆。由 4.3 节即将证明的等价关系，\(\det(A)=0\) 且 \(\det(AB)=0\)，两边都是 0，等式成立。</p>
+            <p><strong>情况二：\(A\) 可逆。</strong> 关键引理：对任意"初等行变换矩阵" \(E\)（对应交换两行、某行乘非零常数、或某行加另一行的倍数这三种操作之一），都有 \(\det(EM)=\det(E)\det(M)\) 对任意方阵 \(M\) 成立——这可以直接从行列式对"交换两行变号""某行乘常数则行列式乘该常数""某行加另一行倍数不改变行列式"这三条性质逐一验证。</p>
+            <p>而任意可逆矩阵 \(A\) 都可以写成有限个初等矩阵的乘积：\(A = E_k E_{k-1}\cdots E_1\)（这正是高斯-约当消元法反过来看的结果，5 节会展开）。于是：</p>
+            <div class="eq">
+                \[
+                \det(AB) = \det(E_k\cdots E_1 B) = \det(E_k)\det(E_{k-1}\cdots E_1 B) = \cdots = \det(E_k)\cdots\det(E_1)\det(B)
+                \]
+            </div>
+            <p>反复应用引理即可把每个 \(E_i\) 的行列式"拆出来"；而同样的拆法用在 \(A=E_k\cdots E_1\) 本身（取 \(B=I\)）给出 \(\det(A)=\det(E_k)\cdots\det(E_1)\)。两式对比即得 \(\det(AB)=\det(A)\det(B)\)。\(\blacksquare\)</p>
+        </div>
+        <p>数值验证：\(A=\begin{bmatrix}1&2\\3&4\end{bmatrix}\)，\(B=\begin{bmatrix}5&6\\7&8\end{bmatrix}\)。\(\det(A)=1\times4-2\times3=-2\)，\(\det(B)=5\times8-6\times7=-2\)，所以 \(\det(A)\det(B)=4\)。另一边 \(AB=\begin{bmatrix}19&22\\43&50\end{bmatrix}\)，\(\det(AB)=19\times50-22\times43=950-946=4\)。两边都是 4，吻合。</p>
+
+        <h3>4.3 证明：\(\det(A)\neq 0 \iff A\) 可逆</h3>
+        <div class="proof">
+            <span class="tag">证明</span>
+            <p>（⟸）若 \(A\) 可逆，则 \(AA^{-1}=I\)，两边取行列式并用刚证明的乘法性质：\(\det(A)\det(A^{-1})=\det(I)=1\)，所以 \(\det(A)\neq0\)（否则左边为 0，不可能等于 1）。</p>
+            <p>（⟹）若 \(\det(A)\neq0\)，反证：假设 \(A\) 不可逆，则 \(A\) 的列线性相关，即存在不全为零的 \(c_1,\dots,c_n\) 使 \(\sum_i c_i\mathbf{a}_i=\mathbf{0}\)。不妨设 \(c_k\neq0\)，则第 \(k\) 列可以写成其余列的线性组合：\(\mathbf{a}_k = -\frac{1}{c_k}\sum_{i\neq k}c_i\mathbf{a}_i\)。把这个线性组合代入第 \(k\) 列、反复使用"某列加另一列的倍数不改变行列式"这条性质，可以把第 \(k\) 列消成全零列而不改变 \(\det(A)\) 的值；但含全零列的矩阵行列式恒为 0，矛盾。故 \(A\) 必可逆。\(\blacksquare\)</p>
+        </div>
+    </section>
+
+    <!-- 5. 逆矩阵与初等变换 -->
+    <section class="section" id="ch5">
+        <h2><span class="num">5</span> 逆矩阵与初等变换</h2>
+        <p><strong>进阶：</strong> 初学者版 5.2 节演示了高斯-约当消元"怎么做"，这一节补上"为什么一定能做到""要花多少步"，并引入 LU 分解作为消元过程的"记账簿"。</p>
+
+        <h3>5.1 逆矩阵存在性与唯一性的精确条件</h3>
+        <p><strong>唯一性定理：</strong> 若 \(A\) 可逆，其逆矩阵唯一。</p>
+        <div class="proof">
+            <span class="tag">证明</span>
+            <p>设 \(B,C\) 都满足 \(AB=BA=I\) 和 \(AC=CA=I\)。则：</p>
+            <div class="eq">
+                \[
+                B = BI = B(AC) = (BA)C = IC = C
+                \]
+            </div>
+            <p>故 \(B=C\)，逆矩阵唯一，记作 \(A^{-1}\)。\(\blacksquare\)</p>
+        </div>
+        <p><strong>存在性：</strong> 结合 4.3 节的结论，下面这些条件对方阵 \(A\in\mathbb{R}^{n\times n}\) 是完全等价的（"当且仅当"关系）——这条清单在后续所有章节里都会反复用到：</p>
+        <ul>
+            <li>\(A\) 可逆（存在 \(A^{-1}\)）</li>
+            <li>\(\det(A)\neq 0\)</li>
+            <li>\(A\) 的列（或行）线性无关</li>
+            <li>\(\text{rank}(A)=n\)</li>
+            <li>\(A\mathbf{x}=\mathbf{0}\) 只有零解（零空间 \(N(A)=\{\mathbf{0}\}\)，6 节会严格定义）</li>
+            <li>高斯-约当消元能把 \(A\) 化为单位矩阵 \(I\)（不会出现全零行）</li>
+        </ul>
+
+        <h3>5.2 高斯-约当消元法的复杂度</h3>
+        <p>对 \(n\times n\) 矩阵求逆，高斯-约当消元需要对增广矩阵 \([A\mid I]\)（\(n\times2n\)）做大约 \(n\) 轮消元，每一轮要处理约 \(2n\) 个元素、对其余 \(n-1\) 行做行操作，因此总的浮点运算次数是 \(O(n^3)\)（更精确地说，约 \(2n^3\) 次乘除法）。这个 \(O(n^3)\) 的复杂度，正是 10 节讨论"为什么大规模矩阵运算要交给 GPU 并行"时的一个重要背景：矩阵求逆、乘法这类 \(O(n^3)\) 运算，是深度学习训练成本的一个决定性因素。</p>
+
+        <h3>5.3 LU 分解：消元过程的"记账簿"</h3>
+        <p>高斯消元的每一步"某行减去另一行的倍数"，本质上是左乘一个下三角初等矩阵。把所有这些初等矩阵的逆按顺序相乘，可以证明：只要消元过程中不需要"交换行"（即不需要选主元换行），矩阵 \(A\) 就能唯一分解成</p>
+        <div class="eq">
+            \[
+            A = LU
+            \]
+        </div>
+        <p>其中 \(L\) 是主对角线全为 1 的下三角矩阵（记录了消元过程中"减去多少倍"的系数），\(U\) 是消元结束后得到的上三角矩阵。LU 分解的价值在于：一旦分解好，求解 \(A\mathbf{x}=\mathbf{b}\) 就变成两步简单的三角方程组回代（\(L\mathbf{y}=\mathbf{b}\) 再 \(U\mathbf{x}=\mathbf{y}\)），复杂度降到 \(O(n^2)\)——这也是数值线性代数库（如 NumPy/LAPACK）在底层求解线性方程组、计算行列式和逆矩阵时的标准做法，比每次都重新跑一遍完整消元要快得多。</p>
+        <div class="note">
+            💡 <strong>与神经网络的联系：</strong> 训练神经网络本身极少直接对权重矩阵求逆（代价太高，且很多层的权重矩阵根本不是方阵）；但 \(O(n^3)\) 矩阵运算的复杂度直觉，以及 LU/QR（8 节）这类"分解一次、多次复用"的思想，同样体现在优化器（如二阶方法的 Hessian 近似）和大规模矩阵乘法的工程实现里。
+        </div>
+    </section>
+
+    <!-- 6. 向量空间与子空间 -->
+    <section class="section" id="ch6">
+        <h2><span class="num">6</span> 向量空间与子空间</h2>
+        <p><strong>进阶：</strong> 初学者版 6.3 节给出了秩-零化度定理的公式和一个 2×2 小例子。这一节先证明这条定理，再在一个 5×3 的"传感器数据矩阵"上完整地手算一遍秩、零空间，并解释"冗余特征"在实践中到底意味着什么。</p>
+
+        <h3>6.1 严格定义四个基本子空间</h3>
+        <p>对 \(A\in\mathbb{R}^{m\times n}\)：</p>
+        <ul>
+            <li><strong>列空间</strong> \(C(A)=\{A\mathbf{x} : \mathbf{x}\in\mathbb{R}^n\}\subseteq\mathbb{R}^m\)，维数 \(=\text{rank}(A)\)。</li>
+            <li><strong>零空间</strong> \(N(A)=\{\mathbf{x}\in\mathbb{R}^n : A\mathbf{x}=\mathbf{0}\}\subseteq\mathbb{R}^n\)，维数 \(=n-\text{rank}(A)\)（这就是即将证明的秩-零化度定理）。</li>
+            <li><strong>行空间</strong> \(C(A^T)\subseteq\mathbb{R}^n\)，维数同样等于 \(\text{rank}(A)\)。</li>
+            <li><strong>左零空间</strong> \(N(A^T)=\{\mathbf{y} : A^T\mathbf{y}=\mathbf{0}\}\subseteq\mathbb{R}^m\)，维数 \(=m-\text{rank}(A)\)。</li>
+        </ul>
+
+        <h3>6.2 秩-零化度定理及其证明</h3>
+        <div class="highlight">
+            <strong>定理（Rank-Nullity Theorem）：</strong> 对任意 \(A\in\mathbb{R}^{m\times n}\)，\(\text{rank}(A) + \dim N(A) = n\)。
+        </div>
+        <div class="proof">
+            <span class="tag">证明思路（基扩张法）</span>
+            <p>设 \(\dim N(A) = k\)，取 \(N(A)\) 的一组基 \(\{\mathbf{v}_1,\dots,\mathbf{v}_k\}\)。因为 \(N(A)\) 是 \(\mathbb{R}^n\) 的子空间，可以把这组基扩充成整个 \(\mathbb{R}^n\) 的一组基 \(\{\mathbf{v}_1,\dots,\mathbf{v}_k,\mathbf{v}_{k+1},\dots,\mathbf{v}_n\}\)（基扩张定理：任何线性无关组都能扩充为全空间的基）。</p>
+            <p><strong>断言：</strong> \(\{A\mathbf{v}_{k+1},\dots,A\mathbf{v}_n\}\) 是 \(C(A)\) 的一组基。</p>
+            <p><em>张成：</em> 对任意 \(\mathbf{x}\in\mathbb{R}^n\)，把 \(\mathbf{x}\) 用基展开 \(\mathbf{x}=\sum_{i=1}^n c_i\mathbf{v}_i\)，则 \(A\mathbf{x}=\sum_{i=1}^k c_i A\mathbf{v}_i + \sum_{i=k+1}^n c_i A\mathbf{v}_i = \sum_{i=k+1}^n c_i A\mathbf{v}_i\)（因为 \(\mathbf{v}_1,\dots,\mathbf{v}_k\in N(A)\) 使前 \(k\) 项为零），所以 \(C(A)\) 中每个向量都能由 \(\{A\mathbf{v}_{k+1},\dots,A\mathbf{v}_n\}\) 线性组合出来。</p>
+            <p><em>线性无关：</em> 若 \(\sum_{i=k+1}^n d_i A\mathbf{v}_i=\mathbf{0}\)，即 \(A\big(\sum_{i=k+1}^n d_i\mathbf{v}_i\big)=\mathbf{0}\)，说明 \(\sum_{i=k+1}^n d_i\mathbf{v}_i\in N(A)\)。但这个向量同时也是"扩充基中后 \(n-k\) 个向量"的线性组合，而 \(N(A)\) 已经由前 \(k\) 个基向量张成——一个向量若既在 \(N(A)\) 里，又是与 \(N(A)\) 基线性无关的那部分基向量的组合，唯一的可能是这个向量本身为零向量，从而（由 \(\mathbf{v}_{k+1},\dots,\mathbf{v}_n\) 线性无关）所有 \(d_i=0\)。</p>
+            <p>因此 \(\dim C(A) = n-k\)，即 \(\text{rank}(A) = n - \dim N(A)\)，整理得 \(\text{rank}(A)+\dim N(A)=n\)。\(\blacksquare\)</p>
+        </div>
+
+        <h3>6.3 完整实例：一个秩亏的传感器数据矩阵</h3>
+        <p>为了让秩亏现象能够完全手算清楚，这里构造一个理想化的子场景（仍是示例数据）：假设电压稳定在标称值 220V、功率因数恒为 0.90（现实中电网电压和负载性质常年在这个量级上下小幅波动，这里先固定它们，方便手算；1 节中带有真实微小波动的表 A 会在 7、9 节里对应"非精确、近似冗余"的更真实情形）。</p>
+        <div class="data-tag">表 B · 示例数据（用于演示计算，非实际记录）</div>
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <tr><th>编号</th><th>电压 V (V)</th><th>电流 I (A)</th><th>功率 P (kW)</th></tr>
+                <tr><td>①</td><td>220</td><td>10</td><td>1.980</td></tr>
+                <tr><td>②</td><td>220</td><td>15</td><td>2.970</td></tr>
+                <tr><td>③</td><td>220</td><td>8</td><td>1.584</td></tr>
+                <tr><td>④</td><td>220</td><td>20</td><td>3.960</td></tr>
+                <tr><td>⑤</td><td>220</td><td>12</td><td>2.376</td></tr>
+            </table>
+        </div>
+        <p>把它写成矩阵（列依次是电压、电流、功率）：</p>
+        <div class="eq">
+            \[
+            A_6 = \begin{bmatrix}
+            220 & 10 & 1.98 \\ 220 & 15 & 2.97 \\ 220 & 8 & 1.584 \\ 220 & 20 & 3.96 \\ 220 & 12 & 2.376
+            \end{bmatrix}
+            \]
+        </div>
+        <p>因为 \(P = V\times \text{pf}/1000 \times I = 220\times0.9/1000\times I = 0.198\,I\) 对表中每一行都精确成立，所以第 3 列（功率）恰好是第 2 列（电流）乘以常数 \(0.198\)，即第 3 列可以写成第 1、2 列的线性组合（系数分别是 0 和 0.198）：</p>
+        <div class="eq">
+            \[
+            \mathbf{a}_3 = 0\cdot\mathbf{a}_1 + 0.198\cdot\mathbf{a}_2
+            \]
+        </div>
+        <p>这说明 \(A_6\) 的列线性相关，\(\text{rank}(A_6) < 3\)。而第 1 列（常数 220）和第 2 列（明显变化的电流值）显然线性无关（一个是常数向量，另一个不是常数向量的倍数），所以 \(\text{rank}(A_6)=2\)。</p>
+        <p><strong>求零空间：</strong> 要找所有 \(\mathbf{x}=(x_1,x_2,x_3)\) 使 \(A_6\mathbf{x}=\mathbf{0}\)，即对每一行都要 \(220x_1 + I_i x_2 + P_i x_3 = 0\)（\(I_i,P_i\) 是第 \(i\) 行的电流、功率值）。代入 \(P_i=0.198I_i\)：</p>
+        <div class="eq">
+            \[
+            220x_1 + I_i x_2 + 0.198 I_i x_3 = 220x_1 + I_i(x_2+0.198x_3) = 0 \quad \text{对所有 } i \text{ 成立}
+            \]
+        </div>
+        <p>因为 \(I_i\) 在 5 行里取了不同的值（不是常数），要让上式对所有行都成立，必须系数分别为零：\(x_1=0\) 且 \(x_2+0.198x_3=0\)。所以零空间是一维的，由下面这个向量张成：</p>
+        <div class="eq">
+            \[
+            N(A_6) = \text{span}\{(0,\ -0.198,\ 1)\}
+            \]
+        </div>
+        <p>代入验证：\(A_6\cdot(0,-0.198,1)^T\) 的第一行 \(=220\times0+10\times(-0.198)+1.98\times1=-1.98+1.98=0\)，其余各行同理为 0，验证通过。由秩-零化度定理：\(\text{rank}(A_6)+\dim N(A_6)=2+1=3=\)列数，吻合。</p>
+        <div class="highlight">
+            <strong>实践解读：</strong> 零空间方向 \((0,-0.198,1)\) 翻译成人话就是——"\(-0.198\times\)电流 \(+\ 1\times\)功率 \(=0\)"，即"功率能被电流精确线性预测"。在特征工程里，这意味着"电压、电流、功率"这三列里其实只有两个独立的自由度：只要电压近似恒定，功率这一列就是电流的冗余复制品，同时放进模型（尤其是线性模型或做矩阵求逆的算法）会造成列共线性、矩阵病态、参数不可辨识等问题；正确做法通常是三选二，或者像第 9 节那样，用 PCA/SVD 自动识别并合并这种冗余方向。
+        </div>
+
+        <div class="demo-box">
+            <div class="demo-caption">📉 列共线性演示：表 B 中 (电流, 功率) 精确落在一条直线上</div>
+            <div id="rankChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">五个蓝色点是表 B 的 (电流, 功率) 数据，全部精确落在直线 \(P=0.198I\) 上——这条直线就是这两列张成的一维列空间在二维平面上的样子，直接说明"功率"没有提供电流之外的新信息。</div>
+        </div>
+    </section>
+
+    <!-- 7. 特征值与特征向量 -->
+    <section class="section" id="ch7">
+        <h2><span class="num">7</span> 特征值与特征向量</h2>
+        <p><strong>进阶：</strong> 初学者版 7.2 节直接给出了 \(\det(A-\lambda I)=0\) 这个判定方程。这一节推导它从何而来，多做一个 3×3 的例子，证明对称矩阵的谱定理，并把特征值和"数据里的方差方向"直接挂钩——这是第 9 节 PCA 的理论基础。</p>
+
+        <h3>7.1 特征多项式的推导</h3>
+        <p>从定义 \(A\mathbf{v}=\lambda\mathbf{v}\)（\(\mathbf{v}\neq\mathbf{0}\)）出发，移项得 \((A-\lambda I)\mathbf{v}=\mathbf{0}\)。这说明 \(\mathbf{v}\) 是矩阵 \(A-\lambda I\) 的零空间中的非零向量，即 \(N(A-\lambda I)\neq\{\mathbf{0}\}\)。由 5.1 节的等价条件清单，这当且仅当 \(A-\lambda I\) 不可逆，即 \(\det(A-\lambda I)=0\)。这就是特征方程的来源——它不是凭空规定的判据，而是"存在非零解"这个条件翻译成行列式语言的直接结果。</p>
+        <p>对一般 2×2 矩阵 \(A=\begin{bmatrix}a&b\\c&d\end{bmatrix}\)：</p>
+        <div class="eq">
+            \[
+            \det(A-\lambda I) = (a-\lambda)(d-\lambda)-bc = \lambda^2 - (a+d)\lambda + (ad-bc) = \lambda^2 - \text{tr}(A)\lambda + \det(A)
+            \]
+        </div>
+        <p>用求根公式解出：</p>
+        <div class="eq">
+            \[
+            \lambda = \frac{\text{tr}(A) \pm \sqrt{\text{tr}(A)^2 - 4\det(A)}}{2}
+            \]
+        </div>
+        <p>代入初学者版 7 节的例子 \(A=\begin{bmatrix}2&1\\1&2\end{bmatrix}\)：\(\text{tr}(A)=4\)，\(\det(A)=3\)，特征方程 \(\lambda^2-4\lambda+3=0\)，因式分解 \((\lambda-1)(\lambda-3)=0\)，得 \(\lambda_1=1,\lambda_2=3\)——和初学者版给出的结果一致，这里补上了完整的推导过程。</p>
+
+        <h3>7.2 一个完整的 3×3 例子</h3>
+        <p>取 \(A=\begin{bmatrix}2&0&0\\0&3&1\\0&1&3\end{bmatrix}\)。按第一行余子式展开：</p>
+        <div class="eq">
+            \[
+            \det(A-\lambda I) = (2-\lambda)\det\begin{bmatrix}3-\lambda&1\\1&3-\lambda\end{bmatrix} = (2-\lambda)\big[(3-\lambda)^2-1\big]
+            \]
+        </div>
+        <p>展开 \((3-\lambda)^2-1=\lambda^2-6\lambda+8=(\lambda-2)(\lambda-4)\)，所以特征多项式因式分解为：</p>
+        <div class="eq">
+            \[
+            \det(A-\lambda I) = (2-\lambda)(\lambda-2)(\lambda-4) = 0 \ \Longrightarrow\ \lambda_1=4,\ \lambda_2=\lambda_3=2
+            \]
+        </div>
+        <p>展开成标准多项式形式是 \(\lambda^3-8\lambda^2+20\lambda-16=0\)，代入 \(\lambda=4\)：\(64-128+80-16=0\) ✓；代入 \(\lambda=2\)：\(8-32+40-16=0\) ✓，验证通过。注意 \(\lambda=2\) 是二重根——特征值可以重复出现，这不影响谱定理（下面 7.3 节）成立。</p>
+
+        <h3>7.3 谱定理：对称矩阵的特征值都是实数，特征向量互相正交</h3>
+        <div class="proof">
+            <span class="tag">证明思路</span>
+            <p><strong>特征值为实数：</strong> 设 \(A\) 是实对称矩阵（\(A^T=A\)），\(A\mathbf{v}=\lambda\mathbf{v}\)（先允许 \(\lambda,\mathbf{v}\) 为复数）。两边左乘 \(\bar{\mathbf{v}}^T\)（\(\mathbf{v}\) 的共轭转置）：\(\bar{\mathbf{v}}^TA\mathbf{v}=\lambda\bar{\mathbf{v}}^T\mathbf{v}\)。对左边取共轭转置，利用 \(A\) 是实对称矩阵（\(\bar A=A\)，\(A^T=A\)）：\(\overline{\bar{\mathbf{v}}^TA\mathbf{v}}=\mathbf{v}^TA\bar{\mathbf{v}}=\bar{\mathbf{v}}^TA^T\mathbf{v}=\bar{\mathbf{v}}^TA\mathbf{v}\)，说明 \(\bar{\mathbf{v}}^TA\mathbf{v}\) 是一个等于自己共轭的数，因此是实数；而 \(\bar{\mathbf{v}}^T\mathbf{v}=\|\mathbf{v}\|^2\) 也是正实数，所以 \(\lambda=\bar{\mathbf{v}}^TA\mathbf{v}/\bar{\mathbf{v}}^T\mathbf{v}\) 必为实数。</p>
+            <p><strong>不同特征值对应的特征向量正交：</strong> 设 \(A\mathbf{v}_1=\lambda_1\mathbf{v}_1\)，\(A\mathbf{v}_2=\lambda_2\mathbf{v}_2\)，\(\lambda_1\neq\lambda_2\)。考虑 \(\mathbf{v}_1^TA\mathbf{v}_2\)，一方面等于 \(\mathbf{v}_1^T(\lambda_2\mathbf{v}_2)=\lambda_2(\mathbf{v}_1\cdot\mathbf{v}_2)\)；另一方面，因为 \(A\) 对称，\(\mathbf{v}_1^TA\mathbf{v}_2=(A\mathbf{v}_1)^T\mathbf{v}_2=\lambda_1(\mathbf{v}_1\cdot\mathbf{v}_2)\)。两式相等：\(\lambda_2(\mathbf{v}_1\cdot\mathbf{v}_2)=\lambda_1(\mathbf{v}_1\cdot\mathbf{v}_2)\)，即 \((\lambda_1-\lambda_2)(\mathbf{v}_1\cdot\mathbf{v}_2)=0\)。因为 \(\lambda_1\neq\lambda_2\)，必有 \(\mathbf{v}_1\cdot\mathbf{v}_2=0\)。\(\blacksquare\)</p>
+            <p>把这两条结论合在一起（并补充：对称矩阵总能凑齐 \(n\) 个正交特征向量，即使有重根，这一步的完整证明需要更细致的归纳，此处从略），就是 9.2 节要用到的<strong>谱定理</strong>：任何实对称矩阵都可以正交对角化，\(A=Q D Q^T\)。</p>
+        </div>
+
+        <h3>7.4 特征值 = 方差方向：协方差矩阵实例</h3>
+        <p>把 7 节的抽象结论用在 1 节的表 A 上。取"电流"和"功率"两列，先各自减去均值做中心化（\(\bar I=13.3\)，\(\bar P=2.6037\)），得到中心化后的数据矩阵 \(X\in\mathbb{R}^{5\times2}\)（每行是一个样本，两列是中心化后的电流、功率），再算样本协方差矩阵：</p>
+        <div class="eq">
+            \[
+            C = \frac{1}{n-1}X^TX = \begin{bmatrix} 22.825 & 4.175 \\ 4.175 & 0.764 \end{bmatrix}
+            \]
+        </div>
+        <p>\(C\) 是对称矩阵，按 7.1 节的公式求特征值：\(\text{tr}(C)=23.589\)，\(\det(C)=22.825\times0.764-4.175^2 = 17.44-17.43\approx0.032\)（受舍入误差影响，精确计算约为 \(0.0034\)），特征方程 \(\lambda^2-23.589\lambda+0.0034\approx0\)，解得：</p>
+        <div class="eq">
+            \[
+            \lambda_1 \approx 23.589, \qquad \lambda_2 \approx 0.000141
+            \]
+        </div>
+        <p>对应的（单位化）特征向量约为 \(\mathbf{q}_1\approx(0.984,\ 0.180)\)（沿"电流-功率"几乎完全线性相关的方向）和 \(\mathbf{q}_2\approx(-0.180,\ 0.984)\)（垂直方向，几乎不携带方差）。这组结果直接呼应了 6.3 节的发现：电流和功率高度共线，绝大部分方差都集中在 \(\mathbf{q}_1\) 这一个方向上（占比 \(\lambda_1/(\lambda_1+\lambda_2)\approx99.9994\%\)），几乎没有方差留给正交方向 \(\mathbf{q}_2\)。这正是主成分分析（PCA）的核心直觉——<strong>协方差矩阵最大特征值对应的特征向量，就是数据方差最大的方向</strong>，第 9 节会用 SVD 从另一个角度重新推出同一组数字。</p>
+
+        <div class="demo-box">
+            <div class="demo-caption">🧭 协方差矩阵的特征向量：数据云的主方向</div>
+            <div id="covEigChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">灰色散点是中心化后的 (电流, 功率) 样本；红色箭头是最大特征值 \(\lambda_1\approx23.59\) 对应的特征向量方向（数据延展最长的方向），长度按 \(\sqrt{\lambda_1}\) 缩放；绿色箭头是 \(\lambda_2\approx0.0001\) 对应的方向，几乎看不见——因为这个方向上数据几乎没有变化。</div>
+        </div>
+    </section>
+
+    <!-- 8. 正交性与投影 -->
+    <section class="section" id="ch8">
+        <h2><span class="num">8</span> 正交性与投影</h2>
+        <p><strong>进阶：</strong> 初学者版只提到格拉姆-施密特正交化"能把一组向量扶正"，没有展示具体过程。这一节完整手算一遍三维的格拉姆-施密特，并证明正交矩阵保长度、保夹角这条关键性质。</p>
+
+        <h3>8.1 证明：正交矩阵保持长度与夹角不变</h3>
+        <p>设 \(Q\) 满足 \(Q^TQ=I\)（正交矩阵）。</p>
+        <div class="proof">
+            <span class="tag">证明</span>
+            <p><strong>保长度：</strong> 对任意向量 \(\mathbf{x}\)，\(\|Q\mathbf{x}\|^2 = (Q\mathbf{x})^T(Q\mathbf{x}) = \mathbf{x}^TQ^TQ\mathbf{x} = \mathbf{x}^TI\mathbf{x} = \mathbf{x}^T\mathbf{x} = \|\mathbf{x}\|^2\)，两边开方即 \(\|Q\mathbf{x}\|=\|\mathbf{x}\|\)。</p>
+            <p><strong>保夹角（进而保点积）：</strong> 对任意 \(\mathbf{u},\mathbf{v}\)，\((Q\mathbf{u})\cdot(Q\mathbf{v}) = (Q\mathbf{u})^T(Q\mathbf{v}) = \mathbf{u}^TQ^TQ\mathbf{v} = \mathbf{u}^T\mathbf{v} = \mathbf{u}\cdot\mathbf{v}\)。点积不变，而夹角 \(\theta\) 由 \(\cos\theta = \frac{\mathbf{u}\cdot\mathbf{v}}{\|\mathbf{u}\|\|\mathbf{v}\|}\) 决定，分子分母都不变，故夹角也不变。\(\blacksquare\)</p>
+        </div>
+        <p>这也是为什么正交矩阵在数值计算里备受青睐：用它做坐标变换不会放大或压缩误差（不会造成数值不稳定），这在 9 节的 SVD 和深度学习的正交初始化中都是重要考量。</p>
+
+        <h3>8.2 完整手算格拉姆-施密特正交化</h3>
+        <p>取三个线性无关的向量（可以看作三个传感器通道各自中心化偏差模式的简化示例）：</p>
+        <div class="eq">
+            \[
+            \mathbf{a}_1=(1,1,0),\quad \mathbf{a}_2=(1,0,1),\quad \mathbf{a}_3=(0,1,1)
+            \]
+        </div>
+        <p><strong>第 1 步：</strong> 直接单位化 \(\mathbf{a}_1\)：</p>
+        <div class="eq">
+            \[
+            \mathbf{e}_1 = \frac{\mathbf{a}_1}{\|\mathbf{a}_1\|} = \frac{(1,1,0)}{\sqrt2} = \left(\tfrac{1}{\sqrt2},\tfrac{1}{\sqrt2},0\right) \approx (0.7071,\ 0.7071,\ 0)
+            \]
+        </div>
+        <p><strong>第 2 步：</strong> 从 \(\mathbf{a}_2\) 中减去它在 \(\mathbf{e}_1\) 方向上的投影分量（8.2 节初学者版介绍过的投影公式），剩下的部分才是"和 \(\mathbf{e}_1\) 无关的新方向"：</p>
+        <div class="eq">
+            \[
+            \mathbf{u}_2 = \mathbf{a}_2 - (\mathbf{a}_2\cdot\mathbf{e}_1)\mathbf{e}_1
+            \]
+        </div>
+        <p>\(\mathbf{a}_2\cdot\mathbf{e}_1 = 1\times0.7071+0\times0.7071+1\times0=0.7071=\frac{1}{\sqrt2}\)，所以：</p>
+        <div class="eq">
+            \[
+            \mathbf{u}_2 = (1,0,1) - \tfrac{1}{\sqrt2}\left(\tfrac1{\sqrt2},\tfrac1{\sqrt2},0\right) = (1,0,1)-(0.5,0.5,0) = (0.5,\ -0.5,\ 1)
+            \]
+        </div>
+        <p>单位化：\(\|\mathbf{u}_2\|=\sqrt{0.25+0.25+1}=\sqrt{1.5}=\frac{\sqrt6}{2}\approx1.2247\)，</p>
+        <div class="eq">
+            \[
+            \mathbf{e}_2 = \frac{\mathbf{u}_2}{\|\mathbf{u}_2\|} = \left(\tfrac{1}{\sqrt6},\ -\tfrac{1}{\sqrt6},\ \tfrac{2}{\sqrt6}\right) \approx (0.4082,\ -0.4082,\ 0.8165)
+            \]
+        </div>
+        <p><strong>第 3 步：</strong> 从 \(\mathbf{a}_3\) 中同时减去它在 \(\mathbf{e}_1\)、\(\mathbf{e}_2\) 方向上的投影：</p>
+        <div class="eq">
+            \[
+            \mathbf{u}_3 = \mathbf{a}_3 - (\mathbf{a}_3\cdot\mathbf{e}_1)\mathbf{e}_1 - (\mathbf{a}_3\cdot\mathbf{e}_2)\mathbf{e}_2
+            \]
+        </div>
+        <p>\(\mathbf{a}_3\cdot\mathbf{e}_1 = 0\times0.7071+1\times0.7071+1\times0 = 0.7071\)；\(\mathbf{a}_3\cdot\mathbf{e}_2 = 0\times0.4082+1\times(-0.4082)+1\times0.8165=0.4082\)。代入：</p>
+        <div class="eq">
+            \[
+            \mathbf{u}_3 = (0,1,1) - 0.7071(0.7071,0.7071,0) - 0.4082(0.4082,-0.4082,0.8165) \approx \left(-\tfrac23,\ \tfrac23,\ \tfrac23\right)
+            \]
+        </div>
+        <p>单位化：\(\|\mathbf{u}_3\| = \sqrt{3\times(2/3)^2}=\frac{2}{\sqrt3}\approx1.1547\)，得：</p>
+        <div class="eq">
+            \[
+            \mathbf{e}_3 = \left(-\tfrac1{\sqrt3},\ \tfrac1{\sqrt3},\ \tfrac1{\sqrt3}\right) \approx (-0.5774,\ 0.5774,\ 0.5774)
+            \]
+        </div>
+        <p>验证：\(\mathbf{e}_1\cdot\mathbf{e}_2=\mathbf{e}_1\cdot\mathbf{e}_3=\mathbf{e}_2\cdot\mathbf{e}_3=0\)（可逐一代入数值核对），三个向量确实两两正交且都是单位向量，构成一组标准正交基。</p>
+        <div class="note">
+            💡 <strong>QR 分解：</strong> 把 \(\mathbf{e}_1,\mathbf{e}_2,\mathbf{e}_3\) 按列排成正交矩阵 \(Q\)，把每一步的投影系数（如 \(\mathbf{a}_2\cdot\mathbf{e}_1\)）按上三角方式排成矩阵 \(R\)（对角线是 \(\|\mathbf{u}_i\|\)），就得到 \(A=QR\) 分解——这是格拉姆-施密特的矩阵形式，广泛用于最小二乘回归的数值稳定求解。
+        </div>
+
+        <div class="demo-box">
+            <div class="demo-caption">📐 二维简化图示：格拉姆-施密特的投影几何（完整三维手算见上文正文）</div>
+            <div id="gsChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">为了在平面上画清楚，这里用一对二维向量 \(a_1=(1,1)\)、\(a_2=(2,0)\) 演示同样的几何操作：蓝色箭头是 \(a_1\)，灰色箭头是 \(a_2\)，橙色虚线是 \(a_2\) 在 \(e_1\) 方向上的投影，紫色箭头 \(u_2=a_2-\text{proj}\) 是去掉投影分量后剩下、与 \(e_1\) 垂直的部分。三维情形（正文里的 \(a_1,a_2,a_3\)）用的是完全相同的"减去已有正交方向上的投影"这一步骤，只是多重复一次。</div>
+        </div>
+    </section>
+
+    <!-- 9. 对角化与SVD -->
+    <section class="section" id="ch9">
+        <h2><span class="num">9</span> 对角化与SVD</h2>
+        <p><strong>进阶：</strong> 初学者版把 SVD 讲成"旋转-拉伸-旋转"的动画。这一节推导 SVD 为什么一定存在，在真实的示例数据上完整手算一遍，并明确把它和 PCA、降维连起来。</p>
+
+        <h3>9.1 SVD 存在性：从 \(A^TA\) 的特征分解出发</h3>
+        <div class="proof">
+            <span class="tag">推导思路</span>
+            <p>对任意 \(A\in\mathbb{R}^{m\times n}\)，考虑 \(A^TA\in\mathbb{R}^{n\times n}\)。它总是对称的（\((A^TA)^T=A^TA^{TT}=A^TA\)），并且是半正定的（对任意 \(\mathbf{x}\)，\(\mathbf{x}^TA^TA\mathbf{x}=\|A\mathbf{x}\|^2\ge0\)），所以由 7.3 节的谱定理，\(A^TA\) 可以正交对角化：</p>
+            <div class="eq">
+                \[
+                A^TA = V\Lambda V^T, \qquad \Lambda=\text{diag}(\lambda_1,\dots,\lambda_n),\ \lambda_i\ge0,\ V^TV=I
+                \]
+            </div>
+            <p>定义<strong>奇异值</strong> \(\sigma_i=\sqrt{\lambda_i}\ge0\)，并对 \(\sigma_i>0\) 的部分定义 \(\mathbf{u}_i = A\mathbf{v}_i/\sigma_i\)。可以验证这些 \(\mathbf{u}_i\) 两两正交且单位长度：\(\mathbf{u}_i\cdot\mathbf{u}_j = \frac{(A\mathbf{v}_i)^T(A\mathbf{v}_j)}{\sigma_i\sigma_j}=\frac{\mathbf{v}_i^TA^TA\mathbf{v}_j}{\sigma_i\sigma_j}=\frac{\lambda_j\,\mathbf{v}_i\cdot\mathbf{v}_j}{\sigma_i\sigma_j}\)，当 \(i\neq j\) 时因 \(\mathbf{v}_i\perp\mathbf{v}_j\) 而为零，当 \(i=j\) 时等于 1。把这些 \(\mathbf{u}_i\) 扩充为 \(\mathbb{R}^m\) 的标准正交基 \(U\)，就得到完整分解 \(A=U\Sigma V^T\)。\(\blacksquare\)（这就是奇异值分解一定存在的原因——它本质上是把"对称矩阵一定可正交对角化"这条结论，通过 \(A^TA\) 这座桥梁，搬运到任意（非方阵也可以）矩阵上。）</p>
+        </div>
+
+        <h3>9.2 完整手算示例：对表 A 的电流-功率数据做 SVD</h3>
+        <p>沿用 7.4 节中心化后的数据矩阵 \(X\in\mathbb{R}^{5\times2}\)（电流、功率两列，各自减去均值）。按 9.1 节的方法，先算 \(X^TX\)：</p>
+        <div class="eq">
+            \[
+            X^TX = \begin{bmatrix} 91.30 & 16.70 \\ 16.70 & 3.055 \end{bmatrix}
+            \]
+        </div>
+        <p>（注意 \(X^TX = (n-1)C\)，正是 7.4 节协方差矩阵的 4 倍，因为 \(n-1=4\)——两条计算路径在这里汇合。）求它的特征值：\(\text{tr}=94.355\)，\(\det\approx91.30\times3.055-16.70^2\approx0.56\)，特征方程 \(\lambda^2-94.355\lambda+0.56\approx0\)，解得：</p>
+        <div class="eq">
+            \[
+            \lambda_1 \approx 94.355, \qquad \lambda_2 \approx 0.00056
+            \]
+        </div>
+        <p>对应奇异值：</p>
+        <div class="eq">
+            \[
+            \sigma_1 = \sqrt{94.355} \approx 9.714, \qquad \sigma_2 = \sqrt{0.00056} \approx 0.0237
+            \]
+        </div>
+        <p>与 \(X^TX\) 对应的（右）奇异向量 \(\mathbf{v}_1\approx(0.9837,\ 0.1799)\)，\(\mathbf{v}_2\approx(0.1799,\ -0.9837)\)（和 7.4 节协方差矩阵的特征向量方向一致，符合预期，因为两者本就是同一个对称矩阵按比例缩放）。左奇异向量按 \(\mathbf{u}_i=X\mathbf{v}_i/\sigma_i\) 逐个算出（可用数值计算核验），第一列约为：</p>
+        <div class="eq">
+            \[
+            \mathbf{u}_1 \approx (-0.325,\ 0.230,\ -0.544,\ 0.732,\ -0.094)^T
+            \]
+        </div>
+        <p>于是 \(X\approx\sigma_1\mathbf{u}_1\mathbf{v}_1^T + \sigma_2\mathbf{u}_2\mathbf{v}_2^T\)，其中第二项的系数 \(\sigma_2\approx0.0237\) 相比 \(\sigma_1\approx9.714\) 小了 400 多倍。</p>
+
+        <h3>9.3 与 PCA、降维的直接关系</h3>
+        <p>方差解释比例（这正是 PCA 里最常报告的指标）由奇异值的平方给出：</p>
+        <div class="eq">
+            \[
+            \frac{\sigma_1^2}{\sigma_1^2+\sigma_2^2} = \frac{94.355}{94.355+0.00056} \approx 99.9994\%, \qquad \frac{\sigma_2^2}{\sigma_1^2+\sigma_2^2}\approx0.0006\%
+            \]
+        </div>
+        <p>也就是说：只用第一主成分（沿 \(\mathbf{v}_1\approx(0.984,0.180)\) 方向，也就是"电流和功率的某种加权和"）就能保留原始（电流, 功率）二维数据 99.9994% 的方差；第二主成分几乎完全是噪声。这正是 6.3 节"功率约等于电流的线性冗余"和 7.4 节"协方差矩阵几乎奇异"两个观察的第三次印证——三条完全独立的证据（列的精确线性关系、协方差特征值、SVD 奇异值）都指向同一个结论：<strong>这两个测量量本质上只提供了一份独立信息</strong>。在实际的深度学习特征工程里，这意味着可以放心地用 PCA 把这两列压缩成一维，减少输入维度而几乎不损失信息。</p>
+
+        <div class="demo-box">
+            <div class="demo-caption">📊 奇异值对比：\(\sigma_1\) 和 \(\sigma_2\)（对数坐标）</div>
+            <div id="svdBarChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">柱状图使用对数坐标轴，否则 \(\sigma_2\approx0.024\) 在线性坐标下会小到几乎看不见——这本身就说明了两者数量级差距有多大：第一个奇异值几乎独占了全部信息量。</div>
+        </div>
+    </section>
+
+    <!-- 10. MLP 应用 -->
+    <section class="section" id="ch10">
+        <h2><span class="num">10</span> MLP 应用 —— 反向传播的完整矩阵推导</h2>
+        <p><strong>进阶：</strong> 初学者版 10.5 节手算了一次前向传播，但没有算反向传播的具体数字。这一节先严格推导 \(\partial L/\partial W\) 的外积形式，再对一个真正的小型 MLP（用表 A 的数据做输入）完整手算一次前向 + 反向传播。</p>
+
+        <h3>10.1 严格推导：单样本的权重梯度是一个外积</h3>
+        <p>回忆初学者版的记号：\(\mathbf{z}^{[l]}=W^{[l]}\mathbf{a}^{[l-1]}+\mathbf{b}^{[l]}\)，误差项 \(\boldsymbol{\delta}^{[l]}=\partial L/\partial \mathbf{z}^{[l]}\)。要求 \(\partial L/\partial W^{[l]}_{ij}\)（\(W^{[l]}\) 第 \(i\) 行第 \(j\) 列，即"第 \(j\) 个输入神经元到第 \(i\) 个输出神经元的权重"）：</p>
+        <div class="eq">
+            \[
+            \frac{\partial L}{\partial W^{[l]}_{ij}} = \frac{\partial L}{\partial z^{[l]}_i}\cdot\frac{\partial z^{[l]}_i}{\partial W^{[l]}_{ij}} = \delta^{[l]}_i \cdot a^{[l-1]}_j
+            \]
+        </div>
+        <p>（这里用到 \(z_i^{[l]}=\sum_k W^{[l]}_{ik}a^{[l-1]}_k + b_i^{[l]}\)，对 \(W_{ij}^{[l]}\) 求偏导时只有 \(k=j\) 那一项存活，结果正是 \(a_j^{[l-1]}\)。）把所有 \(i,j\) 组合写成矩阵形式，正是外积：</p>
+        <div class="eq">
+            \[
+            \frac{\partial L}{\partial W^{[l]}} = \boldsymbol{\delta}^{[l]}\,\mathbf{a}^{[l-1]T}
+            \]
+        </div>
+        <p>形状检验：若 \(\boldsymbol{\delta}^{[l]}\in\mathbb{R}^{n_l\times1}\)，\(\mathbf{a}^{[l-1]}\in\mathbb{R}^{n_{l-1}\times1}\)，则外积 \(\boldsymbol{\delta}^{[l]}\mathbf{a}^{[l-1]T}\in\mathbb{R}^{n_l\times n_{l-1}}\)，与 \(W^{[l]}\) 形状完全一致——这不是巧合，而是矩阵求导规则自动保证的。</p>
+        <p>批量形式（\(N\) 个样本一起训练时）把每个样本的外积按样本求和（或取平均），等价于两个矩阵直接相乘：设 \(\Delta^{[l]}\in\mathbb{R}^{N\times n_l}\) 是把每个样本的 \(\boldsymbol{\delta}^{[l]T}\) 按行堆叠，\(A^{[l-1]}\in\mathbb{R}^{N\times n_{l-1}}\) 类似堆叠激活值，则：</p>
+        <div class="eq">
+            \[
+            \frac{\partial L}{\partial W^{[l]}} = \Delta^{[l]T}A^{[l-1]} \in \mathbb{R}^{n_l\times n_{l-1}}
+            \]
+        </div>
+        <p>这正是初学者版 10.4 节直接给出、这里补全推导的那个公式。</p>
+
+        <h3>10.2 完整数值实例：2→2→1 的 MLP，用真实巡检数据训练一步</h3>
+        <p>任务：用（电压偏差, 电流偏差）预测功率 \(P\)。为了让数字便于手算，把表 A 的原始电压、电流做一次简单的线性标准化（这也是线性代数在数据预处理里的直接应用）：</p>
+        <div class="eq">
+            \[
+            x_1 = \frac{V-220}{2}, \qquad x_2 = \frac{I-13}{5}
+            \]
+        </div>
+        <p>取表 A 的第 ① 和第 ④ 条记录组成一个大小为 2 的批量：</p>
+        <div class="data-tag">沿用表 A 的第①、④行（示例数据，用于演示计算，非实际记录）</div>
+        <div class="eq">
+            \[
+            \mathbf{x}^{(1)} = (-1.00,\ -0.56), \quad y^{(1)}=P^{(1)}=2.023 \qquad\qquad
+            \mathbf{x}^{(4)} = (1.00,\ 1.46), \quad y^{(4)}=P^{(4)}=3.876
+            \]
+        </div>
+        <p>网络结构：输入 2 维 → 隐藏层 2 个神经元（ReLU）→ 输出 1 维（线性输出，回归任务）。设定权重（为演示手工选定，非训练结果）：</p>
+        <div class="eq">
+            \[
+            W^{[1]} = \begin{bmatrix}1.0 & 0.5\\ 0.5 & -1.0\end{bmatrix},\quad
+            \mathbf{b}^{[1]} = \begin{bmatrix}0.8\\0.8\end{bmatrix},\quad
+            W^{[2]} = \begin{bmatrix}1.2 & 0.8\end{bmatrix},\quad
+            b^{[2]} = 0.5
+            \]
+        </div>
+        <h4>前向传播</h4>
+        <p>把两个样本按行堆成批量矩阵 \(X=\begin{bmatrix}-1.00&-0.56\\1.00&1.46\end{bmatrix}\)，按 10.1 节的批量公式 \(Z^{[1]}=XW^{[1]T}+\mathbf{1}\mathbf{b}^{[1]T}\)：</p>
+        <div class="eq">
+            \[
+            Z^{[1]} = \begin{bmatrix}-0.48 & 0.86\\ 2.53 & -0.16\end{bmatrix}, \qquad
+            A^{[1]} = \text{ReLU}(Z^{[1]}) = \begin{bmatrix}0 & 0.86\\ 2.53 & 0\end{bmatrix}
+            \]
+        </div>
+        <p>验证第一行第一列：\(z^{[1]}_{11}=1.0\times(-1.00)+0.5\times(-0.56)+0.8=-1.00-0.28+0.8=-0.48\)，ReLU 后变 0，与上表一致。继续算输出层 \(Z^{[2]}=A^{[1]}W^{[2]T}+b^{[2]}\)：</p>
+        <div class="eq">
+            \[
+            Z^{[2]} = \begin{bmatrix}0\times1.2+0.86\times0.8+0.5\\ 2.53\times1.2+0\times0.8+0.5\end{bmatrix}
+            = \begin{bmatrix}1.188\\ 3.536\end{bmatrix} = \hat{\mathbf{y}}
+            \]
+        </div>
+        <p>网络预测两条记录的功率分别是 1.188 kW 和 3.536 kW，真实值是 2.023 kW 和 3.876 kW——因为权重是随手设的、未经训练，预测有明显误差，这正好用来演示反向传播如何计算"该往哪个方向调整"。</p>
+
+        <h4>反向传播</h4>
+        <p>用均方误差损失 \(L=\frac{1}{N}\sum_i(\hat y_i-y_i)^2\)（\(N=2\)）。第一步算输出层梯度：</p>
+        <div class="eq">
+            \[
+            \Delta^{[2]} = \frac{\partial L}{\partial Z^{[2]}} = \frac{2}{N}(\hat{\mathbf{y}}-\mathbf{y}) = \begin{bmatrix}-0.835\\ -0.340\end{bmatrix}
+            \]
+        </div>
+        <p>（\(1.188-2.023=-0.835\)，\(3.536-3.876=-0.340\)，再乘以 \(2/N=1\)。）代入 10.1 节的批量公式求第二层权重梯度：</p>
+        <div class="eq">
+            \[
+            \frac{\partial L}{\partial W^{[2]}} = \Delta^{[2]T}A^{[1]} = \begin{bmatrix}-0.859 & -0.719\end{bmatrix}, \qquad
+            \frac{\partial L}{\partial b^{[2]}} = \sum_i \Delta^{[2]}_i = -1.175
+            \]
+        </div>
+        <p>验证第一个分量：\((-0.835)\times0 + (-0.340)\times2.53 = -0.860\)（与 \(-0.859\) 的微小差异来自中间结果保留的小数位数）。接着把误差往回传一层，先算 \(\partial L/\partial A^{[1]} = \Delta^{[2]}W^{[2]}\)：</p>
+        <div class="eq">
+            \[
+            \frac{\partial L}{\partial A^{[1]}} = \begin{bmatrix}-1.003 & -0.668\\ -0.408 & -0.272\end{bmatrix}
+            \]
+        </div>
+        <p>再乘以 ReLU 的导数（\(z>0\) 处导数为 1，\(z\le0\) 处导数为 0；对照前面 \(Z^{[1]}=\begin{bmatrix}-0.48&0.86\\2.53&-0.16\end{bmatrix}\)，导数矩阵是 \(\begin{bmatrix}0&1\\1&0\end{bmatrix}\)），逐元素相乘得到 \(\Delta^{[1]}\)：</p>
+        <div class="eq">
+            \[
+            \Delta^{[1]} = \frac{\partial L}{\partial A^{[1]}}\odot\begin{bmatrix}0&1\\1&0\end{bmatrix} = \begin{bmatrix}0 & -0.668\\ -0.408 & 0\end{bmatrix}
+            \]
+        </div>
+        <p>最后算第一层的权重梯度 \(\partial L/\partial W^{[1]}=\Delta^{[1]T}X\)：</p>
+        <div class="eq">
+            \[
+            \frac{\partial L}{\partial W^{[1]}} = \begin{bmatrix}-0.408 & -0.595 \\ 0.668 & 0.374\end{bmatrix}, \qquad
+            \frac{\partial L}{\partial \mathbf{b}^{[1]}} = \begin{bmatrix}-0.408\\ -0.668\end{bmatrix}
+            \]
+        </div>
+        <p>拿到这四组梯度（\(\partial L/\partial W^{[1]},\partial L/\partial \mathbf{b}^{[1]},\partial L/\partial W^{[2]},\partial L/\partial b^{[2]}\)）之后，梯度下降的下一步就是 \(W\leftarrow W-\eta\,\partial L/\partial W\)（\(\eta\) 是学习率）——这一步纯粹是数乘和减法，不再需要新的线性代数工具；真正用到线性代数的，正是上面这一整套"矩阵乘 + 转置 + 逐元素乘"的梯度计算过程。</p>
+
+        <div class="demo-box">
+            <div class="demo-caption">🎯 预测值 vs 真实值（训练前）</div>
+            <div id="mlpBarChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">红色是当前（未训练）权重下的预测功率 \(\hat y\)，蓝色是真实功率 \(y\)。两条记录都预测偏低，对应上面算出的负梯度——如果沿负梯度方向更新权重，下一步的预测会更接近蓝色柱子。</div>
+        </div>
+
+        <div class="highlight">
+            <strong>🎯 全书回顾：</strong> 从 1 节证明三条巡检记录线性无关，到 6 节发现电压恒定时功率是电流的精确冗余，到 7、9 节用特征值和奇异值两条独立路径证实"电流-功率"高度共线，再到这里用同一批数据训练一个真实的小型 MLP——贯穿全书的示例数据，把"抽象定理"和"能落地的计算"连成了一条线。这也是线性代数在深度学习实践中真正的样子：不是记住公式，而是能在纸上把每一步矩阵运算算对。
+        </div>
+    </section>
+
+    <!-- 结束语 -->
+    <div class="section" style="background: #f0f7ff; border: none;">
+        <h2 style="border-bottom: none; margin-bottom: 0.5rem;">🎓 进阶版完结</h2>
+        <p>你已经把初学者版的直觉，逐章补上了严格证明和真实可手算的数值例子。行列式的乘法公式、秩-零化度定理、谱定理、SVD 的存在性证明、MLP 反向传播的矩阵推导——这些是继续深入机器学习理论（凸优化、二阶方法、注意力机制的线性代数）所需的下一块基石。</p>
+        <p style="margin-top: 0.8rem;">建议下一步：用 NumPy 把本文里的每一个手算例子重新算一遍（特征值、SVD、反向传播梯度），并尝试把 batch size、隐藏层维度改大，观察哪些结论仍然成立、哪些只是小例子的巧合。</p>
+    </div>
+
+    <footer>
+        ⚡ 线性代数 · 大学全量 · 进阶版
+    </footer>
+</main>
+
+<script>
+    // ===== 渲染 KaTeX =====
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+            delimiters: [
+                {left: '\\[', right: '\\]', display: true},
+                {left: '\\(', right: '\\)', display: false}
+            ],
+            throwOnError: false
+        });
+    });
+
+    // ================= ECharts 演示 =================
+    window.addEventListener('load', function() {
+
+        // ---------- ch3: 旋转 vs 缩放 不可交换性 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('commuteChart'));
+            const theta = Math.PI / 4;
+            const cosT = Math.cos(theta), sinT = Math.sin(theta);
+            const circle = [];
+            for (let i = 0; i <= 60; i++) {
+                const t = (i / 60) * 2 * Math.PI;
+                circle.push([Math.cos(t), Math.sin(t)]);
+            }
+            function applyR(pts) {
+                return pts.map(p => [cosT*p[0]-sinT*p[1], sinT*p[0]+cosT*p[1]]);
+            }
+            function applyS(pts) {
+                return pts.map(p => [2*p[0], p[1]]);
+            }
+            const RS = applyR(applyS(circle)); // 先 S 再 R
+            const SR = applyS(applyR(circle)); // 先 R 再 S
+            chart.setOption({
+                grid: { left: 40, right: 20, top: 20, bottom: 30 },
+                xAxis: { type: 'value', min: -3, max: 3, name: 'x' },
+                yAxis: { type: 'value', min: -3, max: 3, name: 'y' },
+                series: [
+                    { name: '原始单位圆', type: 'line', data: circle, showSymbol: false, lineStyle: { color: '#cbd5e1', width: 1, type: 'dashed' } },
+                    { name: 'RS (先缩放再旋转)', type: 'line', data: RS, showSymbol: false, lineStyle: { color: '#3b82f6', width: 3 } },
+                    { name: 'SR (先旋转再缩放)', type: 'line', data: SR, showSymbol: false, lineStyle: { color: '#ef4444', width: 3 } }
+                ],
+                legend: { bottom: 0, data: ['原始单位圆','RS (先缩放再旋转)','SR (先旋转再缩放)'] }
+            });
+        })();
+
+        // ---------- ch6: 列共线性演示 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('rankChart'));
+            const I0 = [10, 15, 8, 20, 12];
+            const P0 = I0.map(i => 0.198 * i);
+            const linePts = [[0,0],[22, 22*0.198]];
+            chart.setOption({
+                grid: { left: 50, right: 20, top: 20, bottom: 40 },
+                xAxis: { type: 'value', min: 0, max: 22, name: '电流 I (A)' },
+                yAxis: { type: 'value', min: 0, max: 4.5, name: '功率 P (kW)' },
+                series: [
+                    { name: 'P = 0.198 I', type: 'line', data: linePts, showSymbol: false, lineStyle: { color: '#94a3b8', width: 2, type: 'dashed' } },
+                    { name: '表B数据点', type: 'scatter', data: I0.map((i,k)=>[i,P0[k]]), symbolSize: 12, itemStyle: { color: '#3b82f6' } }
+                ]
+            });
+        })();
+
+        // ---------- ch7: 协方差特征向量 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('covEigChart'));
+            const I = [10.2,15.5,8.1,20.3,12.4];
+            const P = [2.023476,3.01444,1.649727,3.875676,2.4552];
+            const Imean = I.reduce((a,b)=>a+b,0)/I.length;
+            const Pmean = P.reduce((a,b)=>a+b,0)/P.length;
+            const pts = I.map((v,k)=>[v-Imean, P[k]-Pmean]);
+            const lambda1 = 23.589, lambda2 = 0.000141;
+            const q1 = [0.9837, 0.1799];
+            const q2 = [-0.1799, 0.9837];
+            const s1 = Math.sqrt(lambda1), s2 = Math.sqrt(lambda2);
+            function arrow(vec, color) {
+                return { type: 'lines', coordinateSystem: 'cartesian2d', data: [{ coords: [[0,0], vec] }],
+                         lineStyle: { color: color, width: 3 }, symbol: ['none','arrow'], symbolSize: 10 };
+            }
+            chart.setOption({
+                grid: { left: 50, right: 20, top: 20, bottom: 30 },
+                xAxis: { type: 'value', min: -8, max: 8, name: '电流偏差' },
+                yAxis: { type: 'value', min: -1.5, max: 1.5, name: '功率偏差' },
+                series: [
+                    { name: '数据点', type: 'scatter', data: pts, symbolSize: 10, itemStyle: { color: '#94a3b8' } },
+                    arrow([q1[0]*s1*0.3, q1[1]*s1*0.3], '#ef4444'),
+                    arrow([q2[0]*s2*30, q2[1]*s2*30], '#10b981')
+                ]
+            });
+        })();
+
+        // ---------- ch8: 格拉姆-施密特 2D 简化图示 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('gsChart'));
+            const a1 = [1,1], a2 = [2,0];
+            const norm1 = Math.hypot(a1[0],a1[1]);
+            const e1 = [a1[0]/norm1, a1[1]/norm1];
+            const dot = a2[0]*e1[0]+a2[1]*e1[1];
+            const proj = [dot*e1[0], dot*e1[1]];
+            const u2 = [a2[0]-proj[0], a2[1]-proj[1]];
+            function arrow(vec, color, dashed) {
+                return { type: 'lines', coordinateSystem: 'cartesian2d', data: [{ coords: [[0,0], vec] }],
+                         lineStyle: { color: color, width: 3, type: dashed ? 'dashed' : 'solid' }, symbol: ['none','arrow'], symbolSize: 10 };
+            }
+            chart.setOption({
+                grid: { left: 40, right: 20, top: 20, bottom: 30 },
+                xAxis: { type: 'value', min: -1, max: 3, name: 'x' },
+                yAxis: { type: 'value', min: -1, max: 2, name: 'y' },
+                series: [
+                    arrow(a1, '#3b82f6'),
+                    arrow(a2, '#94a3b8'),
+                    arrow(proj, '#f59e0b', true),
+                    { type: 'lines', coordinateSystem: 'cartesian2d', data: [{ coords: [proj, a2] }], lineStyle: { color: '#cbd5e1', width: 2, type: 'dashed' } },
+                    arrow(u2, '#8b5cf6')
+                ]
+            });
+        })();
+
+        // ---------- ch9: 奇异值对比（对数坐标） ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('svdBarChart'));
+            chart.setOption({
+                grid: { left: 60, right: 20, top: 20, bottom: 40 },
+                xAxis: { type: 'category', data: ['σ1 ≈ 9.714', 'σ2 ≈ 0.0237'] },
+                yAxis: { type: 'log', name: '奇异值（对数坐标）', min: 0.01, max: 20 },
+                series: [{
+                    type: 'bar',
+                    data: [
+                        { value: 9.714, itemStyle: { color: '#3b82f6' } },
+                        { value: 0.0237, itemStyle: { color: '#ef4444' } }
+                    ],
+                    barWidth: '45%'
+                }]
+            });
+        })();
+
+        // ---------- ch10: 预测 vs 真实值 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('mlpBarChart'));
+            chart.setOption({
+                grid: { left: 50, right: 20, top: 20, bottom: 40 },
+                xAxis: { type: 'category', data: ['样本①', '样本④'] },
+                yAxis: { type: 'value', name: '功率 (kW)' },
+                legend: { bottom: 0, data: ['预测 ŷ', '真实 y'] },
+                series: [
+                    { name: '预测 ŷ', type: 'bar', data: [1.188, 3.536], itemStyle: { color: '#ef4444' } },
+                    { name: '真实 y', type: 'bar', data: [2.023, 3.876], itemStyle: { color: '#3b82f6' } }
+                ]
+            });
+        })();
+
+    });
+
+    // ===== 目录高亮 =====
+    const sections = document.querySelectorAll('.section');
+    const tocLinks = document.querySelectorAll('.toc a');
+
+    function updateActiveToc() {
+        let current = '';
+        const scrollPos = window.scrollY + 120;
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            if (scrollPos >= sectionTop) {
+                current = section.getAttribute('id');
+            }
+        });
+        tocLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${current}`) {
+                link.classList.add('active');
+            }
+        });
+    }
+
+    window.addEventListener('scroll', updateActiveToc);
+    window.addEventListener('load', updateActiveToc);
+
+    // 平滑滚动
+    tocLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) {
+                targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                setTimeout(updateActiveToc, 100);
+            }
+        });
+    });
+</script>
+</body>
+</html>

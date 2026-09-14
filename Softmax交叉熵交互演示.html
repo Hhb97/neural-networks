@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Softmax + 交叉熵 交互演示</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px;
+    background: #F5F4EF; color: #2C2C2A;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 500; margin: 0 0 4px; }
+  h3 { font-size: 15px; font-weight: 500; margin: 0 0 10px; }
+  .sub { color: #5F5E5A; font-size: 14px; margin-bottom: 18px; }
+  .back { display: inline-block; margin-bottom: 14px; color: #185FA5; text-decoration: none; font-size: 14px; }
+  .back:hover { text-decoration: underline; }
+  .card { background: #fff; border: 1px solid #D3D1C7; border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+  .row > .card { flex: 1; min-width: 300px; margin-bottom: 0; }
+  button {
+    font-family: inherit; font-size: 13px; padding: 7px 14px;
+    border-radius: 8px; border: 1px solid #185FA5; background: #185FA5; color: #fff; cursor: pointer;
+  }
+  button.ghost { background: #fff; color: #185FA5; }
+  button:active { transform: translateY(1px); }
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .class-row { display: flex; gap: 10px; margin-bottom: 18px; }
+  .class-pill {
+    flex: 1; text-align: center; padding: 10px 6px; border-radius: 10px; cursor: pointer;
+    border: 2px solid #E5E3DB; background: #F1EFE8; font-size: 14px; user-select: none;
+  }
+  .class-pill.true { border-color: #185FA5; background: #E8F1FB; font-weight: 500; }
+  .slider-block { margin-bottom: 14px; }
+  .slider-block .label-row { display: flex; justify-content: space-between; font-size: 13.5px; margin-bottom: 4px; }
+  .slider-block .label-row b { font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: #185FA5; }
+  .bars { display: flex; align-items: flex-end; gap: 22px; height: 200px; margin: 10px 0 6px; padding: 0 10px; }
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+  .bar { width: 56px; border-radius: 6px 6px 0 0; background: #A9C3DD; transition: height .15s ease; position: relative; }
+  .bar.true { background: #185FA5; }
+  .bar-val { font-size: 13px; margin-bottom: 6px; font-variant-numeric: tabular-nums; font-weight: 500; }
+  .bar-name { font-size: 13px; margin-top: 8px; color: #5F5E5A; }
+  .readout {
+    background: #F1EFE8; border-radius: 8px; padding: 14px 16px;
+    font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 12.5px;
+    white-space: pre; line-height: 1.85; overflow-x: auto;
+  }
+  .loss-box {
+    text-align: center; padding: 16px; border-radius: 10px; background: #FAEEDA;
+    border: 1px solid #EAD9AE; margin-top: 4px;
+  }
+  .loss-box .num { font-size: 32px; font-weight: 600; color: #8A4B0D; font-variant-numeric: tabular-nums; }
+  .loss-box .cap { font-size: 13px; color: #5F5E5A; margin-top: 4px; }
+  .hint { font-size: 13px; color: #5F5E5A; margin-top: 10px; }
+  .dim { color: #888780; }
+  .hl { color: #185FA5; font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back" href="index.html">&larr; 返回首页</a>
+  <h1>Softmax + 交叉熵：把分数变成概率，再算错得多离谱</h1>
+  <div class="sub">
+    拖动三个类别的 logit（原始分数），实时看 Softmax 概率、交叉熵损失、以及梯度 <b>p − y</b> 怎么变化。
+    对应笔记：《神经网络进阶：分类、激活函数与优化器》第 2～4 节。
+  </div>
+
+  <div class="card">
+    <h3>1. 选一个"真实类别"</h3>
+    <div class="class-row" id="classRow">
+      <div class="class-pill" data-i="0">🐱 猫</div>
+      <div class="class-pill" data-i="1">🐶 狗</div>
+      <div class="class-pill" data-i="2">🐦 鸟</div>
+    </div>
+
+    <h3>2. 拖动三个类别的 logit（原始分数）</h3>
+    <div class="slider-block">
+      <div class="label-row"><span>🐱 猫的 logit（z猫）</span><b id="v0">2.0</b></div>
+      <input type="range" id="z0" min="-5" max="5" step="0.1" value="2.0">
+    </div>
+    <div class="slider-block">
+      <div class="label-row"><span>🐶 狗的 logit（z狗）</span><b id="v1">1.0</b></div>
+      <input type="range" id="z1" min="-5" max="5" step="0.1" value="1.0">
+    </div>
+    <div class="slider-block">
+      <div class="label-row"><span>🐦 鸟的 logit（z鸟）</span><b id="v2">0.1</b></div>
+      <input type="range" id="z2" min="-5" max="5" step="0.1" value="0.1">
+    </div>
+
+    <div class="presets">
+      <button class="ghost" data-preset="confident-correct">自信且答对</button>
+      <button class="ghost" data-preset="confident-wrong">自信但答错</button>
+      <button class="ghost" data-preset="unsure">犹豫不决</button>
+      <button class="ghost" data-preset="reset">笔记里的例子</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <h3>Softmax 概率</h3>
+      <div class="bars" id="bars">
+        <div class="bar-col"><div class="bar-val" id="p0">--</div><div class="bar" id="bar0" style="height:0"></div><div class="bar-name">🐱 猫</div></div>
+        <div class="bar-col"><div class="bar-val" id="p1">--</div><div class="bar" id="bar1" style="height:0"></div><div class="bar-name">🐶 狗</div></div>
+        <div class="bar-col"><div class="bar-val" id="p2">--</div><div class="bar" id="bar2" style="height:0"></div><div class="bar-name">🐦 鸟</div></div>
+      </div>
+      <div class="hint">柱子越高，模型越觉得"像这一类"。三个概率永远加起来等于 1。</div>
+    </div>
+    <div class="card">
+      <h3>交叉熵损失</h3>
+      <div class="loss-box">
+        <div class="num" id="lossNum">--</div>
+        <div class="cap">L = −log(p<sub>真实类别</sub>)</div>
+      </div>
+      <div class="hint" id="lossHint">损失只关心模型分配给"真实类别"的那一个概率。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>计算过程 &amp; 反向传播的梯度</h3>
+    <div class="readout" id="readout"></div>
+    <div class="hint">
+      <span class="hl">∂L/∂z_i = p_i − y_i</span> —— 梯度是负的，说明该增大这个 logit；梯度是正的，说明该减小。
+      这跟入门笔记里 sigmoid 的"预测值减真实值"结论一致。
+    </div>
+  </div>
+
+</div>
+
+<script>
+const names = ["猫", "狗", "鸟"];
+const emoji = ["🐱", "🐶", "🐦"];
+let trueClass = 0;
+
+const sliders = [document.getElementById('z0'), document.getElementById('z1'), document.getElementById('z2')];
+const vlabels = [document.getElementById('v0'), document.getElementById('v1'), document.getElementById('v2')];
+const bars = [document.getElementById('bar0'), document.getElementById('bar1'), document.getElementById('bar2')];
+const pLabels = [document.getElementById('p0'), document.getElementById('p1'), document.getElementById('p2')];
+const classRow = document.getElementById('classRow');
+
+function softmax(z) {
+  const ex = z.map(Math.exp);
+  const sum = ex.reduce((a,b)=>a+b, 0);
+  return { ex, sum, p: ex.map(e => e/sum) };
+}
+
+function fmt(x, n=3) { return x.toFixed(n); }
+
+function update() {
+  const z = sliders.map(s => parseFloat(s.value));
+  z.forEach((v,i) => vlabels[i].textContent = fmt(v,1));
+
+  const { ex, sum, p } = softmax(z);
+
+  p.forEach((val,i) => {
+    bars[i].style.height = Math.max(2, val*180) + 'px';
+    bars[i].className = 'bar' + (i===trueClass ? ' true' : '');
+    pLabels[i].textContent = (val*100).toFixed(1) + '%';
+  });
+
+  const loss = -Math.log(p[trueClass]);
+  document.getElementById('lossNum').textContent = fmt(loss, 3);
+
+  let lossHint;
+  if (loss < 0.2) lossHint = "非常好：模型对真实类别很自信，损失接近 0。";
+  else if (loss < 1.0) lossHint = "还可以，但模型不够自信，损失有一点。";
+  else lossHint = "损失偏高：模型没能把足够高的概率分给真实类别。";
+  document.getElementById('lossHint').textContent = lossHint;
+
+  let out = '';
+  out += `logits：z = [${z.map(v=>fmt(v,2)).join(', ')}]   (${names.join(', ')})\n\n`;
+  out += `第一步：取指数\n`;
+  z.forEach((v,i) => out += `  e^${fmt(v,2)} (${names[i]}) = ${fmt(ex[i])}\n`);
+  out += `\n第二步：求和 = ${fmt(sum)}\n\n`;
+  out += `第三步：除以总和，得到概率\n`;
+  p.forEach((v,i) => out += `  p${names[i]} = ${fmt(ex[i])} / ${fmt(sum)} = ${fmt(v)}\n`);
+  out += `\n真实类别是「${emoji[trueClass]}${names[trueClass]}」\n`;
+  out += `交叉熵损失 L = -log(${fmt(p[trueClass])}) = ${fmt(loss)}\n\n`;
+  out += `反向传播梯度 ∂L/∂z_i = p_i − y_i：\n`;
+  p.forEach((v,i) => {
+    const y = (i===trueClass) ? 1 : 0;
+    const g = v - y;
+    out += `  ∂L/∂z${names[i]} = ${fmt(v)} − ${y} = ${g>=0?'+':''}${fmt(g)}${g<0 ? '   ← 该增大' : (g>0 ? '   ← 该减小' : '')}\n`;
+  });
+
+  document.getElementById('readout').textContent = out;
+}
+
+sliders.forEach(s => s.addEventListener('input', update));
+
+classRow.querySelectorAll('.class-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    trueClass = parseInt(pill.dataset.i);
+    classRow.querySelectorAll('.class-pill').forEach(p => p.classList.remove('true'));
+    pill.classList.add('true');
+    update();
+  });
+});
+classRow.querySelector('.class-pill[data-i="0"]').classList.add('true');
+
+document.querySelectorAll('[data-preset]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const preset = btn.dataset.preset;
+    let z, tc;
+    if (preset === 'confident-correct') { z = [3.5, 0, -1]; tc = 0; }
+    else if (preset === 'confident-wrong') { z = [3.5, 0, -1]; tc = 1; }
+    else if (preset === 'unsure') { z = [0.1, 0.0, -0.1]; tc = 0; }
+    else { z = [2.0, 1.0, 0.1]; tc = 0; }
+    sliders.forEach((s,i) => s.value = z[i]);
+    trueClass = tc;
+    classRow.querySelectorAll('.class-pill').forEach((p,i) => p.classList.toggle('true', i===tc));
+    update();
+  });
+});
+
+update();
+</script>
+</body>
+</html>

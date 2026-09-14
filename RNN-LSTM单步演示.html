@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RNN / LSTM 单步演示</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px;
+    background: #F5F4EF; color: #2C2C2A;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 940px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 500; margin: 0 0 4px; }
+  h3 { font-size: 15px; font-weight: 500; margin: 0 0 10px; }
+  .sub { color: #5F5E5A; font-size: 14px; margin-bottom: 18px; }
+  .back { display: inline-block; margin-bottom: 14px; color: #185FA5; text-decoration: none; font-size: 14px; }
+  .back:hover { text-decoration: underline; }
+  .card { background: #fff; border: 1px solid #D3D1C7; border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+  .row > .card { flex: 1; min-width: 300px; margin-bottom: 0; }
+  .mode-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .mode-btn {
+    flex: 1; text-align: center; padding: 10px; border-radius: 10px; cursor: pointer;
+    border: 2px solid #E5E3DB; background: #F1EFE8; font-size: 14px;
+  }
+  .mode-btn.active { border-color: #185FA5; background: #E8F1FB; font-weight: 500; color: #185FA5; }
+  .seq { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .seq .step {
+    padding: 8px 12px; border-radius: 8px; background: #F1EFE8; font-size: 13px;
+    font-variant-numeric: tabular-nums; border: 2px solid transparent;
+  }
+  .seq .step.now { border-color: #185FA5; background: #E8F1FB; font-weight: 500; }
+  .seq .step.done { color: #0F6E56; }
+  button {
+    font-family: inherit; font-size: 13px; padding: 7px 14px;
+    border-radius: 8px; border: 1px solid #185FA5; background: #185FA5; color: #fff; cursor: pointer;
+  }
+  button.ghost { background: #fff; color: #185FA5; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button:active { transform: translateY(1px); }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 4px; }
+  .gate-row { margin-bottom: 10px; }
+  .gate-row .label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 3px; }
+  .gate-bar-bg { background: #F1EFE8; border-radius: 6px; height: 16px; overflow: hidden; }
+  .gate-bar-fill { height: 100%; border-radius: 6px; transition: width .25s ease; }
+  svg { display: block; width: 100%; height: auto; }
+  .readout {
+    background: #F1EFE8; border-radius: 8px; padding: 12px 16px; margin-top: 10px;
+    font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 12.5px;
+    white-space: pre; line-height: 1.8;
+  }
+  .hint { font-size: 13px; color: #5F5E5A; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back" href="index.html">&larr; 返回首页</a>
+  <h1>RNN / LSTM 单步演示：记忆是怎么一步步更新的</h1>
+  <div class="sub">
+    一维简化版（真实模型是几百维向量，这里缩到 1 维方便看清楚每一步在算什么）。
+    对应笔记：《神经网络进阶：RNN 与 LSTM》第 3、6 节。
+  </div>
+
+  <div class="card">
+    <div class="mode-row">
+      <div class="mode-btn active" data-mode="rnn">朴素 RNN</div>
+      <div class="mode-btn" data-mode="lstm">LSTM</div>
+    </div>
+
+    <h3>输入序列 x</h3>
+    <div class="seq" id="seqRow"></div>
+
+    <div class="controls">
+      <button id="stepBtn">下一步 →</button>
+      <button id="playBtn" class="ghost">自动播放</button>
+      <button id="randomBtn" class="ghost">换一组序列</button>
+      <button id="resetBtn" class="ghost">重置</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <h3 id="gateTitle">门控 &amp; 状态</h3>
+      <div id="gatesArea"></div>
+      <div class="readout" id="readout"></div>
+    </div>
+    <div class="card">
+      <h3>隐藏状态 h 随时间变化</h3>
+      <svg id="hChart" viewBox="0 0 380 260"></svg>
+      <div class="hint" id="chartHint"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let mode = 'rnn';
+let X = [1.0, 2.0, -1.0, 0.5, 1.5];
+let t = 0; // 已经算到第几步 (0 = 还没开始)
+let hHist = [0];
+let cHist = [0];
+let playTimer = null;
+
+// RNN 参数
+const RNN = { Wx: 0.5, Wh: 0.8, b: 0 };
+// LSTM 参数（1维简化：forget / input / candidate / output）
+const LSTM = {
+  f: { Wx: 0.5, Wh: 0.3, b: 0 },
+  i: { Wx: 0.6, Wh: 0.2, b: 0 },
+  c: { Wx: 0.5, Wh: 0.4, b: 0 },
+  o: { Wx: 0.4, Wh: 0.5, b: 0 },
+};
+
+function sigmoid(x) { return 1/(1+Math.exp(-x)); }
+
+function stepRNN(x, hPrev) {
+  const z = RNN.Wx*x + RNN.Wh*hPrev + RNN.b;
+  const h = Math.tanh(z);
+  return { h, z };
+}
+
+function stepLSTM(x, hPrev, cPrev) {
+  const f = sigmoid(LSTM.f.Wx*x + LSTM.f.Wh*hPrev + LSTM.f.b);
+  const i = sigmoid(LSTM.i.Wx*x + LSTM.i.Wh*hPrev + LSTM.i.b);
+  const cTilde = Math.tanh(LSTM.c.Wx*x + LSTM.c.Wh*hPrev + LSTM.c.b);
+  const c = f*cPrev + i*cTilde;
+  const o = sigmoid(LSTM.o.Wx*x + LSTM.o.Wh*hPrev + LSTM.o.b);
+  const h = o*Math.tanh(c);
+  return { f, i, cTilde, c, o, h };
+}
+
+function renderSeq() {
+  const row = document.getElementById('seqRow');
+  row.innerHTML = X.map((v,idx) => {
+    let cls = 'step';
+    if (idx < t) cls += ' done';
+    if (idx === t) cls += ' now';
+    return `<div class="${cls}">x${idx+1}=${v.toFixed(1)}</div>`;
+  }).join('');
+}
+
+function gateBar(label, val, color) {
+  return `<div class="gate-row">
+    <div class="label"><span>${label}</span><b>${val.toFixed(3)}</b></div>
+    <div class="gate-bar-bg"><div class="gate-bar-fill" style="width:${(val*100).toFixed(1)}%;background:${color}"></div></div>
+  </div>`;
+}
+
+function renderGatesAndReadout() {
+  const gatesArea = document.getElementById('gatesArea');
+  const readout = document.getElementById('readout');
+  const hPrev = hHist[hHist.length-1];
+  const cPrev = cHist[cHist.length-1];
+
+  if (t >= X.length) {
+    gatesArea.innerHTML = '<div class="hint">序列已经读完啦。点"换一组序列"或"重置"再来一遍。</div>';
+    readout.textContent = `最终隐藏状态 h = ${hPrev.toFixed(4)}` + (mode==='lstm' ? `\n最终细胞状态 C = ${cPrev.toFixed(4)}` : '');
+    return;
+  }
+
+  const x = X[t];
+
+  if (mode === 'rnn') {
+    const { h, z } = stepRNN(x, hPrev);
+    gatesArea.innerHTML = `<div class="hint">朴素 RNN 没有门，只有一次 tanh 激活。</div>`;
+    readout.textContent =
+`第 ${t+1} 步：
+  输入 x${t+1} = ${x.toFixed(2)}
+  上一步记忆 h${t} = ${hPrev.toFixed(4)}
+
+  z = Wx·x + Wh·h${t} + b
+    = ${RNN.Wx}×${x.toFixed(2)} + ${RNN.Wh}×${hPrev.toFixed(4)}
+    = ${z.toFixed(4)}
+
+  h${t+1} = tanh(z) = ${h.toFixed(4)}`;
+    gatesArea.dataset.pendingH = h;
+  } else {
+    const r = stepLSTM(x, hPrev, cPrev);
+    gatesArea.innerHTML =
+      gateBar('遗忘门 f（保留多少旧记忆）', r.f, '#A32D2D') +
+      gateBar('输入门 i（写入多少新信息）', r.i, '#185FA5') +
+      gateBar('输出门 o（说出口多少记忆）', r.o, '#0F6E56');
+    readout.textContent =
+`第 ${t+1} 步：
+  输入 x${t+1} = ${x.toFixed(2)}
+  上一步：h${t} = ${hPrev.toFixed(4)}，C${t} = ${cPrev.toFixed(4)}
+
+  候选值 C̃ = tanh(...) = ${r.cTilde.toFixed(4)}
+
+  细胞状态更新：
+  C${t+1} = f×C${t} + i×C̃
+       = ${r.f.toFixed(3)}×${cPrev.toFixed(4)} + ${r.i.toFixed(3)}×${r.cTilde.toFixed(4)}
+       = ${r.c.toFixed(4)}
+
+  隐藏状态：h${t+1} = o × tanh(C${t+1}) = ${r.o.toFixed(3)} × ${Math.tanh(r.c).toFixed(4)} = ${r.h.toFixed(4)}`;
+    gatesArea.dataset.pendingH = r.h;
+    gatesArea.dataset.pendingC = r.c;
+  }
+}
+
+function renderChart() {
+  const svg = document.getElementById('hChart');
+  const W=380, H=260, PAD={l:36,r:10,t:14,b:24};
+  function lx(i){ return PAD.l + (X.length===0?0:i/X.length)*(W-PAD.l-PAD.r); }
+  function ly(v){ return H-PAD.b - (v+1)/2*(H-PAD.t-PAD.b); } // h 范围大致 [-1,1]
+
+  let s = '';
+  s += `<line x1="${PAD.l}" y1="${ly(0)}" x2="${W-PAD.r}" y2="${ly(0)}" stroke="#E5E3DB"/>`;
+  s += `<line x1="${PAD.l}" y1="${PAD.t}" x2="${PAD.l}" y2="${H-PAD.b}" stroke="#B8B6AC"/>`;
+  s += `<text x="4" y="${ly(1)+4}" font-size="10" fill="#888780">1</text>`;
+  s += `<text x="4" y="${ly(0)+4}" font-size="10" fill="#888780">0</text>`;
+  s += `<text x="4" y="${ly(-1)+4}" font-size="10" fill="#888780">-1</text>`;
+
+  let d = '';
+  hHist.forEach((v,i) => { d += (i===0?'M':'L') + lx(i).toFixed(1) + ' ' + ly(v).toFixed(1) + ' '; });
+  s += `<path d="${d}" fill="none" stroke="#185FA5" stroke-width="2.5"/>`;
+  hHist.forEach((v,i) => { s += `<circle cx="${lx(i).toFixed(1)}" cy="${ly(v).toFixed(1)}" r="4" fill="#185FA5"/>`; });
+
+  if (mode === 'lstm') {
+    let d2 = '';
+    cHist.forEach((v,i) => { d2 += (i===0?'M':'L') + lx(i).toFixed(1) + ' ' + ly(Math.max(-1,Math.min(1,v))).toFixed(1) + ' '; });
+    s += `<path d="${d2}" fill="none" stroke="#A32D2D" stroke-width="2" stroke-dasharray="5 4"/>`;
+  }
+
+  svg.innerHTML = s;
+  document.getElementById('chartHint').textContent = mode==='lstm'
+    ? '蓝色实线是隐藏状态 h，红色虚线是细胞状态 C（LSTM 专门维护的长期记忆）。'
+    : '蓝色曲线是隐藏状态 h 随时间步的变化（tanh 限制在 -1~1 之间）。';
+}
+
+function commitStep() {
+  const gatesArea = document.getElementById('gatesArea');
+  const h = parseFloat(gatesArea.dataset.pendingH);
+  hHist.push(h);
+  if (mode === 'lstm') cHist.push(parseFloat(gatesArea.dataset.pendingC));
+  else cHist.push(0);
+  t += 1;
+}
+
+function stepForward() {
+  if (t >= X.length) return;
+  renderGatesAndReadout();
+  commitStep();
+  renderSeq();
+  renderGatesAndReadout();
+  renderChart();
+}
+
+function resetAll() {
+  t = 0; hHist = [0]; cHist = [0];
+  renderSeq(); renderGatesAndReadout(); renderChart();
+}
+
+function randomizeSeq() {
+  X = Array.from({length:5}, () => Math.round((Math.random()*4-2)*10)/10);
+  resetAll();
+}
+
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    mode = btn.dataset.mode;
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b===btn));
+    resetAll();
+  });
+});
+
+document.getElementById('stepBtn').addEventListener('click', stepForward);
+document.getElementById('resetBtn').addEventListener('click', () => { clearInterval(playTimer); playTimer=null; document.getElementById('playBtn').textContent='自动播放'; resetAll(); });
+document.getElementById('randomBtn').addEventListener('click', () => { clearInterval(playTimer); playTimer=null; document.getElementById('playBtn').textContent='自动播放'; randomizeSeq(); });
+document.getElementById('playBtn').addEventListener('click', (e) => {
+  if (playTimer) {
+    clearInterval(playTimer); playTimer = null;
+    e.target.textContent = '自动播放';
+  } else {
+    e.target.textContent = '暂停';
+    playTimer = setInterval(() => {
+      if (t >= X.length) { clearInterval(playTimer); playTimer=null; e.target.textContent='自动播放'; return; }
+      stepForward();
+    }, 900);
+  }
+});
+
+resetAll();
+</script>
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dropout 可视化演示</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px;
+    background: #F5F4EF; color: #2C2C2A;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 940px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 500; margin: 0 0 4px; }
+  h3 { font-size: 15px; font-weight: 500; margin: 0 0 10px; }
+  .sub { color: #5F5E5A; font-size: 14px; margin-bottom: 18px; }
+  .back { display: inline-block; margin-bottom: 14px; color: #185FA5; text-decoration: none; font-size: 14px; }
+  .back:hover { text-decoration: underline; }
+  .card { background: #fff; border: 1px solid #D3D1C7; border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+  svg { display: block; width: 100%; height: auto; }
+  .mode-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .mode-btn {
+    flex: 1; text-align: center; padding: 10px; border-radius: 10px; cursor: pointer;
+    border: 2px solid #E5E3DB; background: #F1EFE8; font-size: 14px;
+  }
+  .mode-btn.active { border-color: #185FA5; background: #E8F1FB; font-weight: 500; color: #185FA5; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+  button {
+    font-family: inherit; font-size: 13px; padding: 7px 14px;
+    border-radius: 8px; border: 1px solid #185FA5; background: #185FA5; color: #fff; cursor: pointer;
+  }
+  button.ghost { background: #fff; color: #185FA5; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button:active { transform: translateY(1px); }
+  .slider-row { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 220px; }
+  input[type=range] { flex: 1; accent-color: #185FA5; }
+  .p-val { font-variant-numeric: tabular-nums; min-width: 42px; text-align: right; font-weight: 500; }
+  .stat { font-size: 13.5px; margin-top: 10px; }
+  .hint { font-size: 13px; color: #5F5E5A; margin-top: 10px; }
+  .note {
+    background: #FAEEDA; border-left: 3px solid #BA7517; padding: 10px 14px;
+    margin-top: 12px; font-size: 13px; color: #412402;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back" href="index.html">&larr; 返回首页</a>
+  <h1>Dropout 可视化：训练时随机"关掉"一部分神经元</h1>
+  <div class="sub">
+    每点一次"重新采样"，两层隐藏层里都会随机变灰一批神经元（连带的连接线跟着变淡）——这就是训练时每一步看到的"临时小网络"。
+    对应笔记：《神经网络进阶：分类、激活函数与优化器》第 7 节。
+  </div>
+
+  <div class="card">
+    <div class="mode-row">
+      <div class="mode-btn active" data-mode="train">🎲 训练模式（开启 Dropout）</div>
+      <div class="mode-btn" data-mode="eval">✅ 推理模式（关闭 Dropout）</div>
+    </div>
+
+    <svg id="net" viewBox="0 0 780 340"></svg>
+
+    <div class="controls">
+      <button id="resampleBtn">🎲 重新采样一次</button>
+      <button id="playBtn" class="ghost">自动循环</button>
+      <div class="slider-row">
+        <span style="font-size:13.5px">Dropout 比例 p</span>
+        <input type="range" id="pSlider" min="0.1" max="0.7" step="0.05" value="0.4">
+        <span class="p-val" id="pVal">0.40</span>
+      </div>
+    </div>
+    <div class="stat" id="stat"></div>
+    <div class="note" id="modeNote"></div>
+  </div>
+
+</div>
+
+<script>
+const svg = document.getElementById('net');
+const W = 780, H = 340;
+
+const LAYERS = [
+  { n: 2, x: 60,  label: '输入层' },
+  { n: 6, x: 260, label: '隐藏层 1', dropoutable: true },
+  { n: 6, x: 500, label: '隐藏层 2', dropoutable: true },
+  { n: 2, x: 720, label: '输出层' },
+];
+
+function layerYs(n) {
+  const gap = 40;
+  const total = (n-1) * gap;
+  const y0 = H/2 - total/2;
+  return Array.from({length:n}, (_,i) => y0 + i*gap);
+}
+
+let mode = 'train'; // 'train' | 'eval'
+let mask = LAYERS.map(l => l.dropoutable ? Array(l.n).fill(true) : Array(l.n).fill(true));
+let playTimer = null;
+
+function resample() {
+  const p = parseFloat(document.getElementById('pSlider').value);
+  LAYERS.forEach((l, li) => {
+    if (!l.dropoutable) return;
+    mask[li] = Array.from({length:l.n}, () => Math.random() > p);
+  });
+}
+
+function activeAt(li, i) {
+  if (mode === 'eval') return true;               // 推理模式：全部激活
+  if (!LAYERS[li].dropoutable) return true;        // 输入/输出层不做 dropout
+  return mask[li][i];
+}
+
+function render() {
+  let s = '';
+  const positions = LAYERS.map(l => layerYs(l.n));
+
+  // 先画边
+  for (let li = 0; li < LAYERS.length - 1; li++) {
+    const ys1 = positions[li], ys2 = positions[li+1];
+    for (let i = 0; i < ys1.length; i++) {
+      for (let j = 0; j < ys2.length; j++) {
+        const activeEdge = activeAt(li, i) && activeAt(li+1, j);
+        s += `<line x1="${LAYERS[li].x}" y1="${ys1[i]}" x2="${LAYERS[li+1].x}" y2="${ys2[j]}"
+                stroke="${activeEdge ? '#B9C9DB' : '#E5E3DB'}" stroke-width="${activeEdge?1.4:1}"
+                stroke-dasharray="${activeEdge?'0':'3 3'}" opacity="${activeEdge?0.85:0.5}"/>`;
+      }
+    }
+  }
+
+  // 再画节点
+  LAYERS.forEach((l, li) => {
+    const ys = positions[li];
+    s += `<text x="${l.x}" y="24" font-size="13" fill="#5F5E5A" text-anchor="middle">${l.label}</text>`;
+    ys.forEach((y,i) => {
+      const on = activeAt(li, i);
+      const fill = on ? (l.dropoutable ? '#185FA5' : '#0F6E56') : '#D3D1C7';
+      s += `<circle cx="${l.x}" cy="${y}" r="15" fill="${on ? fill : '#F1EFE8'}" stroke="${fill}" stroke-width="2" opacity="${on?1:0.55}"/>`;
+      if (!on) s += `<text x="${l.x}" y="${y+5}" font-size="14" fill="#A8A69C" text-anchor="middle">×</text>`;
+    });
+  });
+
+  svg.innerHTML = s;
+
+  // 统计
+  let dropped = 0, total = 0;
+  LAYERS.forEach((l, li) => {
+    if (!l.dropoutable) return;
+    total += l.n;
+    dropped += mask[li].filter(a => !a).length;
+  });
+  const statEl = document.getElementById('stat');
+  if (mode === 'train') {
+    statEl.innerHTML = `本次两层隐藏层共 <b>${total}</b> 个神经元，被随机关闭 <b>${dropped}</b> 个（约 ${(dropped/total*100).toFixed(0)}%）。`;
+  } else {
+    statEl.innerHTML = `推理模式：全部 ${total} 个隐藏神经元都参与计算。`;
+  }
+
+  const noteEl = document.getElementById('modeNote');
+  if (mode === 'train') {
+    noteEl.textContent = '训练模式下，每一步（每次前向传播）都会重新随机选一批神经元关闭，逼着网络不能依赖某几个固定神经元。';
+  } else {
+    noteEl.textContent = '推理 / 预测阶段要关闭 Dropout（对应代码里的 model.eval()）。现代框架用"inverted dropout"，训练时已经把保留下来的神经元输出按 1/(1-p) 放大，所以推理时可以直接用全部神经元，不用再额外缩放。';
+  }
+}
+
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    mode = btn.dataset.mode;
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b===btn));
+    document.getElementById('resampleBtn').disabled = (mode === 'eval');
+    document.getElementById('playBtn').disabled = (mode === 'eval');
+    render();
+  });
+});
+
+document.getElementById('resampleBtn').addEventListener('click', () => { resample(); render(); });
+document.getElementById('pSlider').addEventListener('input', (e) => {
+  document.getElementById('pVal').textContent = parseFloat(e.target.value).toFixed(2);
+});
+document.getElementById('playBtn').addEventListener('click', (e) => {
+  if (playTimer) {
+    clearInterval(playTimer); playTimer = null;
+    e.target.textContent = '自动循环';
+  } else {
+    e.target.textContent = '暂停';
+    playTimer = setInterval(() => { resample(); render(); }, 700);
+  }
+});
+
+resample();
+render();
+</script>
+</body>
+</html>

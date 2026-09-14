@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>优化器对比动画</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px;
+    background: #F5F4EF; color: #2C2C2A;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 940px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 500; margin: 0 0 4px; }
+  h3 { font-size: 15px; font-weight: 500; margin: 0 0 10px; }
+  .sub { color: #5F5E5A; font-size: 14px; margin-bottom: 18px; }
+  .back { display: inline-block; margin-bottom: 14px; color: #185FA5; text-decoration: none; font-size: 14px; }
+  .back:hover { text-decoration: underline; }
+  .card { background: #fff; border: 1px solid #D3D1C7; border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+  .row > .card { flex: 1; min-width: 300px; margin-bottom: 0; }
+  svg { display: block; width: 100%; height: auto; background: #FCFBF8; border-radius: 8px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+  button {
+    font-family: inherit; font-size: 13px; padding: 7px 14px;
+    border-radius: 8px; border: 1px solid #185FA5; background: #185FA5; color: #fff; cursor: pointer;
+  }
+  button.ghost { background: #fff; color: #185FA5; }
+  button:active { transform: translateY(1px); }
+  .slider-row { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 220px; }
+  input[type=range] { flex: 1; accent-color: #185FA5; }
+  .lr-val { font-variant-numeric: tabular-nums; min-width: 42px; text-align: right; font-weight: 500; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 10px 0 4px; font-size: 13px; }
+  .legend .item { display: flex; align-items: center; gap: 6px; }
+  .legend .dot { width: 10px; height: 10px; border-radius: 50%; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+  th, td { padding: 6px 8px; text-align: right; border-bottom: 1px solid #E5E3DB; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: #5F5E5A; font-weight: 500; }
+  .hint { font-size: 13px; color: #5F5E5A; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back" href="index.html">&larr; 返回首页</a>
+  <h1>优化器对比：SGD vs Momentum vs RMSProp vs Adam</h1>
+  <div class="sub">
+    同一个"峡谷形"损失面（一个方向陡、一个方向平缓），四种优化器用相同的学习率从同一起点出发，看谁先到谷底、谁会震荡。
+    对应笔记：《神经网络进阶：分类、激活函数与优化器》第 6 节。
+  </div>
+
+  <div class="card">
+    <div class="legend" id="legend"></div>
+    <svg id="plot" viewBox="0 0 820 420"></svg>
+    <div class="controls">
+      <button id="stepBtn">单步 →</button>
+      <button id="playBtn" class="ghost">自动播放</button>
+      <button id="resetBtn" class="ghost">重置</button>
+      <div class="slider-row">
+        <span style="font-size:13.5px">学习率</span>
+        <input type="range" id="lr" min="0.05" max="1.0" step="0.05" value="0.35">
+        <span class="lr-val" id="lrVal">0.35</span>
+      </div>
+    </div>
+    <div class="hint">损失面：L(w₁,w₂) = 0.05·w₁² + w₂²（w₂ 方向陡峭，w₁ 方向平缓）。起点 (−4.5, 2.2)，谷底 (0,0)。</div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <h3>当前状态</h3>
+      <table id="stateTable">
+        <thead><tr><th>优化器</th><th>w₁</th><th>w₂</th><th>损失 L</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="hint">迭代次数：<b id="iterN">0</b></div>
+    </div>
+    <div class="card">
+      <h3>损失下降曲线</h3>
+      <svg id="lossChart" viewBox="0 0 380 260"></svg>
+      <div class="hint">纵轴是损失（越低越好），横轴是迭代次数。</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const OPTS = [
+  { key: 'sgd', name: 'SGD', color: '#888780' },
+  { key: 'momentum', name: 'Momentum', color: '#185FA5' },
+  { key: 'rmsprop', name: 'RMSProp', color: '#BA7517' },
+  { key: 'adam', name: 'Adam', color: '#A32D2D' },
+];
+
+const A = 0.05; // L = A*w1^2 + w2^2
+function loss(w1, w2) { return A*w1*w1 + w2*w2; }
+function grad(w1, w2) { return [2*A*w1, 2*w2]; }
+
+const START = [-4.5, 2.2];
+const BETA1 = 0.9, BETA2 = 0.999, EPS = 1e-8;
+
+let state = {};
+let iter = 0;
+let playTimer = null;
+
+function initState() {
+  state = {};
+  OPTS.forEach(o => {
+    state[o.key] = {
+      w: [...START], v: [0,0], s: [0,0], t: 0,
+      path: [[...START]], lossHist: [loss(...START)],
+    };
+  });
+  iter = 0;
+}
+
+function stepOne(o) {
+  const st = state[o.key];
+  const lr = parseFloat(document.getElementById('lr').value);
+  const [g1, g2] = grad(st.w[0], st.w[1]);
+  const g = [g1, g2];
+  st.t += 1;
+
+  if (o.key === 'sgd') {
+    st.w[0] -= lr * g[0];
+    st.w[1] -= lr * g[1];
+  } else if (o.key === 'momentum') {
+    st.v[0] = BETA1 * st.v[0] + g[0];
+    st.v[1] = BETA1 * st.v[1] + g[1];
+    st.w[0] -= lr * st.v[0];
+    st.w[1] -= lr * st.v[1];
+  } else if (o.key === 'rmsprop') {
+    const beta = 0.9;
+    st.s[0] = beta * st.s[0] + (1-beta) * g[0]*g[0];
+    st.s[1] = beta * st.s[1] + (1-beta) * g[1]*g[1];
+    st.w[0] -= lr * g[0] / (Math.sqrt(st.s[0]) + EPS);
+    st.w[1] -= lr * g[1] / (Math.sqrt(st.s[1]) + EPS);
+  } else if (o.key === 'adam') {
+    st.v[0] = BETA1 * st.v[0] + (1-BETA1) * g[0];
+    st.v[1] = BETA1 * st.v[1] + (1-BETA1) * g[1];
+    st.s[0] = BETA2 * st.s[0] + (1-BETA2) * g[0]*g[0];
+    st.s[1] = BETA2 * st.s[1] + (1-BETA2) * g[1]*g[1];
+    const mHat = [st.v[0]/(1-Math.pow(BETA1,st.t)), st.v[1]/(1-Math.pow(BETA1,st.t))];
+    const sHat = [st.s[0]/(1-Math.pow(BETA2,st.t)), st.s[1]/(1-Math.pow(BETA2,st.t))];
+    st.w[0] -= lr * mHat[0] / (Math.sqrt(sHat[0]) + EPS);
+    st.w[1] -= lr * mHat[1] / (Math.sqrt(sHat[1]) + EPS);
+  }
+
+  // 防止发散把画面炸飞
+  st.w[0] = Math.max(-8, Math.min(8, st.w[0]));
+  st.w[1] = Math.max(-6, Math.min(6, st.w[1]));
+
+  st.path.push([...st.w]);
+  st.lossHist.push(loss(st.w[0], st.w[1]));
+}
+
+function stepAll() {
+  OPTS.forEach(stepOne);
+  iter += 1;
+  renderAll();
+}
+
+// ---------- 主图（等高线 + 轨迹） ----------
+const svg = document.getElementById('plot');
+const W = 820, H = 420;
+const PAD = 20;
+const X_MIN = -6, X_MAX = 6, Y_MIN = -3.2, Y_MAX = 3.2;
+
+function sx(x) { return PAD + (x - X_MIN) / (X_MAX - X_MIN) * (W - 2*PAD); }
+function sy(y) { return H - PAD - (y - Y_MIN) / (Y_MAX - Y_MIN) * (H - 2*PAD); }
+
+function ellipsePath(c) {
+  let d = '';
+  const a = Math.sqrt(c / A), b = Math.sqrt(c);
+  for (let i = 0; i <= 80; i++) {
+    const t = i / 80 * 2 * Math.PI;
+    const x = a * Math.cos(t), y = b * Math.sin(t);
+    d += (i===0 ? 'M' : 'L') + sx(x).toFixed(1) + ' ' + sy(y).toFixed(1) + ' ';
+  }
+  return d + 'Z';
+}
+
+function pathFor(points) {
+  let d = '';
+  points.forEach((p,i) => { d += (i===0?'M':'L') + sx(p[0]).toFixed(1) + ' ' + sy(p[1]).toFixed(1) + ' '; });
+  return d;
+}
+
+function renderMain() {
+  let s = '';
+  [1,3,6,10,16,24].forEach(c => {
+    s += `<path d="${ellipsePath(c)}" fill="none" stroke="#EFEDE4" stroke-width="1.5"/>`;
+  });
+  s += `<circle cx="${sx(0)}" cy="${sy(0)}" r="5" fill="none" stroke="#0F6E56" stroke-width="2"/>`;
+  s += `<text x="${sx(0)+8}" y="${sy(0)-8}" font-size="12" fill="#0F6E56">谷底</text>`;
+
+  OPTS.forEach(o => {
+    const st = state[o.key];
+    s += `<path d="${pathFor(st.path)}" fill="none" stroke="${o.color}" stroke-width="2.5" opacity="0.9"/>`;
+    const last = st.path[st.path.length-1];
+    s += `<circle cx="${sx(last[0])}" cy="${sy(last[1])}" r="6" fill="${o.color}"/>`;
+  });
+
+  s += `<circle cx="${sx(START[0])}" cy="${sy(START[1])}" r="5" fill="#2C2C2A"/>`;
+  s += `<text x="${sx(START[0])+8}" y="${sy(START[1])+4}" font-size="12" fill="#5F5E5A">起点</text>`;
+
+  svg.innerHTML = s;
+}
+
+// ---------- 损失曲线 ----------
+const lossSvg = document.getElementById('lossChart');
+const LW = 380, LH = 260, LPAD = { l: 36, r: 10, t: 10, b: 24 };
+
+function renderLossChart() {
+  const maxIter = Math.max(...OPTS.map(o => state[o.key].lossHist.length)) - 1;
+  const maxLoss = Math.max(0.01, ...OPTS.flatMap(o => state[o.key].lossHist));
+
+  function lx(i) { return LPAD.l + (maxIter===0?0:i/maxIter) * (LW-LPAD.l-LPAD.r); }
+  function ly(v) { return LH-LPAD.b - (v/maxLoss) * (LH-LPAD.t-LPAD.b); }
+
+  let s = '';
+  s += `<line x1="${LPAD.l}" y1="${LH-LPAD.b}" x2="${LW-LPAD.r}" y2="${LH-LPAD.b}" stroke="#B8B6AC"/>`;
+  s += `<line x1="${LPAD.l}" y1="${LPAD.t}" x2="${LPAD.l}" y2="${LH-LPAD.b}" stroke="#B8B6AC"/>`;
+  s += `<text x="4" y="${LPAD.t+8}" font-size="10" fill="#888780">${maxLoss.toFixed(1)}</text>`;
+  s += `<text x="4" y="${LH-LPAD.b}" font-size="10" fill="#888780">0</text>`;
+
+  OPTS.forEach(o => {
+    const hist = state[o.key].lossHist;
+    let d = '';
+    hist.forEach((v,i) => { d += (i===0?'M':'L') + lx(i).toFixed(1) + ' ' + ly(v).toFixed(1) + ' '; });
+    s += `<path d="${d}" fill="none" stroke="${o.color}" stroke-width="2"/>`;
+  });
+
+  lossSvg.innerHTML = s;
+}
+
+function renderTable() {
+  const tbody = document.querySelector('#stateTable tbody');
+  tbody.innerHTML = OPTS.map(o => {
+    const st = state[o.key];
+    const l = loss(st.w[0], st.w[1]);
+    return `<tr><td style="color:${o.color};font-weight:500">${o.name}</td><td>${st.w[0].toFixed(3)}</td><td>${st.w[1].toFixed(3)}</td><td>${l.toFixed(4)}</td></tr>`;
+  }).join('');
+  document.getElementById('iterN').textContent = iter;
+}
+
+function renderLegend() {
+  document.getElementById('legend').innerHTML = OPTS.map(o =>
+    `<div class="item"><span class="dot" style="background:${o.color}"></span>${o.name}</div>`
+  ).join('');
+}
+
+function renderAll() {
+  renderMain();
+  renderLossChart();
+  renderTable();
+}
+
+document.getElementById('stepBtn').addEventListener('click', stepAll);
+document.getElementById('resetBtn').addEventListener('click', () => {
+  clearInterval(playTimer); playTimer = null;
+  document.getElementById('playBtn').textContent = '自动播放';
+  initState();
+  renderAll();
+});
+document.getElementById('playBtn').addEventListener('click', (e) => {
+  if (playTimer) {
+    clearInterval(playTimer); playTimer = null;
+    e.target.textContent = '自动播放';
+  } else {
+    e.target.textContent = '暂停';
+    playTimer = setInterval(() => {
+      if (iter >= 60) { clearInterval(playTimer); playTimer = null; e.target.textContent = '自动播放'; return; }
+      stepAll();
+    }, 220);
+  }
+});
+document.getElementById('lr').addEventListener('input', (e) => {
+  document.getElementById('lrVal').textContent = parseFloat(e.target.value).toFixed(2);
+});
+
+renderLegend();
+initState();
+renderAll();
+</script>
+</body>
+</html>

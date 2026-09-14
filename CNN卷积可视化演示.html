@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CNN 卷积可视化演示</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px;
+    background: #F5F4EF; color: #2C2C2A;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 500; margin: 0 0 4px; }
+  h3 { font-size: 14px; font-weight: 500; margin: 0 0 10px; color: #5F5E5A; }
+  .sub { color: #5F5E5A; font-size: 14px; margin-bottom: 18px; }
+  .back { display: inline-block; margin-bottom: 14px; color: #185FA5; text-decoration: none; font-size: 14px; }
+  .back:hover { text-decoration: underline; }
+  .card { background: #fff; border: 1px solid #D3D1C7; border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+  .grids { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; }
+  .grid-block svg { display: block; width: 100%; max-width: 300px; height: auto; }
+  .grid-block { flex: 1; min-width: 160px; }
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  button {
+    font-family: inherit; font-size: 13px; padding: 7px 14px;
+    border-radius: 8px; border: 1px solid #185FA5; background: #185FA5; color: #fff; cursor: pointer;
+  }
+  button.ghost { background: #fff; color: #185FA5; }
+  button.ghost.active { background: #185FA5; color: #fff; }
+  button:active { transform: translateY(1px); }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
+  .readout {
+    background: #F1EFE8; border-radius: 8px; padding: 12px 16px; margin-top: 14px;
+    font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 12.5px;
+    white-space: pre; line-height: 1.8;
+  }
+  .hint { font-size: 13px; color: #5F5E5A; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back" href="index.html">&larr; 返回首页</a>
+  <h1>CNN 卷积可视化：一个小窗口怎么扫过整张图</h1>
+  <div class="sub">
+    选一个卷积核，逐步扫描 6×6 的输入图像，右边的输出特征图会一格一格被算出来。
+    对应笔记：《神经网络进阶：CNN 卷积神经网络》第 2～3 节。
+  </div>
+
+  <div class="card">
+    <h3>选一个卷积核</h3>
+    <div class="presets" id="kernelPresets"></div>
+
+    <div class="grids">
+      <div class="grid-block">
+        <h3>输入图像（6×6）</h3>
+        <svg id="inputGrid" viewBox="0 0 300 300"></svg>
+      </div>
+      <div class="grid-block">
+        <h3>卷积核（3×3）</h3>
+        <svg id="kernelGrid" viewBox="0 0 150 150"></svg>
+      </div>
+      <div class="grid-block">
+        <h3>输出特征图（4×4）</h3>
+        <svg id="outputGrid" viewBox="0 0 200 200"></svg>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="stepBtn">下一步 →</button>
+      <button id="playBtn" class="ghost">自动扫描</button>
+      <button id="resetBtn" class="ghost">重置</button>
+    </div>
+
+    <div class="readout" id="readout"></div>
+    <div class="hint">蓝色高亮框是卷积核当前盖住的区域；对应的输出格子在右侧同步高亮。</div>
+  </div>
+
+</div>
+
+<script>
+const INPUT = [
+  [1,2,0,1,3,0],
+  [0,1,3,1,2,1],
+  [2,1,0,0,1,2],
+  [1,0,1,2,0,1],
+  [0,2,1,1,3,0],
+  [1,1,0,2,1,2],
+];
+
+const KERNELS = {
+  vertical: { name: '竖直边缘', k: [[1,0,-1],[1,0,-1],[1,0,-1]] },
+  horizontal: { name: '水平边缘', k: [[1,1,1],[0,0,0],[-1,-1,-1]] },
+  sharpen: { name: '锐化', k: [[0,-1,0],[-1,5,-1],[0,-1,0]] },
+  blur: { name: '模糊（均值）', k: [[1/9,1/9,1/9],[1/9,1/9,1/9],[1/9,1/9,1/9]] },
+  identity: { name: '恒等', k: [[0,0,0],[0,1,0],[0,0,0]] },
+};
+
+let currentKernel = 'vertical';
+const OUT_SIZE = 4; // 6 - 3 + 1
+let outputValues = Array(OUT_SIZE*OUT_SIZE).fill(null);
+let computedCount = 0;
+let playTimer = null;
+
+function kernelMat() { return KERNELS[currentKernel].k; }
+
+function computeAt(idx) {
+  const row = Math.floor(idx / OUT_SIZE), col = idx % OUT_SIZE;
+  const k = kernelMat();
+  let sum = 0;
+  const terms = [];
+  for (let i = 0; i < 3; i++) {
+    const rowTerms = [];
+    for (let j = 0; j < 3; j++) {
+      const v = INPUT[row+i][col+j];
+      const kv = k[i][j];
+      sum += v * kv;
+      rowTerms.push(`(${v}×${fmtK(kv)})`);
+    }
+    terms.push(rowTerms.join('+'));
+  }
+  return { row, col, sum, terms };
+}
+
+function fmtK(v) {
+  if (Math.abs(v - 1/9) < 1e-6) return '1/9';
+  return v.toString();
+}
+
+function renderInputGrid() {
+  const svg = document.getElementById('inputGrid');
+  const cell = 50;
+  let s = '';
+  const highlightRow = computedCount < OUT_SIZE*OUT_SIZE ? Math.floor(computedCount/OUT_SIZE) : -1;
+  const highlightCol = computedCount < OUT_SIZE*OUT_SIZE ? computedCount % OUT_SIZE : -1;
+
+  for (let r = 0; r < 6; r++) {
+    for (let c = 0; c < 6; c++) {
+      const inWindow = highlightRow>=0 && r>=highlightRow && r<highlightRow+3 && c>=highlightCol && c<highlightCol+3;
+      s += `<rect x="${c*cell}" y="${r*cell}" width="${cell}" height="${cell}"
+              fill="${inWindow ? '#E8F1FB' : '#FCFBF8'}" stroke="#D3D1C7"/>`;
+      s += `<text x="${c*cell+cell/2}" y="${r*cell+cell/2+5}" font-size="15" text-anchor="middle" fill="#2C2C2A">${INPUT[r][c]}</text>`;
+    }
+  }
+  if (highlightRow >= 0) {
+    s += `<rect x="${highlightCol*cell}" y="${highlightRow*cell}" width="${cell*3}" height="${cell*3}"
+            fill="none" stroke="#185FA5" stroke-width="3" rx="4"/>`;
+  }
+  svg.innerHTML = s;
+}
+
+function renderKernelGrid() {
+  const svg = document.getElementById('kernelGrid');
+  const cell = 50;
+  const k = kernelMat();
+  let s = '';
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < 3; c++) {
+      s += `<rect x="${c*cell}" y="${r*cell}" width="${cell}" height="${cell}" fill="#F1EFE8" stroke="#185FA5"/>`;
+      s += `<text x="${c*cell+cell/2}" y="${r*cell+cell/2+5}" font-size="14" text-anchor="middle" fill="#185FA5">${fmtK(k[r][c])}</text>`;
+    }
+  }
+  svg.innerHTML = s;
+}
+
+function renderOutputGrid() {
+  const svg = document.getElementById('outputGrid');
+  const cell = 50;
+  let s = '';
+  for (let r = 0; r < OUT_SIZE; r++) {
+    for (let c = 0; c < OUT_SIZE; c++) {
+      const idx = r*OUT_SIZE + c;
+      const val = outputValues[idx];
+      const isCurrent = idx === computedCount;
+      s += `<rect x="${c*cell}" y="${r*cell}" width="${cell}" height="${cell}"
+              fill="${isCurrent ? '#E8F1FB' : (val!==null ? '#fff' : '#F1EFE8')}"
+              stroke="${isCurrent ? '#185FA5' : '#D3D1C7'}" stroke-width="${isCurrent?2.5:1}"/>`;
+      s += `<text x="${c*cell+cell/2}" y="${r*cell+cell/2+5}" font-size="14" text-anchor="middle" fill="#2C2C2A">${val!==null ? val.toFixed(2).replace(/\.00$/,'') : '·'}</text>`;
+    }
+  }
+  svg.innerHTML = s;
+}
+
+function renderReadout() {
+  const el = document.getElementById('readout');
+  if (computedCount >= OUT_SIZE*OUT_SIZE) {
+    el.textContent = '全部 16 个输出位置都已经算完啦。换一个卷积核，点"重置"再来一遍，看看结果有什么不同。';
+    return;
+  }
+  const { row, col, sum, terms } = computeAt(computedCount);
+  let out = `当前窗口：第 ${row+1}~${row+3} 行，第 ${col+1}~${col+3} 列\n\n`;
+  terms.forEach(t => out += `  ${t}\n`);
+  out += `\n输出值 = ${sum.toFixed(3).replace(/\.?0+$/,'')}`;
+  el.textContent = out;
+}
+
+function renderAll() {
+  renderInputGrid();
+  renderKernelGrid();
+  renderOutputGrid();
+  renderReadout();
+}
+
+function stepForward() {
+  if (computedCount >= OUT_SIZE*OUT_SIZE) return;
+  const { sum } = computeAt(computedCount);
+  outputValues[computedCount] = sum;
+  computedCount += 1;
+  renderAll();
+}
+
+function resetAll() {
+  outputValues = Array(OUT_SIZE*OUT_SIZE).fill(null);
+  computedCount = 0;
+  renderAll();
+}
+
+function renderPresets() {
+  const wrap = document.getElementById('kernelPresets');
+  wrap.innerHTML = '';
+  Object.keys(KERNELS).forEach(key => {
+    const btn = document.createElement('button');
+    btn.className = 'ghost' + (key===currentKernel ? ' active' : '');
+    btn.textContent = KERNELS[key].name;
+    btn.addEventListener('click', () => {
+      currentKernel = key;
+      resetAll();
+      renderPresets();
+    });
+    wrap.appendChild(btn);
+  });
+}
+
+document.getElementById('stepBtn').addEventListener('click', stepForward);
+document.getElementById('resetBtn').addEventListener('click', () => { clearInterval(playTimer); playTimer=null; document.getElementById('playBtn').textContent='自动扫描'; resetAll(); });
+document.getElementById('playBtn').addEventListener('click', (e) => {
+  if (playTimer) {
+    clearInterval(playTimer); playTimer = null;
+    e.target.textContent = '自动扫描';
+  } else {
+    e.target.textContent = '暂停';
+    playTimer = setInterval(() => {
+      if (computedCount >= OUT_SIZE*OUT_SIZE) { clearInterval(playTimer); playTimer=null; e.target.textContent='自动扫描'; return; }
+      stepForward();
+    }, 500);
+  }
+});
+
+renderPresets();
+renderAll();
+</script>
+</body>
+</html>

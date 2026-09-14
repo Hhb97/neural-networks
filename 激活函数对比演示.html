@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>激活函数对比演示</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px;
+    background: #F5F4EF; color: #2C2C2A;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 940px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 500; margin: 0 0 4px; }
+  h3 { font-size: 15px; font-weight: 500; margin: 0 0 10px; }
+  .sub { color: #5F5E5A; font-size: 14px; margin-bottom: 18px; }
+  .back { display: inline-block; margin-bottom: 14px; color: #185FA5; text-decoration: none; font-size: 14px; }
+  .back:hover { text-decoration: underline; }
+  .card { background: #fff; border: 1px solid #D3D1C7; border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+  svg { display: block; width: 100%; height: auto; background: #FCFBF8; border-radius: 8px; cursor: crosshair; }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0; }
+  .chip {
+    display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px;
+    border: 1.5px solid #D3D1C7; cursor: pointer; font-size: 13px; user-select: none; background: #F1EFE8;
+  }
+  .chip.on { background: #fff; border-color: currentColor; font-weight: 500; }
+  .chip .dot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+  .toggle-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13.5px; }
+  .readout {
+    background: #F1EFE8; border-radius: 8px; padding: 12px 16px; margin-top: 8px;
+    font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 12.5px;
+    white-space: pre; line-height: 1.85;
+  }
+  .hint { font-size: 13px; color: #5F5E5A; margin-top: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
+  th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #E5E3DB; }
+  th { color: #5F5E5A; font-weight: 500; }
+  code { font-family: ui-monospace, Consolas, monospace; background: #F1EFE8; padding: 1px 5px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back" href="index.html">&larr; 返回首页</a>
+  <h1>激活函数对比：Sigmoid / Tanh / ReLU 家族</h1>
+  <div class="sub">
+    勾选要显示的函数，鼠标移到图上看每个函数在该点的取值和导数。
+    对应笔记：《神经网络进阶：分类、激活函数与优化器》第 5 节。
+  </div>
+
+  <div class="card">
+    <div class="legend" id="legend"></div>
+    <div class="toggle-row">
+      <label><input type="checkbox" id="showDeriv"> 同时显示导数（虚线）</label>
+    </div>
+    <svg id="plot" viewBox="0 0 860 420"></svg>
+    <div class="readout" id="readout">把鼠标移到图上查看数值……</div>
+    <div class="hint">ReLU 在 x&lt;0 时导数恒为 0（“死神经元”问题的根源）；其余几种在负半轴都留了一点非零的导数或曲线。</div>
+  </div>
+
+  <div class="card">
+    <h3>公式对照</h3>
+    <table>
+      <thead><tr><th>函数</th><th>公式</th><th>特点</th></tr></thead>
+      <tbody>
+        <tr><td>Sigmoid</td><td><code>1/(1+e^-x)</code></td><td>输出 (0,1)，深层易梯度消失</td></tr>
+        <tr><td>Tanh</td><td><code>(e^x-e^-x)/(e^x+e^-x)</code></td><td>输出 (-1,1)，比 sigmoid 稍好</td></tr>
+        <tr><td>ReLU</td><td><code>max(0, x)</code></td><td>默认选择，但会"死神经元"</td></tr>
+        <tr><td>Leaky ReLU</td><td><code>max(0.1x, x)</code></td><td>负半轴给一点小斜率</td></tr>
+        <tr><td>ELU</td><td><code>x&gt;0 ? x : e^x-1</code></td><td>负半轴是光滑曲线</td></tr>
+        <tr><td>GELU</td><td><code>x·Φ(x)</code>（近似公式）</td><td>Transformer 系列的默认选择</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+const FUNCS = [
+  { key: 'sigmoid', name: 'Sigmoid', color: '#185FA5', on: true,
+    f: x => 1/(1+Math.exp(-x)) },
+  { key: 'tanh', name: 'Tanh', color: '#7B4B94', on: false,
+    f: x => Math.tanh(x) },
+  { key: 'relu', name: 'ReLU', color: '#0F6E56', on: true,
+    f: x => Math.max(0, x) },
+  { key: 'leaky', name: 'Leaky ReLU', color: '#BA7517', on: false,
+    f: x => x > 0 ? x : 0.1 * x },
+  { key: 'elu', name: 'ELU', color: '#A32D2D', on: false,
+    f: x => x > 0 ? x : (Math.exp(x) - 1) },
+  { key: 'gelu', name: 'GELU', color: '#444441', on: false,
+    f: x => 0.5 * x * (1 + Math.tanh(Math.sqrt(2/Math.PI) * (x + 0.044715 * x*x*x))) },
+];
+
+// 数值求导（中心差分），避免每个函数单独手推导数公式
+function deriv(f, x) {
+  const h = 1e-3;
+  return (f(x+h) - f(x-h)) / (2*h);
+}
+
+const svg = document.getElementById('plot');
+const W = 860, H = 420;
+const PAD = { l: 40, r: 20, t: 20, b: 30 };
+const X_MIN = -5, X_MAX = 5, Y_MIN = -2, Y_MAX = 5;
+
+function sx(x) { return PAD.l + (x - X_MIN) / (X_MAX - X_MIN) * (W - PAD.l - PAD.r); }
+function sy(y) { return H - PAD.b - (y - Y_MIN) / (Y_MAX - Y_MIN) * (H - PAD.t - PAD.b); }
+function dataX(px) { return X_MIN + (px - PAD.l) / (W - PAD.l - PAD.r) * (X_MAX - X_MIN); }
+
+function buildPath(f) {
+  let d = '';
+  for (let i = 0; i <= 200; i++) {
+    const x = X_MIN + (X_MAX - X_MIN) * i / 200;
+    const y = f(x);
+    const px = sx(x), py = sy(Math.max(Y_MIN, Math.min(Y_MAX, y)));
+    d += (i === 0 ? 'M' : 'L') + px.toFixed(1) + ' ' + py.toFixed(1) + ' ';
+  }
+  return d;
+}
+
+function render() {
+  let svgContent = '';
+
+  // 网格线 + 坐标轴
+  for (let x = X_MIN; x <= X_MAX; x++) {
+    svgContent += `<line x1="${sx(x)}" y1="${PAD.t}" x2="${sx(x)}" y2="${H-PAD.b}" stroke="#EFEDE4" stroke-width="1"/>`;
+  }
+  for (let y = Y_MIN; y <= Y_MAX; y++) {
+    svgContent += `<line x1="${PAD.l}" y1="${sy(y)}" x2="${W-PAD.r}" y2="${sy(y)}" stroke="#EFEDE4" stroke-width="1"/>`;
+    svgContent += `<text x="${PAD.l-8}" y="${sy(y)+4}" font-size="11" fill="#888780" text-anchor="end">${y}</text>`;
+  }
+  svgContent += `<line x1="${sx(0)}" y1="${PAD.t}" x2="${sx(0)}" y2="${H-PAD.b}" stroke="#B8B6AC" stroke-width="1.5"/>`;
+  svgContent += `<line x1="${PAD.l}" y1="${sy(0)}" x2="${W-PAD.r}" y2="${sy(0)}" stroke="#B8B6AC" stroke-width="1.5"/>`;
+
+  const showDeriv = document.getElementById('showDeriv').checked;
+
+  FUNCS.forEach(fn => {
+    if (!fn.on) return;
+    svgContent += `<path d="${buildPath(fn.f)}" fill="none" stroke="${fn.color}" stroke-width="2.5"/>`;
+    if (showDeriv) {
+      svgContent += `<path d="${buildPath(x => deriv(fn.f, x))}" fill="none" stroke="${fn.color}" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.7"/>`;
+    }
+  });
+
+  svgContent += `<g id="cursorLayer"></g>`;
+  svg.innerHTML = svgContent;
+}
+
+function renderLegend() {
+  const legend = document.getElementById('legend');
+  legend.innerHTML = '';
+  FUNCS.forEach(fn => {
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (fn.on ? ' on' : '');
+    chip.style.color = fn.color;
+    chip.innerHTML = `<span class="dot"></span><span style="color:#2C2C2A">${fn.name}</span>`;
+    chip.addEventListener('click', () => { fn.on = !fn.on; renderLegend(); render(); });
+    legend.appendChild(chip);
+  });
+}
+
+svg.addEventListener('mousemove', (e) => {
+  const rect = svg.getBoundingClientRect();
+  const px = (e.clientX - rect.left) / rect.width * W;
+  const x = Math.max(X_MIN, Math.min(X_MAX, dataX(px)));
+
+  let cursorLayer = document.getElementById('cursorLayer');
+  let extra = `<line x1="${sx(x)}" y1="${PAD.t}" x2="${sx(x)}" y2="${H-PAD.b}" stroke="#185FA5" stroke-width="1" stroke-dasharray="3 3"/>`;
+
+  let out = `x = ${x.toFixed(2)}\n`;
+  FUNCS.forEach(fn => {
+    if (!fn.on) return;
+    const y = fn.f(x);
+    const dy = deriv(fn.f, x);
+    out += `  ${fn.name.padEnd(11,' ')}  f(x)=${y.toFixed(3).padStart(7,' ')}   f'(x)=${dy.toFixed(3)}\n`;
+    extra += `<circle cx="${sx(x)}" cy="${sy(Math.max(Y_MIN,Math.min(Y_MAX,y)))}" r="4" fill="${fn.color}"/>`;
+  });
+  cursorLayer.innerHTML = extra;
+  document.getElementById('readout').textContent = out;
+});
+
+document.getElementById('showDeriv').addEventListener('change', render);
+
+renderLegend();
+render();
+</script>
+</body>
+</html>

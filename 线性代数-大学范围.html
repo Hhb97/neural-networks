@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>线性代数 · 大学全量 · 初学者指南</title>
+    <!-- KaTeX for math rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+    <!-- ECharts（不加 defer，保证底部内联脚本执行时已可用） -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', system-ui, -apple-system, sans-serif;
+            background: #f6f8fc;
+            color: #1e293b;
+            line-height: 1.65;
+            padding: 1.5rem 1rem;
+            display: flex;
+            gap: 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* 侧边目录 */
+        .toc {
+            width: 280px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 1.5rem;
+            height: calc(100vh - 3rem);
+            overflow-y: auto;
+            background: white;
+            border-radius: 24px;
+            padding: 1.5rem 1rem 1.5rem 1.5rem;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.02);
+            border: 1px solid #e9eef3;
+            transition: all 0.1s;
+        }
+
+        .toc h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 1.2rem;
+            padding-left: 0.75rem;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .toc ul {
+            list-style: none;
+        }
+
+        .toc li {
+            margin-bottom: 0.35rem;
+        }
+
+        .toc a {
+            text-decoration: none;
+            color: #334155;
+            font-size: 0.94rem;
+            display: block;
+            padding: 0.5rem 0.75rem;
+            border-radius: 12px;
+            transition: 0.12s;
+            font-weight: 450;
+            border-left: 3px solid transparent;
+        }
+
+        .toc a:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        .toc a.active {
+            background: #eef6ff;
+            color: #2563eb;
+            font-weight: 500;
+            border-left-color: #3b82f6;
+        }
+
+        .toc .sub {
+            padding-left: 1.5rem;
+            font-size: 0.88rem;
+        }
+
+        .toc .sub a {
+            padding: 0.35rem 0.75rem;
+            font-weight: 400;
+        }
+
+        /* 主内容 */
+        .main {
+            flex: 1;
+            min-width: 0;
+            max-width: 1000px;
+        }
+
+        .main h1 {
+            font-size: 2.4rem;
+            font-weight: 650;
+            letter-spacing: -0.02em;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .main h1 small {
+            font-size: 1rem;
+            font-weight: 400;
+            color: #64748b;
+            margin-left: 1rem;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #475569;
+            margin-bottom: 2.5rem;
+            border-left: 4px solid #94a3b8;
+            padding-left: 1.2rem;
+        }
+
+        .section {
+            background: white;
+            border-radius: 24px;
+            padding: 2rem 2rem 2rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.015), 0 2px 6px rgba(0, 0, 0, 0.02);
+            border: 1px solid #eef2f6;
+            scroll-margin-top: 1.5rem;
+        }
+
+        .section h2 {
+            font-size: 1.8rem;
+            font-weight: 550;
+            margin-bottom: 1.5rem;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #e9eef3;
+        }
+
+        .section h2 .num {
+            background: #3b82f6;
+            color: white;
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .section h3 {
+            font-size: 1.3rem;
+            font-weight: 550;
+            margin: 1.5rem 0 0.8rem 0;
+            color: #1e293b;
+        }
+
+        .section h4 {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin: 1.2rem 0 0.6rem 0;
+            color: #334155;
+        }
+
+        .section p {
+            margin: 0.8rem 0;
+            color: #334155;
+        }
+
+        .section ul, .section ol {
+            margin: 0.8rem 0 0.8rem 1.5rem;
+            color: #334155;
+        }
+
+        .section li {
+            margin-bottom: 0.35rem;
+        }
+
+        .highlight {
+            background: #f0f7ff;
+            border-radius: 16px;
+            padding: 1.2rem 1.5rem;
+            margin: 1.2rem 0;
+            border-left: 5px solid #3b82f6;
+        }
+
+        .note {
+            background: #f8fafc;
+            border-radius: 14px;
+            padding: 1rem 1.3rem;
+            margin: 1rem 0;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            font-size: 0.98rem;
+        }
+
+        .eq {
+            text-align: center;
+            margin: 1.2rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+        }
+
+        .katex {
+            font-size: 1.15rem !important;
+        }
+
+        .matrix-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: center;
+            align-items: center;
+            margin: 1.5rem 0;
+        }
+
+        .matrix-vis {
+            background: #f8fafc;
+            border-radius: 18px;
+            padding: 1.5rem 2rem;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .matrix-bracket {
+            display: inline-flex;
+            align-items: center;
+            font-size: 2.6rem;
+            font-weight: 200;
+            color: #64748b;
+        }
+
+        .matrix-inner {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.4rem 1.2rem;
+            font-size: 1.4rem;
+            font-weight: 400;
+            font-family: 'Courier New', monospace;
+            padding: 0 0.6rem;
+        }
+
+        .matrix-inner span {
+            text-align: right;
+        }
+
+        .btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.7rem 1.6rem;
+            border-radius: 40px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.15s;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+            margin: 0.3rem 0.3rem 0.3rem 0;
+        }
+
+        .btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn.secondary {
+            background: #64748b;
+            box-shadow: 0 4px 12px rgba(100, 116, 139, 0.2);
+        }
+
+        .btn.secondary:hover {
+            background: #475569;
+        }
+
+        .demo-box {
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+            margin: 1.2rem 0;
+        }
+
+        .flex-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .result-badge {
+            background: #dbeafe;
+            padding: 0.4rem 1rem;
+            border-radius: 30px;
+            font-family: monospace;
+            font-size: 1.2rem;
+            color: #1e3a8a;
+            font-weight: 500;
+        }
+
+        /* ===== 新增：ECharts / 动画演示通用样式 ===== */
+        .echart-box {
+            width: 100%;
+            max-width: 640px;
+            height: 360px;
+            margin: 0 auto;
+        }
+
+        .demo-caption {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .la-grid-table {
+            display: inline-grid;
+            gap: 0.3rem;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            margin: 0.6rem;
+        }
+
+        .la-grid-table span {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 0.4rem 0.8rem;
+            text-align: center;
+            min-width: 2.4rem;
+        }
+
+        .la-grid-table span.pivot {
+            background: #dbeafe;
+            border-color: #3b82f6;
+            font-weight: 600;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 2.5rem;
+            color: #94a3b8;
+            font-size: 0.9rem;
+            padding: 1rem 0;
+        }
+
+        /* 响应式 */
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column;
+                padding: 1rem;
+            }
+            .toc {
+                width: 100%;
+                height: auto;
+                position: static;
+                max-height: 300px;
+                margin-bottom: 1rem;
+            }
+        }
+
+        /* 滚动条美化 */
+        .toc::-webkit-scrollbar {
+            width: 5px;
+        }
+        .toc::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        .toc::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .toc::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ========= 侧边目录 ========= -->
+<nav class="toc" id="toc">
+    <h3>📚 线性代数 · 目录</h3>
+    <ul>
+        <li><a href="#ch1" class="active">1. 向量与空间</a></li>
+        <li><a href="#ch2">2. 矩阵基础</a></li>
+        <li><a href="#ch3">3. 矩阵乘法与线性变换</a></li>
+        <li><a href="#ch4">4. 行列式</a></li>
+        <li><a href="#ch5">5. 逆矩阵与初等变换</a></li>
+        <li><a href="#ch6">6. 向量空间与子空间</a></li>
+        <li><a href="#ch7">7. 特征值与特征向量</a></li>
+        <li><a href="#ch8">8. 正交性与投影</a></li>
+        <li><a href="#ch9">9. 对角化与SVD</a></li>
+		<li><a href="#ch10">10. MLP应用</a></li>
+    </ul>
+</nav>
+
+<!-- ========= 主内容 ========= -->
+<main class="main">
+    <h1>线性代数 <small>大学全量 · 初学者</small></h1>
+    <div class="subtitle">从向量到奇异值分解，一步一个脚印</div>
+
+    <!-- 1. 向量与空间 -->
+    <section class="section" id="ch1">
+        <h2><span class="num">1</span> 向量与空间</h2>
+        <p>先看一个生活中的画面：地图上"向东 3 公里、向北 4 公里"这样一条指令，可以想象成一支箭——它既有长度，也有方向。</p>
+        <p><strong>向量</strong>就是这个想法的数学版本。术语：向量就是指一组按顺序排列的数，可以表示一个点的坐标、一个移动的方向，或者一组数据（比如一张图片的像素值）。它是线性代数里最基本的元素，后面矩阵、变换等概念都建立在向量之上。</p>
+        <p>先看向量写成符号的样子：</p>
+        <div class="eq">
+            \[
+            \mathbf{v} = \begin{bmatrix} v_1 \\ v_2 \\ \vdots \\ v_n \end{bmatrix} \in \mathbb{R}^n
+            \]
+        </div>
+        <p>这个式子读作：<strong>向量 v 是由 n 个实数 \(v_1, v_2, \dots, v_n\) 竖着排成的一列</strong>。这里的符号 \(\mathbb{R}^n\) 表示"所有这样长度为 n 的实数向量组成的集合"，可以先把它简单理解成"n 维空间"。</p>
+        <h3>1.1 向量的运算</h3>
+        <p>向量之间可以做几种基本运算。这里先总结一句规律：大多数运算都是"对应位置的数分别处理"，下面逐个来看：</p>
+        <ul>
+            <li><strong>加法：</strong> 对应分量相加，\(\mathbf{u} + \mathbf{v} = (u_1+v_1, \dots, u_n+v_n)\)。</li>
+            <li><strong>数乘：</strong> 每个分量乘以同一个普通数字（这个普通数字在线性代数里专门叫"标量"，用来和向量区分），\(c\mathbf{v} = (cv_1, \dots, cv_n)\)。</li>
+            <li><strong>点积（也叫内积）：</strong> 术语：点积就是指把两个向量对应位置的数分别相乘、再把这些乘积全部加起来，最终得到一个普通数字（不是向量）。它可以用来衡量两个向量"方向有多接近"：\(\mathbf{u} \cdot \mathbf{v} = \sum_{i=1}^n u_i v_i\)。</li>
+            <li><strong>范数（也就是向量的长度）：</strong> 术语：范数就是指向量本身的长度，算法是把勾股定理的思路推广到多维：\(\|\mathbf{v}\| = \sqrt{\mathbf{v} \cdot \mathbf{v}}\)。</li>
+        </ul>
+        <p>光看公式可能还是抽象，下面代入一组具体数字，把四种运算各算一遍：</p>
+        <div class="highlight">
+            <strong>🧪 小例子：</strong> 设 \(\mathbf{u} = (1, 2)\)，\(\mathbf{v} = (3, 4)\)。<br>
+            加法：\(\mathbf{u} + \mathbf{v} = (1+3,\ 2+4) = (4, 6)\)。<br>
+            点积：\(\mathbf{u} \cdot \mathbf{v} = 1\times3 + 2\times4 = 3+8 = 11\)。<br>
+            范数：\(\|\mathbf{u}\| = \sqrt{1^2+2^2} = \sqrt{5} \approx 2.236\)。
+        </div>
+        <h3>1.2 线性组合与线性相关</h3>
+        <p>这一节引入两个互相关联的新词，先看第一个。把几个向量分别乘上一些数字（也就是分别做"数乘"），再把结果加在一起，得到的新向量就叫这些向量的<strong>线性组合</strong>。写成公式：若 \(\mathbf{v}\) 可以写成 \(c_1\mathbf{v}_1 + c_2\mathbf{v}_2 + \dots + c_k\mathbf{v}_k\)（其中 \(c_1,\dots,c_k\) 是一些普通数字），就称 \(\mathbf{v}\) 是这些向量的线性组合。</p>
+        <p>有了这个词，就可以定义第二对术语。如果一组向量里，有某一个能由其余向量"拼凑"（也就是线性组合）出来，这组向量里就存在"多余"的成员，这种情况称为<strong>线性相关</strong>。</p>
+        <p>反过来，如果这组向量里谁也拼不出谁——也就是说每一个向量都提供了独一无二、别人替代不了的方向——就称为<strong>线性无关</strong>。数学上的判定写法是：如果存在一组不全为零的数 \(c_i\)，使得 \(\sum c_i \mathbf{v}_i = \mathbf{0}\)（也就是能拼出零向量），就说明这组向量线性相关；如果这样的 \(c_i\) 除了全为零之外找不到别的，就是线性无关。</p>
+        <div class="note">
+            💡 线性无关意味着没有一个向量能被其他向量线性表示——每一个都在"贡献"新的方向，缺一不可。
+        </div>
+
+        <div class="demo-box">
+            <div class="demo-caption">➡️ 向量加法与数乘演示：\(\mathbf{u}=(1,2)\)，\(\mathbf{v}=(3,4)\)</div>
+            <div class="flex-row">
+                <label>标量 \(c = \)</label>
+                <input type="range" id="vecC" min="-2" max="2" value="1" step="0.1">
+                <span class="result-badge">c = <span id="vecCval">1.0</span></span>
+                <span class="result-badge">c·v = (<span id="vecCV">3.0, 4.0</span>)</span>
+            </div>
+            <div id="vecChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">蓝色箭头是 u，绿色箭头是 v，橙色箭头是 u+v（平行四边形法则），紫色箭头是 c·v，随着 c 变化其方向不变、长度按比例缩放。</div>
+        </div>
+    </section>
+
+    <!-- 2. 矩阵基础 -->
+    <section class="section" id="ch2">
+        <h2><span class="num">2</span> 矩阵基础</h2>
+        <p>先做一个类比：如果说向量是"一列数"，那<strong>矩阵</strong>就是把很多个向量并排摆在一起，组成一张长方形的数字表格。术语：矩阵就是指按行列排成的一张数字表格，可以看作一组列向量并排放在一起的集合。</p>
+        <p>更重要的是，矩阵不只是存数据的表格，它还可以当作一台"机器"：塞一个向量进去，就吐出一个新向量出来——这个用法会在 2.3 节详细看到，这里先记住这个伏笔。</p>
+        <p>符号 \(A \in \mathbb{R}^{m \times n}\) 表示矩阵 \(A\) 有 \(m\) 行、\(n\) 列。</p>
+        <div class="matrix-grid">
+            <div class="matrix-vis">
+                <div class="matrix-bracket">[</div>
+                <div class="matrix-inner">
+                    <span>1</span><span>2</span>
+                    <span>3</span><span>4</span>
+                </div>
+                <div class="matrix-bracket">]</div>
+                <div style="margin-top: 0.5rem; color: #475569;">2×2 矩阵</div>
+            </div>
+            <div class="matrix-vis">
+                <div class="matrix-bracket">[</div>
+                <div class="matrix-inner" style="grid-template-columns: repeat(3, 1fr);">
+                    <span>2</span><span>0</span><span>1</span>
+                    <span>1</span><span>3</span><span>0</span>
+                </div>
+                <div class="matrix-bracket">]</div>
+                <div style="margin-top: 0.5rem; color: #475569;">2×3 矩阵</div>
+            </div>
+        </div>
+        <h3>2.1 特殊矩阵</h3>
+        <p>有几种矩阵长得比较特殊，之后会反复出现。这里先逐一认识它们的名字和长相，后面章节碰到时可以直接回来查：</p>
+        <ul>
+            <li><strong>零矩阵：</strong> 所有元素都是 0。</li>
+            <li><strong>单位矩阵 \(I\)：</strong> 对角线（从左上到右下这一条斜线）上全是 1，其余位置全是 0。术语：单位矩阵就是指矩阵世界里相当于数字"1"的那个矩阵——满足 \(IA = AI = A\)，也就是乘了它等于没乘。</li>
+            <li><strong>对角矩阵：</strong> 除了对角线上的位置，其余元素全为 0（对角线上可以是任意数字，不一定是 1）。</li>
+            <li><strong>对称矩阵：</strong> 沿对角线翻折后和自己完全一样，写成公式是 \(A^T = A\)。</li>
+            <li><strong>转置矩阵 \(A^T\)：</strong> 术语：转置就是指把矩阵的行和列互换——原来的第一行变成第一列，原来的第二行变成第二列，以此类推。</li>
+        </ul>
+        <h3>2.2 矩阵的加法与数乘</h3>
+        <p>矩阵的加法和数乘，跟 1.1 节向量的运算是同一个思路——都是"对应位置的数分别处理"。矩阵加法是逐个元素相加：\((A+B)_{ij} = A_{ij} + B_{ij}\)（这里 \(A_{ij}\) 表示第 \(i\) 行第 \(j\) 列的那个数）。数乘则是每个元素都乘上同一个数：\((cA)_{ij} = cA_{ij}\)。</p>
+
+        <h3>2.3 矩阵作为线性变换</h3>
+        <p>这一节要看矩阵最有意思的一面。先给出直觉：一个矩阵不仅仅是数字表格，还可以看作一台"变换机器"——输入一个点（或者说一个向量），它就按固定规则把这个点挪到平面上的新位置。</p>
+        <p>举个具体例子感受一下：矩阵 \(A=\begin{bmatrix}1&2\\3&4\end{bmatrix}\) 可以把平面上的一组网格点，统一拉伸、旋转到新的位置——具体怎么"拉伸"，会在下方演示区里看到动画，也会在 3.1 节看到精确的计算方法。</p>
+        <div class="demo-box">
+            <div class="demo-caption">🔲 矩阵变换网格点演示：单位正方形四角在 \(A\) 作用下的移动</div>
+            <div class="flex-row">
+                <button class="btn" id="gridTransform">应用变换</button>
+                <button class="btn secondary" id="gridReset">重置</button>
+            </div>
+            <div id="gridChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">点击「应用变换」，浅色网格点会动画移动到深色的变换后位置，可以看到正方形被拉伸、倾斜成平行四边形。</div>
+        </div>
+    </section>
+
+    <!-- 3. 矩阵乘法与线性变换 -->
+    <section class="section" id="ch3">
+        <h2><span class="num">3</span> 矩阵乘法与线性变换</h2>
+        <p>先问一个问题：如果一台"变换机器"先做旋转、再做拉伸，那把这两步合并成"一步到位"的效果，用什么来描述？</p>
+        <p>答案就是矩阵乘法。术语：矩阵乘法就是指两个线性变换依次执行、合并成一个新变换（这种"合并"专业上叫复合）。矩阵乘法是线性代数里最核心的运算，先看它的定义，再拆开逐字看：</p>
+        <div class="eq">
+            \[
+            (AB)_{ij} = \sum_{k=1}^n A_{ik} B_{kj}
+            \]
+        </div>
+        <p>这个式子读作：<strong>AB 的第 i 行第 j 列这个位置的数，等于 A 的第 i 行和 B 的第 j 列，对应位置相乘再相加</strong>。这本质上就是一连串的点积——1.1 节介绍过点积就是"对应位置相乘再相加"。</p>
+        <h3>3.1 矩阵乘向量</h3>
+        <p>公式看起来抽象，先从最简单的情形入手：矩阵乘以一个向量（而不是另一个矩阵）。</p>
+        <p>矩阵 \(A\) 乘以向量 \(\mathbf{x}\) 得到新向量 \(\mathbf{y} = A\mathbf{x}\)——这正是 2.3 节说的"把向量塞进变换机器"，\(\mathbf{y}\) 就是那个机器吐出来的结果。计算方法是：输出向量的每一个分量，都是 \(A\) 的对应一行与 \(\mathbf{x}\) 做点积的结果。</p>
+        <p>代入下方演示里的具体数字看一遍：设 \(A=\begin{bmatrix}1&2\\3&4\end{bmatrix}\)，\(\mathbf{x}=(2,1)\)。输出的第一个分量，是 \(A\) 第一行 \((1,2)\) 与 \(\mathbf{x}\) 的点积：\(1\times2+2\times1=4\)；第二个分量，是 \(A\) 第二行 \((3,4)\) 与 \(\mathbf{x}\) 的点积：\(3\times2+4\times1=10\)。所以 \(A\mathbf{x}=(4,10)\)。</p>
+        <div class="demo-box">
+            <div style="font-size: 1.2rem; margin-bottom: 1rem;">🎛️ 动手：矩阵乘向量</div>
+            <div class="flex-row">
+                <div>
+                    <div>矩阵 \(A = \begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}\)</div>
+                    <div style="margin-top: 0.8rem;">
+                        <label>\(\mathbf{x} = \)</label>
+                        <input type="range" id="vecX" min="-5" max="5" value="2" step="1">
+                        <span id="vecXval">2</span>
+                    </div>
+                    <div>
+                        <label>\(\mathbf{y} = \)</label>
+                        <input type="range" id="vecY" min="-5" max="5" value="1" step="1">
+                        <span id="vecYval">1</span>
+                    </div>
+                </div>
+                <div style="font-size: 1.5rem;">→</div>
+                <div>
+                    <div>结果 \(A\mathbf{x} = \)</div>
+                    <div class="result-badge" id="matVecResult">[4, 10]</div>
+                </div>
+            </div>
+            <div id="matVecChart" class="echart-box" style="margin-top:1rem;"></div>
+            <div class="note" style="text-align:left;">蓝色箭头是输入向量 x，红色箭头是变换后的输出 Ax。拖动滑块观察 A 如何"拉伸+旋转"输入向量。</div>
+        </div>
+        <h3>3.2 矩阵乘矩阵</h3>
+        <p>有了"矩阵乘向量"这个基础，矩阵乘矩阵就顺理成章了：可以理解成"对 B 的每一列分别做一次矩阵乘向量"，再把每一列算出来的结果向量，重新拼回一个新矩阵。</p>
+        <p>维度上要留意一个匹配条件：若 \(A\) 是 \(m\times n\)，\(B\) 是 \(n\times p\)——也就是 A 的列数必须等于 B 的行数——那么乘积 \(AB\) 就是 \(m\times p\)。看一个具体的 2×2 例子：</p>
+        <div class="eq">
+            \[
+            \begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}
+            \begin{bmatrix} 5 & 6 \\ 7 & 8 \end{bmatrix}
+            =
+            \begin{bmatrix} 19 & 22 \\ 43 & 50 \end{bmatrix}
+            \]
+        </div>
+        <p>验证一下左上角的 19 是怎么来的：第一个矩阵的第 1 行 \((1,2)\)，和第二个矩阵的第 1 列 \((5,7)\) 做点积：\(1\times5+2\times7=5+14=19\)，正好对上。</p>
+        <div class="note">
+            ⚠️ 矩阵乘法不满足交换律：\(AB \neq BA\) 是常态。直觉上，先旋转再拉伸，通常和先拉伸再旋转，最终结果是不一样的。
+        </div>
+        <h3>3.3 线性变换视角</h3>
+        <p>这一节把 2.3 节"矩阵是变换机器"这个直觉说法，写得更严格一些：任何矩阵 \(A\) 都定义了一个线性变换 \(T(\mathbf{x}) = A\mathbf{x}\)。</p>
+        <p>之所以叫"线性"，是因为它满足两条很朴素的规律。第一条：先加再变换，等于先变换再加，\(T(\mathbf{u}+\mathbf{v}) = T(\mathbf{u}) + T(\mathbf{v})\)。第二条：先放大再变换，等于先变换再放大，\(T(c\mathbf{v}) = cT(\mathbf{v})\)。这两条规律合起来，就是"线性"这个词的准确含义。</p>
+    </section>
+
+    <!-- 4. 行列式 -->
+    <section class="section" id="ch4">
+        <h2><span class="num">4</span> 行列式</h2>
+
+        <div class="note">
+            💡 <strong>为什么要学这个 / 直觉：</strong> 只记一句话就够了——行列式是一个数，它告诉你"矩阵这台变换机器，把面积（或体积）放大了多少倍"。如果这个数是 0，说明变换把整个空间压扁成了一条线甚至一个点，信息被压没了，这样的矩阵也就没法"逆着变换回去"。
+        </div>
+
+        <p>术语：<strong>行列式</strong>就是指从一个方阵（行数等于列数的矩阵）算出来的一个单独的数字，记作 \(\det(A)\) 或 \(|A|\)，只对方阵有定义。它衡量的是矩阵对应的线性变换，把空间的面积或体积放大或缩小了多少倍，这个倍数就叫<strong>伸缩比例</strong>。</p>
+        <h3>4.1 2×2 和 3×3 行列式</h3>
+        <p>先看最常用的两种情形——2×2 和 3×3 矩阵的行列式计算公式，按套路代入数字即可算出来：</p>
+        <div class="eq">
+            \[
+            \det\begin{bmatrix} a & b \\ c & d \end{bmatrix} = ad - bc
+            \]
+        </div>
+        <div class="eq">
+            \[
+            \det\begin{bmatrix} a & b & c \\ d & e & f \\ g & h & i \end{bmatrix}
+            = a(ei - fh) - b(di - fg) + c(dh - eg)
+            \]
+        </div>
+        <p>代入一个具体的 2×2 例子：\(\det\begin{bmatrix}2&0\\1&2\end{bmatrix} = 2\times2 - 0\times1 = 4\)。这说明这个矩阵对应的变换，把面积放大了 4 倍——下方演示区可以拖动滑块，直观看到这个"放大倍数"随矩阵改变的样子。</p>
+        <h3>4.2 行列式的性质</h3>
+        <p>行列式有几条常用的规律，做题和理解证明时会反复用到。这里先分开列出来，逐条看：</p>
+        <ul>
+            <li>\(\det(AB) = \det(A)\det(B)\)：两次变换依次做完，总的伸缩比例，等于各自伸缩比例相乘。</li>
+            <li>\(\det(A^T) = \det(A)\)：转置（2.1 节介绍过）不改变伸缩比例。</li>
+            <li>若某一行（或某一列）全为 0，则 \(\det = 0\)。</li>
+            <li>交换两行，行列式的符号会翻转——对应"变换的方向被翻转了"这个几何事实。</li>
+            <li>\(\det(A) \neq 0 \iff A\) 可逆（"可逆"是什么意思，下一章会详细讲）。</li>
+        </ul>
+        <div class="highlight">
+            <strong>几何意义：</strong> 在平面（2D）上，\(|\det(A)|\) 就是变换后的面积与变换前面积的比值；在三维空间（3D）中，它是体积的比值。
+        </div>
+
+        <div class="demo-box">
+            <div class="demo-caption">🟦 行列式即面积演示：\(A=\begin{bmatrix}2&b\\1&2\end{bmatrix}\) 对单位正方形的作用</div>
+            <div class="flex-row">
+                <label>\(b = \)</label>
+                <input type="range" id="detB" min="-3" max="3" value="0" step="0.1">
+                <span class="result-badge">b = <span id="detBval">0.0</span></span>
+                <span class="result-badge">det(A) = <span id="detVal">4.00</span></span>
+            </div>
+            <div id="detChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">阴影平行四边形是变换后单位正方形的像，其面积等于 |det(A)|。当 det(A) 变号时，平行四边形的顶点顺序发生翻转（方向反转）。</div>
+        </div>
+    </section>
+
+    <!-- 5. 逆矩阵与初等变换 -->
+    <section class="section" id="ch5">
+        <h2><span class="num">5</span> 逆矩阵与初等变换</h2>
+        <p>先问一个问题：如果矩阵 \(A\) 是一台"把点搬到新位置"的机器，那有没有另一台机器，能把新位置的点原封不动地搬回去？</p>
+        <p>如果有，这台"倒放"机器就叫 \(A\) 的<strong>逆矩阵</strong>。术语：逆矩阵就是指这样一个矩阵 \(B\)——满足 \(AB = BA = I\)（\(I\) 是 2.1 节介绍过的单位矩阵，相当于"什么都不做"）。只要存在这样的 \(B\)，就称 \(A\) 可逆，并把 \(B\) 记作 \(A^{-1}\)。</p>
+        <h3>5.1 逆矩阵的性质</h3>
+        <p>逆矩阵有几条直观的规律，逐条看一下：</p>
+        <ul>
+            <li>\((A^{-1})^{-1} = A\)：倒放的倒放，等于原来的正放。</li>
+            <li>\((AB)^{-1} = B^{-1}A^{-1}\)：可以类比"先穿鞋再穿袜子，脱的时候要先脱袜子再脱鞋"——顺序要反过来。</li>
+            <li>\((A^T)^{-1} = (A^{-1})^T\)：求逆和转置这两个操作，谁先谁后结果都一样。</li>
+            <li>\(\det(A^{-1}) = 1/\det(A)\)：逆矩阵的伸缩比例，正好是原矩阵伸缩比例的倒数。</li>
+        </ul>
+        <h3>5.2 初等行变换</h3>
+        <p>知道了逆矩阵是什么，接下来要问：怎么手算出一个具体的逆矩阵？这需要先认识三种基本操作。</p>
+        <p>求逆矩阵有一套手算的固定流程，靠的是三种最基本、不会改变方程组解的"整理表格"操作，称为初等行变换：</p>
+        <ol>
+            <li>交换两行。</li>
+            <li>某一行整体乘以一个非零常数。</li>
+            <li>把某一行加上另一行的若干倍。</li>
+        </ol>
+        <p>反复使用这三种操作，就能用一种叫高斯-约当消元法的具体流程求出逆矩阵。术语：高斯-约当消元法就是指——把 \(A\) 和单位矩阵 \(I\) 并排写在一起，对这个"合并表格"反复做上面三种行变换，直到左边变成了 \(I\)；这时神奇的是，右边会自动变成 \(A^{-1}\)。写成流程图就是：\([A \mid I] \xrightarrow{\text{行变换}} [I \mid A^{-1}]\)。下方演示区可以逐步点击，看这个过程具体怎么走。</p>
+        <div class="note">
+            💡 若矩阵不可逆（奇异，即行列式为 0），消元过程中会出现全零行——说明信息在变换中丢失了，找不到"倒放"的办法。
+        </div>
+
+        <div class="demo-box">
+            <div class="demo-caption">🧮 高斯-约当消元演示：求 \(A=\begin{bmatrix}2&1\\1&1\end{bmatrix}\) 的逆矩阵 \([A\mid I]\to[I\mid A^{-1}]\)</div>
+            <div class="flex-row">
+                <button class="btn" id="gjNext">下一步</button>
+                <button class="btn secondary" id="gjReset">重置</button>
+                <span class="result-badge" id="gjStepLabel">第 0 / 3 步</span>
+            </div>
+            <div id="gjGrid" class="la-grid-table" style="grid-template-columns: repeat(4, auto);"></div>
+            <div class="note" id="gjExplain" style="text-align:left;">初始状态：增广矩阵 \([A \mid I]\)。点击「下一步」逐步执行行变换。</div>
+        </div>
+    </section>
+
+    <!-- 6. 向量空间与子空间 -->
+    <section class="section" id="ch6">
+        <h2><span class="num">6</span> 向量空间与子空间</h2>
+
+        <div class="note">
+            💡 <strong>为什么要学这个 / 直觉：</strong> 一句话记住本节——矩阵 \(A\) 把输入向量"喂"进去后，输出结果并不一定能占满整个空间，而是可能被压扁在一条线、一张面上；"秩"这个数，就是衡量输出到底占了多少维空间。这能帮我们判断一个矩阵有没有丢信息、方程组有没有解、解是否唯一。
+        </div>
+
+        <p>先引入这一节的第一个术语：<strong>向量空间</strong>可以先理解成"一堆向量组成的大集合"，只要满足一个条件——集合里任意向量做加法或数乘，结果还落在这个集合里面，不会跑出去（这个条件专业上叫"封闭"）。举个例子：\(\mathbb{R}^n\)（1 节介绍过，即所有 n 维实向量组成的集合）就是最常见的向量空间。</p>
+        <h3>6.1 子空间</h3>
+        <p>术语：<strong>子空间</strong>就是指一个向量空间"内部"的一小块区域（也就是一个子集），但这一小块自己也必须满足向量空间的条件：必须包含零向量，并且对加法和数乘同样封闭。举个具体例子：三维空间里过原点的一个平面，就是一个子空间——平面内任意两个向量相加或数乘，结果仍在这个平面上。</p>
+        <h3>6.2 四个基本子空间</h3>
+        <p>每一个矩阵 \(A\) 都自带四个和它密切相关的子空间。这里先说清楚它们分别在回答什么问题：一部分回答"这台变换机器的输出能到达哪里"，另一部分回答"什么样的输入会被压成 0、信息丢失了"。逐个来看：</p>
+        <ul>
+            <li><strong>列空间 \(C(A)\)：</strong> \(A\) 的所有列向量能线性组合出来的全部结果，也就是 \(A\mathbf{x}\) 所有可能取值的集合——换句话说，是这台"变换机器"所有可能的输出。</li>
+            <li><strong>零空间 \(N(A)\)：</strong> 所有会被 \(A\) 变换压成零向量的输入 \(\mathbf{x}\)，即满足 \(A\mathbf{x} = \mathbf{0}\) 的全部 \(\mathbf{x}\)——这些输入的信息在变换中彻底丢失了，因为不管原来是什么，输出都变成了 0。</li>
+            <li><strong>行空间 \(C(A^T)\)：</strong> 所有行向量的线性组合，也就是把 \(A\) 转置之后再取列空间。</li>
+            <li><strong>左零空间 \(N(A^T)\)：</strong> 满足 \(A^T\mathbf{y} = \mathbf{0}\) 的所有 \(\mathbf{y}\)，也就是 \(A^T\) 的零空间。</li>
+        </ul>
+        <h3>6.3 秩</h3>
+        <p>这一节引入本章最重要的术语：矩阵的<strong>秩</strong>。术语：秩就是指列空间实际占了几维——它也等于行空间的维数（这两个数总是相等，是一个不太直观但很重要的事实），记作 \(\text{rank}(A)\)。</p>
+        <p>换一个等价的说法：秩等于矩阵中线性无关的列（或行）的最大数目。秩越小，说明输出被压缩得越厉害，丢失的信息就越多。</p>
+        <p>秩和零空间之间有一条固定的数量关系，先看公式：</p>
+        <div class="eq">
+            \[
+            \text{rank}(A) + \dim N(A) = n \quad (\text{列数})
+            \]
+        </div>
+        <p>这个式子读作：<strong>秩加上零空间的维数，恰好等于矩阵的列数</strong>。直觉是这样的：全部的输入维度，可以分成两部分——"没被压扁、保留下来的维度"（也就是秩）,加上"被压成 0、彻底丢失的维度"（也就是零空间的维数），这两部分加起来正好等于全部的输入维度 \(n\)。</p>
+        <p>代入下方演示里的具体矩阵验证一下：\(A=\begin{bmatrix}1&2\\2&4\end{bmatrix}\) 的秩是 1（两列成比例，只贡献了一个方向），列数 \(n=2\)，所以零空间的维数是 \(2-1=1\)——确实存在一整条方向的输入会被压成 0。</p>
+        <div class="highlight">
+            <strong>秩-零化度定理：</strong> 矩阵的秩加上零空间的维数等于列数，这正是上面那条公式的名字。
+        </div>
+
+        <div class="demo-box">
+            <div class="demo-caption">📉 列空间演示：秩亏矩阵 \(A=\begin{bmatrix}1&2\\2&4\end{bmatrix}\)（rank(A)=1）</div>
+            <div id="colSpaceChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">灰色散点是随机采样的输入向量 x，蓝色散点是它们对应的输出 \(A\mathbf{x}\)——无论 x 取什么值，输出全部落在同一条直线上，这条直线就是 A 的列空间，维数（秩）为 1。</div>
+        </div>
+    </section>
+
+    <!-- 7. 特征值与特征向量 -->
+    <section class="section" id="ch7">
+        <h2><span class="num">7</span> 特征值与特征向量</h2>
+
+        <div class="note">
+            💡 <strong>为什么要学这个 / 直觉：</strong> 一句话记住——大多数向量被矩阵 \(A\) 变换后，方向都会被"掰弯"（旋转），但总有那么一两个特殊方向，\(A\) 只把它们拉长或缩短，方向丝毫不变。这些特殊方向就是特征向量，拉伸的倍数就是特征值。它们相当于这台变换机器的"主轴"，抓住了它们就抓住了变换的骨架。
+        </div>
+
+        <p>先给出严格定义：对于方阵 \(A\)，若存在一个非零向量 \(\mathbf{v}\) 和一个数字 \(\lambda\)（希腊字母，读作"拉姆达"），使得 \(A\) 作用在 \(\mathbf{v}\) 上，效果就跟直接把 \(\mathbf{v}\) 按比例 \(\lambda\) 放大缩小完全一样，写成公式是：</p>
+        <div class="eq">
+            \[
+            A\mathbf{v} = \lambda \mathbf{v}
+            \]
+        </div>
+        <p>这个式子读作：<strong>A 乘 v，等于 \(\lambda\) 乘 v</strong>。左边是"正经地做一次矩阵变换"，右边是"只是简单地按比例缩放"，这个等式说的是：对这个特殊的 \(\mathbf{v}\) 来说，这两种操作的效果完全相同。</p>
+        <p>这时，术语：<strong>特征值</strong>就是指满足上面这个等式的数 \(\lambda\)；<strong>特征向量</strong>就是指对应的那个非零向量 \(\mathbf{v}\)。</p>
+        <h3>7.1 几何意义</h3>
+        <p>换句话说，特征向量就是那个在变换 \(A\) 下只被拉伸或压缩、方向完全不变的特殊方向。而 \(\lambda\) 就是这个方向上具体的拉伸倍数：\(\lambda>1\) 表示拉长，\(0<\lambda<1\) 表示缩短，\(\lambda<0\) 则表示方向翻转了 180°（同时还可能拉伸或缩短）。</p>
+        <h3>7.2 特征多项式</h3>
+        <p>知道了定义，接下来的问题是：给定一个具体的矩阵 \(A\)，怎么找出它的这些特殊的 \(\lambda\) 呢？</p>
+        <p>把定义式移项整理，可以证明它等价于求解下面这个方程——只有让这个方程成立的 \(\lambda\)，才会存在对应的非零特征向量：</p>
+        <div class="eq">
+            \[
+            \det(A - \lambda I) = 0
+            \]
+        </div>
+        <p>这是一个关于未知数 \(\lambda\) 的多项式方程，这个多项式有个专门的名字，叫特征多项式。解出这个多项式方程的所有根，就得到了矩阵 \(A\) 的全部特征值。</p>
+        <h3>7.3 性质</h3>
+        <p>特征值还有几条好记的规律，逐条看一下：</p>
+        <ul>
+            <li>\(\sum \lambda_i = \text{tr}(A)\)：所有特征值加起来，等于矩阵对角线元素之和（这个和有个专门的名字，叫矩阵的"迹"）。</li>
+            <li>\(\prod \lambda_i = \det(A)\)：所有特征值乘起来，等于矩阵的行列式（4 节介绍过行列式）。</li>
+            <li>对称矩阵（2.1 节介绍过）的特征值全部是实数，并且不同特征值对应的特征向量，彼此互相垂直（这个性质专业上叫"正交"，8 节会详细讲）。</li>
+        </ul>
+        <div class="highlight">
+            <strong>🧪 例子：</strong> \(A = \begin{bmatrix} 2 & 1 \\ 1 & 2 \end{bmatrix}\)<br>
+            特征值 \(\lambda_1 = 3, \lambda_2 = 1\)，对应特征向量 \((1,1)^T\) 和 \((1,-1)^T\)。
+        </div>
+
+        <div class="demo-box">
+            <div class="demo-caption">🧭 特征向量演示：多个向量在 \(A=\begin{bmatrix}2&1\\1&2\end{bmatrix}\) 变换下的运动</div>
+            <div class="flex-row">
+                <button class="btn" id="eigenStep">应用一次变换</button>
+                <button class="btn secondary" id="eigenReset">重置</button>
+            </div>
+            <div id="eigenChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">红色和绿色向量沿特征方向 (1,1) 与 (1,-1)，每次变换只被拉伸不改变方向；其余灰色向量在变换后会明显偏离原方向（旋转）。</div>
+        </div>
+    </section>
+
+    <!-- 8. 正交性与投影 -->
+    <section class="section" id="ch8">
+        <h2><span class="num">8</span> 正交性与投影</h2>
+        <p>先说清楚这一章的第一个术语。术语：<strong>正交</strong>就是指"垂直"这个概念，推广到更高维度（不止二维、三维）之后的说法。判定方法是：两个向量正交（垂直），当且仅当它们的点积为零，即 \(\mathbf{u} \cdot \mathbf{v} = 0\)。回忆一下 1.1 节，点积衡量的是"两个方向有多接近"——点积为零，说明两个方向完全没有重叠、彼此独立。</p>
+        <h3>8.1 正交基与标准正交基</h3>
+        <p>把"正交"用在一整组向量上，会得到一个新术语：一组两两互相垂直的向量，称为正交基，就像坐标轴一样互不干扰、各管一个方向。</p>
+        <p>如果这组向量的长度还都恰好是 1（也就是 7 节提到过的"单位向量"），就更进一步称为<strong>标准正交基</strong>——这是用起来最方便的一类"坐标轴"，因为长度和方向都是最简单的形式。</p>
+        <h3>8.2 投影</h3>
+        <p>先看一个生活中的类比：把手电筒垂直照在墙上，物体在墙上留下的影子，就是一种"投影"。</p>
+        <p>向量的<strong>投影</strong>是类似的想法。术语：投影就是指——\(\mathbf{b}\) 在 \(\mathbf{a}\) 上的投影，是 \(\mathbf{a}\) 这个方向上、离 \(\mathbf{b}\) 最近的那个点所对应的向量，可以理解成 \(\mathbf{b}\) "照"在 \(\mathbf{a}\) 方向上留下的影子。公式是：</p>
+        <div class="eq">
+            \[
+            \text{proj}_{\mathbf{a}} \mathbf{b} = \frac{\mathbf{a} \cdot \mathbf{b}}{\mathbf{a} \cdot \mathbf{a}} \mathbf{a}
+            \]
+        </div>
+        <p>下方演示区可以拖动滑块改变 \(\mathbf{b}\)，直观看到投影的橙色虚线随之变化。</p>
+        <h3>8.3 格拉姆-施密特正交化</h3>
+        <p>先问一个问题：拿到一组彼此不垂直的线性无关向量（1.2 节介绍过线性无关），能不能想办法把它们"扶正"，变成一组互相垂直的正交基？</p>
+        <p>格拉姆-施密特正交化就是做这件事的具体方法，它也是后面 QR 分解的基础（这里先记住这个名字，本文不展开 QR 分解的细节）。</p>
+        <div class="note">
+            💡 由标准正交基的列向量组成的矩阵，叫正交矩阵 \(Q\)，满足 \(Q^T Q = I\)，也就是 \(Q^{-1} = Q^T\)——转置直接就是逆，求逆瞬间完成，不需要额外计算。它对应的变换只做旋转或镜像，保持向量的长度和夹角完全不变。
+        </div>
+
+        <div class="demo-box">
+            <div class="demo-caption">📐 投影演示：\(\mathbf{b}\) 在 \(\mathbf{a}=(3,1)\) 上的投影</div>
+            <div class="flex-row">
+                <label>\(b_x = \)</label>
+                <input type="range" id="projBx" min="-4" max="4" value="1" step="0.1">
+                <label>\(b_y = \)</label>
+                <input type="range" id="projBy" min="-4" max="4" value="3" step="0.1">
+            </div>
+            <div id="projChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">灰色箭头是 a，蓝色箭头是 b，橙色虚线段是投影 \(\text{proj}_a b\)，紫色虚线是 b 到投影点的垂线（直角标记）。</div>
+        </div>
+    </section>
+
+    <!-- 9. 对角化与SVD -->
+    <section class="section" id="ch9">
+        <h2><span class="num">9</span> 对角化与SVD</h2>
+
+        <div class="note">
+            💡 <strong>为什么要学这个 / 直觉：</strong> 一句话记住 SVD——任何一台变换机器，不管长得多复杂，都可以拆解成三个简单动作依次完成：先旋转，再沿坐标轴拉伸/压缩，最后再旋转一次。这三步拆解几乎能用在任何矩阵上，是数据压缩、降维、推荐系统等技术背后的通用武器。
+        </div>
+
+        <h3>9.1 对角化</h3>
+        <p>7 节说过，特征向量是矩阵变换中方向不变的"主轴"。这一节要问：能不能借助这些主轴，把矩阵 \(A\) 拆解成一个更简单的形式？</p>
+        <p>如果 \(A\) 恰好有 \(n\) 个互相独立（也就是线性无关）的特征向量，那答案是可以的：可以把 \(A\) 拆成"只在这些主轴上做简单缩放"的形式，这个操作叫<strong>对角化</strong>：</p>
+        <div class="eq">
+            \[
+            A = PDP^{-1}
+            \]
+        </div>
+        <p>这里 \(D\) 是对角矩阵（2.1 节介绍过），对角线上放着各个特征值；\(P\) 的每一列是对应的特征向量。整个式子可以从右往左读成一个三步过程：<strong>先用 \(P^{-1}\) 换到特征向量的坐标系，再用 \(D\) 沿着这些坐标轴做简单缩放，最后用 \(P\) 换回原来的坐标系</strong>。</p>
+        <h3>9.2 对称矩阵与正交对角化</h3>
+        <p>对角化在一种特殊情况下会变得格外整齐。如果 \(A\) 恰好是 8 节提到的对称矩阵（也就是 \(A = A^T\)），那它的特征向量总能选成互相垂直的一组标准正交基。这时上面的对角化公式可以写得更简洁：\(A = QDQ^T\)，其中 \(Q\) 是 8 节介绍过的正交矩阵。</p>
+        <h3>9.3 奇异值分解 (SVD)</h3>
+        <p>9.1 节的对角化有一个局限：只有方阵、并且特征向量数量足够多时才能用。这一节要介绍一个几乎对任意矩阵都成立、威力更大的分解方法。</p>
+        <p>术语：<strong>奇异值分解</strong>（缩写 SVD）就是指——任意矩阵 \(A \in \mathbb{R}^{m \times n}\)（不要求是方阵）都可以分解成三个矩阵相乘的形式：</p>
+        <div class="eq">
+            \[
+            A = U \Sigma V^T
+            \]
+        </div>
+        <p>回顾一下本节开头"直觉"提示里说的三步动作：先旋转，再沿坐标轴拉伸压缩，最后再旋转一次。这三个字母正好对应这三步：</p>
+        <ul>
+            <li>\(V^T\)：\(n \times n\) 正交矩阵（称为右奇异向量组成的矩阵），负责第一次旋转。</li>
+            <li>\(\Sigma\)（读作 sigma）：\(m \times n\) 对角矩阵，对角线上是非负的数字 \(\sigma_i \ge 0\)（称为奇异值），负责沿坐标轴拉伸或压缩。</li>
+            <li>\(U\)：\(m \times m\) 正交矩阵（称为左奇异向量组成的矩阵），负责第二次旋转。</li>
+        </ul>
+        <p>下方演示区把这三步拆开、逐步展示：一个单位圆先被 \(V^T\) 旋转，再被 \(\Sigma\) 拉伸成椭圆，最后被 \(U\) 再旋转一次——可以点击「下一步」逐段观看。</p>
+        <div class="highlight">
+            <strong>🎯 应用：</strong> 数据压缩、降维（PCA）、推荐系统、图像处理——只保留最大的几个奇异值，舍弃较小的，就能用很少的信息还原出矩阵的主要样子。
+        </div>
+        <div class="note">
+            💡 奇异值是 \(A^T A\) 特征值的平方根。SVD 是线性代数中最强大的工具之一。
+        </div>
+
+        <div class="demo-box">
+            <div class="demo-caption">🔄 SVD 三步分解演示：单位圆在 \(A=U\Sigma V^T\) 下的变化（旋转 → 拉伸 → 旋转）</div>
+            <div class="flex-row">
+                <button class="btn" id="svdNext">下一步</button>
+                <button class="btn secondary" id="svdReset">重置</button>
+                <span class="result-badge" id="svdStepLabel">阶段 0/3：原始单位圆</span>
+            </div>
+            <div id="svdChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">依次点击「下一步」：① 原始单位圆 → ② 经 \(V^T\) 旋转 → ③ 经 \(\Sigma\) 拉伸成椭圆 → ④ 经 \(U\) 再次旋转，得到最终的椭圆（即 A 直接作用的结果）。</div>
+        </div>
+    </section>
+<!-- 在 </main> 之前，即第9章 section 之后插入以下代码 -->
+
+    <!-- 10. MLP 应用 -->
+    <section class="section" id="ch10">
+        <h2><span class="num">10</span> MLP 应用 —— 线性代数的实战</h2>
+        <p>现在把前面九章学到的向量、矩阵、变换连起来，看看它们如何组装成一个真正的神经网络。先解释一个新名词：多层感知机（缩写 MLP）就是指一种最基础的神经网络结构，它是线性代数最直接的应用之一。</p>
+        <p>一个 MLP 的前向传播，本质就是<strong>矩阵乘法（2.3、3.1 节介绍过的变换）</strong>加上<strong>非线性激活</strong>，两者反复堆叠而成。</p>
+
+        <h3>10.1 单层：矩阵乘向量</h3>
+        <p>先看一层是怎么算的。一个全连接层（神经网络里最基本的一种计算层）对输入向量 \(\mathbf{x}\) 做的事情，分三步：先做 3.1 节的"矩阵乘向量"，再加上一次简单的位移，最后做一次非线性加工。写成公式是：</p>
+        <div class="eq">
+            \[
+            \mathbf{z} = W\mathbf{x} + \mathbf{b}, \qquad \mathbf{a} = \sigma(\mathbf{z})
+            \]
+        </div>
+        <p>这里 \(W\) 是这一层的权重矩阵，决定"变换机器"具体怎么拉伸旋转；\(\mathbf{b}\) 是偏置向量，负责把结果整体平移一下；\(\sigma\) 是激活函数（比如 ReLU、Sigmoid），负责引入非线性——如果没有这一步，不管叠多少层，整个网络本质上都只是一个线性变换，学不到比直线、平面更复杂的规律。</p>
+        <div class="highlight">
+            <strong>📐 维度分析：</strong> 若输入 \(\mathbf{x} \in \mathbb{R}^{n}\)，输出 \(\mathbf{z} \in \mathbb{R}^{m}\)，<br>
+            则 \(W \in \mathbb{R}^{m \times n}\)，\(\mathbf{b} \in \mathbb{R}^{m}\)。
+        </div>
+
+        <h3>10.2 多层 MLP 前向传播</h3>
+        <p>把上面这个"单层"操作重复堆叠多次，就是完整的 MLP：上一层的输出，作为下一层的输入。设第 \(l\) 层的权重为 \(W^{[l]}\)，偏置为 \(\mathbf{b}^{[l]}\)，输入 \(\mathbf{a}^{[0]} = \mathbf{x}\)，则：</p>
+        <div class="eq">
+            \[
+            \mathbf{a}^{[l]} = \sigma\!\left(W^{[l]}\mathbf{a}^{[l-1]} + \mathbf{b}^{[l]}\right), \quad l = 1, 2, \dots, L
+            \]
+        </div>
+        <p>一层一层往前传，最后一层输出 \(\mathbf{a}^{[L]}\) 就是网络的预测结果。</p>
+
+        <h3>10.3 批量计算（矩阵化）</h3>
+        <p>实际训练时，为了效率，通常不是一个一个样本处理，而是一次性处理 \(N\) 个样本（这叫"批量"）。做法是把输入按行堆成一个大矩阵 \(X \in \mathbb{R}^{N \times n_0}\)，这样第 \(l\) 层的计算就变成了：</p>
+        <div class="eq">
+            \[
+            Z^{[l]} = A^{[l-1]} W^{[l]\top} + \mathbf{1}\mathbf{b}^{[l]\top}
+            \]
+            \[
+            A^{[l]} = \sigma(Z^{[l]})
+            \]
+        </div>
+        <p>其中 \(A^{[l-1]} \in \mathbb{R}^{N \times n_{l-1}}\)，\(W^{[l]\top} \in \mathbb{R}^{n_{l-1} \times n_l}\)（转置的作用参见 2.1 节），\(\mathbf{1}\) 是全 1 列向量，用来把偏置"广播"（复制）到每一个样本上。</p>
+        <div class="note">
+            💡 批量计算把 N 个样本原本要分别做的向量运算，合并成一次大矩阵乘法，这正是 GPU 能高效训练神经网络的基础——GPU 天生擅长同时做大量的矩阵乘法。
+        </div>
+
+        <div class="demo-box">
+            <div class="demo-caption">⚡ 批量矩阵计算 vs 逐样本循环：相对耗时对比（示意，非真实基准）</div>
+            <div class="flex-row">
+                <label>批大小 N = </label>
+                <input type="range" id="batchN" min="8" max="512" value="128" step="8">
+                <span class="result-badge">N = <span id="batchNval">128</span></span>
+            </div>
+            <div id="batchChart" class="echart-box" style="height:320px;"></div>
+            <div class="note" style="text-align:left;">柱状图仅为示意：逐样本循环的耗时随 N 近似线性增长，而矩阵批量计算利用底层向量化/GPU 并行，耗时增长慢得多——这就是 10.3 节把 N 个样本堆成矩阵 X 一次性计算的原因。</div>
+        </div>
+
+        <h3>10.4 反向传播的线性代数</h3>
+        <p>训练网络时，需要知道每一个权重该往哪个方向调整——这属于微积分中"链式法则"的内容，这里只关注其中涉及线性代数的部分。一句话概括：反向传播本质上是链式法则加上矩阵转置乘法——信息从输出往输入回传时，用的正是权重矩阵的转置（2.1 节介绍过转置）。</p>
+        <p>先定义一个中间量：第 \(l\) 层的误差项 \(\delta^{[l]} = \partial L / \partial \mathbf{z}^{[l]}\)，它表示损失 \(L\) 对这一层"求和结果"的敏感程度。有了这个记号，反向传播的公式是：</p>
+        <div class="eq">
+            \[
+            \delta^{[L]} = \nabla_{\mathbf{a}^{[L]}} L \odot \sigma'(\mathbf{z}^{[L]})
+            \]
+            \[
+            \delta^{[l]} = \left(W^{[l+1]\top} \delta^{[l+1]}\right) \odot \sigma'(\mathbf{z}^{[l]})
+            \]
+        </div>
+        <p>有了每一层的误差项，就能直接算出权重和偏置该往哪个方向调整——同样是把误差项和上一层输出做一次乘法（这里用到了转置）：</p>
+        <div class="eq">
+            \[
+            \frac{\partial L}{\partial W^{[l]}} = \delta^{[l]} \mathbf{a}^{[l-1]\top}, \qquad
+            \frac{\partial L}{\partial \mathbf{b}^{[l]}} = \delta^{[l]}
+            \]
+        </div>
+        <p>把它推广到 10.3 节的批量形式（一次处理 N 个样本）：</p>
+        <div class="eq">
+            \[
+            \frac{\partial L}{\partial W^{[l]}} = \Delta^{[l]\top} A^{[l-1]}
+            \]
+        </div>
+        <p>可以看到：<strong>前向是矩阵乘，反向还是矩阵乘（转置）</strong>。</p>
+
+        <h3>10.5 一个具体例子：1 → 1h → 2h → 1</h3>
+        <p>网络结构：输入 1 维，第一隐藏层 1 个神经元，第二隐藏层 2 个神经元，输出 1 维。</p>
+        <div class="demo-box">
+            <div style="font-size: 1.1rem; margin-bottom: 1rem;">🧪 前向传播演示（ReLU 激活）</div>
+            <div style="text-align: left; max-width: 600px; margin: 0 auto; font-family: monospace; font-size: 1.05rem;">
+                <div><strong>输入：</strong> \(x = 2\)</div>
+                <div style="margin-top: 0.6rem;"><strong>第1层 (1h)：</strong></div>
+                <div>\(W^{[1]} = [3],\ b^{[1]} = [-1]\)</div>
+                <div>\(z^{[1]} = 3\times2 -1 = 5\)</div>
+                <div>\(a^{[1]} = \text{ReLU}(5) = 5\)</div>
+                <div style="margin-top: 0.6rem;"><strong>第2层 (2h)：</strong></div>
+                <div>\(W^{[2]} = \begin{bmatrix}1\\-2\end{bmatrix},\ b^{[2]} = \begin{bmatrix}0\\1\end{bmatrix}\)</div>
+                <div>\(z^{[2]} = \begin{bmatrix}5\\-9\end{bmatrix}\)</div>
+                <div>\(a^{[2]} = \text{ReLU}\!\left(\begin{bmatrix}5\\-9\end{bmatrix}\right) = \begin{bmatrix}5\\0\end{bmatrix}\)</div>
+                <div style="margin-top: 0.6rem;"><strong>第3层 (输出)：</strong></div>
+                <div>\(W^{[3]} = [2, 1],\ b^{[3]} = [0.5]\)</div>
+                <div>\(z^{[3]} = 2\times5 + 1\times0 + 0.5 = 10.5\)</div>
+                <div>\(y = 10.5\)</div>
+            </div>
+        </div>
+
+        <h3>10.6 为什么 MLP 需要线性代数</h3>
+        <p>回顾一下：本章没有引入任何新概念，只是把前面九章学到的工具一一对应到了神经网络的各个部分：</p>
+        <ul>
+            <li><strong>向量：</strong> 表示数据样本、激活值、梯度</li>
+            <li><strong>矩阵：</strong> 表示权重、批量数据</li>
+            <li><strong>矩阵乘法：</strong> 前向传播和反向传播的核心运算</li>
+            <li><strong>转置：</strong> 反向传播中误差的反向传递</li>
+            <li><strong>特征值/奇异值：</strong> 分析网络稳定性、初始化策略</li>
+            <li><strong>正交性：</strong> 正交初始化、避免梯度消失/爆炸</li>
+        </ul>
+
+        <div class="highlight">
+            <strong>🎯 一句话总结：</strong> MLP 把线性代数的向量、矩阵、矩阵乘法、转置、范数等工具全部用上了。学好线性代数，就掌握了理解神经网络的第一把钥匙。
+        </div>
+
+        <div class="note">
+            💡 进一步学习：梯度下降、反向传播的矩阵推导、批量归一化、注意力机制中的线性代数。
+        </div>
+    </section>
+    <!-- 结束语 -->
+    <div class="section" style="background: #f0f7ff; border: none;">
+        <h2 style="border-bottom: none; margin-bottom: 0.5rem;">🎓 恭喜</h2>
+        <p>你已经走完了大学线性代数的主要脉络。从向量、矩阵到特征值、SVD，这些工具是机器学习、计算机图形学、信号处理等领域的基石。</p>
+        <p style="margin-top: 0.8rem;">继续动手推导、编程实践（如 NumPy），你会越来越熟练。</p>
+    </div>
+
+    <footer>
+        ⚡ 线性代数 · 大学全量 · 初学者指南
+    </footer>
+</main>
+
+<script>
+    // ===== 渲染 KaTeX =====
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+            delimiters: [
+                {left: '\\[', right: '\\]', display: true},
+                {left: '\\(', right: '\\)', display: false}
+            ],
+            throwOnError: false
+        });
+    });
+
+    // ===== 矩阵乘向量交互 =====
+    const vecX = document.getElementById('vecX');
+    const vecY = document.getElementById('vecY');
+    const vecXval = document.getElementById('vecXval');
+    const vecYval = document.getElementById('vecYval');
+    const matVecResult = document.getElementById('matVecResult');
+
+    function updateMatVec() {
+        const x = parseInt(vecX.value);
+        const y = parseInt(vecY.value);
+        vecXval.textContent = x;
+        vecYval.textContent = y;
+        // A = [[1,2],[3,4]]
+        const r1 = 1 * x + 2 * y;
+        const r2 = 3 * x + 4 * y;
+        matVecResult.textContent = `[${r1}, ${r2}]`;
+    }
+
+    vecX.addEventListener('input', updateMatVec);
+    vecY.addEventListener('input', updateMatVec);
+    updateMatVec();
+
+    // ================= 以下为新增 ECharts / 动画演示 =================
+    window.addEventListener('load', function() {
+
+        // ---------- ch1: 向量加法与数乘 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('vecChart'));
+            const u = [1, 2], v = [3, 4];
+            const vecC = document.getElementById('vecC');
+            const vecCval = document.getElementById('vecCval');
+            const vecCV = document.getElementById('vecCV');
+
+            function arrow(vec, color, name) {
+                return {
+                    name: name, type: 'lines', coordinateSystem: 'cartesian2d',
+                    data: [{ coords: [[0, 0], vec] }],
+                    lineStyle: { color: color, width: 3 }, symbol: ['none', 'arrow'], symbolSize: 10
+                };
+            }
+
+            function render(c) {
+                const cv = [c * v[0], c * v[1]];
+                const sum = [u[0] + v[0], u[1] + v[1]];
+                chart.setOption({
+                    grid: { left: 40, right: 20, top: 20, bottom: 30 },
+                    xAxis: { type: 'value', min: -6, max: 8, name: 'x' },
+                    yAxis: { type: 'value', min: -6, max: 8, name: 'y' },
+                    series: [
+                        arrow(u, '#3b82f6', 'u'),
+                        arrow(v, '#10b981', 'v'),
+                        arrow(sum, '#f59e0b', 'u+v'),
+                        arrow(cv, '#8b5cf6', 'c·v')
+                    ]
+                });
+                vecCval.textContent = c.toFixed(1);
+                vecCV.textContent = cv[0].toFixed(1) + ', ' + cv[1].toFixed(1);
+            }
+            vecC.addEventListener('input', function() { render(parseFloat(this.value)); });
+            render(parseFloat(vecC.value));
+        })();
+
+        // ---------- ch2: 矩阵变换网格点 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('gridChart'));
+            const A = [[1, 2], [3, 4]];
+            // 单位正方形四个角 + 一些内部网格点
+            const original = [];
+            for (let i = 0; i <= 2; i++) {
+                for (let j = 0; j <= 2; j++) {
+                    original.push([i / 2, j / 2]);
+                }
+            }
+            const transformed = original.map(p => [A[0][0] * p[0] + A[0][1] * p[1], A[1][0] * p[0] + A[1][1] * p[1]]);
+            let applied = false;
+
+            function render() {
+                const data = applied ? transformed : original;
+                chart.setOption({
+                    grid: { left: 40, right: 20, top: 20, bottom: 30 },
+                    xAxis: { type: 'value', min: -1, max: 5, name: 'x' },
+                    yAxis: { type: 'value', min: -1, max: 7, name: 'y' },
+                    series: [
+                        { type: 'scatter', data: original, symbolSize: 8, itemStyle: { color: '#cbd5e1' } },
+                        { type: 'scatter', data: data, symbolSize: 10, itemStyle: { color: applied ? '#3b82f6' : '#94a3b8' },
+                          animationDuration: 600, animationEasing: 'cubicOut' }
+                    ]
+                });
+            }
+            render();
+            document.getElementById('gridTransform').addEventListener('click', function() { applied = true; render(); });
+            document.getElementById('gridReset').addEventListener('click', function() { applied = false; render(); });
+        })();
+
+        // ---------- ch3: 矩阵乘向量的几何效果（增强） ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('matVecChart'));
+            function arrow(vec, color) {
+                return { type: 'lines', coordinateSystem: 'cartesian2d', data: [{ coords: [[0, 0], vec] }],
+                         lineStyle: { color: color, width: 3 }, symbol: ['none', 'arrow'], symbolSize: 10 };
+            }
+            function render() {
+                const x = parseInt(vecX.value), y = parseInt(vecY.value);
+                const r1 = 1 * x + 2 * y, r2 = 3 * x + 4 * y;
+                chart.setOption({
+                    grid: { left: 40, right: 20, top: 20, bottom: 30 },
+                    xAxis: { type: 'value', min: -30, max: 30, name: 'x' },
+                    yAxis: { type: 'value', min: -30, max: 30, name: 'y' },
+                    series: [ arrow([x, y], '#3b82f6'), arrow([r1, r2], '#ef4444') ]
+                });
+            }
+            vecX.addEventListener('input', render);
+            vecY.addEventListener('input', render);
+            render();
+        })();
+
+        // ---------- ch4: 行列式即面积 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('detChart'));
+            const detB = document.getElementById('detB');
+            const detBval = document.getElementById('detBval');
+            const detVal = document.getElementById('detVal');
+
+            function render(b) {
+                // A = [[2, b], [1, 2]]，列向量 col1=(2,1), col2=(b,2)
+                const col1 = [2, 1], col2 = [b, 2];
+                const det = col1[0] * col2[1] - col2[0] * col1[1];
+                const origin = [0, 0];
+                const p1 = col1, p2 = [col1[0] + col2[0], col1[1] + col2[1]], p3 = col2;
+                chart.setOption({
+                    grid: { left: 40, right: 20, top: 20, bottom: 30 },
+                    xAxis: { type: 'value', min: -5, max: 5, name: 'x' },
+                    yAxis: { type: 'value', min: -5, max: 5, name: 'y' },
+                    series: [
+                        {
+                            type: 'custom',
+                            renderItem: function(params, api) {
+                                const pts = [origin, p1, p2, p3].map(p => api.coord(p));
+                                return { type: 'polygon', shape: { points: pts },
+                                          style: { fill: det >= 0 ? 'rgba(59,130,246,0.35)' : 'rgba(239,68,68,0.35)', stroke: det >= 0 ? '#3b82f6' : '#ef4444' } };
+                            },
+                            data: [0]
+                        },
+                        { type: 'lines', coordinateSystem: 'cartesian2d', data: [{ coords: [origin, col1] }], lineStyle: { color: '#3b82f6', width: 3 }, symbol: ['none', 'arrow'] },
+                        { type: 'lines', coordinateSystem: 'cartesian2d', data: [{ coords: [origin, col2] }], lineStyle: { color: '#10b981', width: 3 }, symbol: ['none', 'arrow'] }
+                    ]
+                });
+                detBval.textContent = b.toFixed(1);
+                detVal.textContent = det.toFixed(2);
+            }
+            detB.addEventListener('input', function() { render(parseFloat(this.value)); });
+            render(parseFloat(detB.value));
+        })();
+
+        // ---------- ch5: 高斯-约当消元 ----------
+        (function() {
+            // 增广矩阵 [A|I]，A = [[2,1],[1,1]]
+            const steps = [
+                { m: [[2, 1, 1, 0], [1, 1, 0, 1]], pivot: null, text: '初始状态：增广矩阵 [A | I]。' },
+                { m: [[1, 0.5, 0.5, 0], [1, 1, 0, 1]], pivot: [0, 0], text: '第1步：第一行除以 2，使 (1,1) 变为主元 1。' },
+                { m: [[1, 0.5, 0.5, 0], [0, 0.5, -0.5, 1]], pivot: [1, 1], text: '第2步：第二行减去第一行，消去 (2,1) 位置。' },
+                { m: [[1, 0.5, 0.5, 0], [0, 1, -1, 2]], pivot: [1, 1], text: '第3步：第二行乘以 2，使 (2,2) 变为主元 1。' },
+                { m: [[1, 0, 1, -1], [0, 1, -1, 2]], pivot: null, text: '第4步：第一行减去 0.5×第二行，消去 (1,2)。完成！右侧即为 A⁻¹ = [[1,-1],[-1,2]]。' }
+            ];
+            let idx = 0;
+            const grid = document.getElementById('gjGrid');
+            const label = document.getElementById('gjStepLabel');
+            const explain = document.getElementById('gjExplain');
+
+            function render() {
+                const st = steps[idx];
+                grid.innerHTML = '';
+                st.m.forEach((row, ri) => {
+                    row.forEach((val, ci) => {
+                        const span = document.createElement('span');
+                        span.textContent = (Number.isInteger(val) ? val : val.toFixed(1));
+                        if (ci === 2) span.style.marginLeft = '0.6rem';
+                        grid.appendChild(span);
+                    });
+                });
+                label.textContent = '第 ' + idx + ' / ' + (steps.length - 1) + ' 步';
+                explain.textContent = st.text;
+            }
+            document.getElementById('gjNext').addEventListener('click', function() {
+                if (idx < steps.length - 1) idx++;
+                render();
+            });
+            document.getElementById('gjReset').addEventListener('click', function() {
+                idx = 0;
+                render();
+            });
+            render();
+        })();
+
+        // ---------- ch6: 列空间演示 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('colSpaceChart'));
+            const A = [[1, 2], [2, 4]];
+            const xs = [], ys = [];
+            for (let i = 0; i < 40; i++) {
+                const x = (Math.random() - 0.5) * 10;
+                const y = (Math.random() - 0.5) * 10;
+                xs.push([x, y]);
+                ys.push([A[0][0] * x + A[0][1] * y, A[1][0] * x + A[1][1] * y]);
+            }
+            chart.setOption({
+                grid: { left: 40, right: 20, top: 20, bottom: 30 },
+                xAxis: { type: 'value', min: -15, max: 15, name: 'x' },
+                yAxis: { type: 'value', min: -15, max: 15, name: 'y' },
+                series: [
+                    { name: '输入 x', type: 'scatter', data: xs, symbolSize: 7, itemStyle: { color: '#cbd5e1' } },
+                    { name: '输出 Ax（列空间）', type: 'scatter', data: ys, symbolSize: 7, itemStyle: { color: '#3b82f6' } }
+                ]
+            });
+        })();
+
+        // ---------- ch7: 特征向量动画 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('eigenChart'));
+            const A = [[2, 1], [1, 2]];
+            function applyA(v) { return [A[0][0] * v[0] + A[0][1] * v[1], A[1][0] * v[0] + A[1][1] * v[1]]; }
+
+            let vectors = [
+                { v: [1, 1], color: '#ef4444', name: '特征向量(1,1)' },
+                { v: [1, -1], color: '#10b981', name: '特征向量(1,-1)' },
+                { v: [1, 0], color: '#94a3b8', name: '普通向量' },
+                { v: [0, 1], color: '#94a3b8', name: '普通向量' },
+                { v: [-1, 0.5], color: '#94a3b8', name: '普通向量' }
+            ];
+
+            function render() {
+                const series = vectors.map(o => ({
+                    type: 'lines', coordinateSystem: 'cartesian2d', data: [{ coords: [[0, 0], o.v] }],
+                    lineStyle: { color: o.color, width: 3 }, symbol: ['none', 'arrow'], symbolSize: 10
+                }));
+                chart.setOption({
+                    grid: { left: 40, right: 20, top: 20, bottom: 30 },
+                    xAxis: { type: 'value', min: -8, max: 8, name: 'x' },
+                    yAxis: { type: 'value', min: -8, max: 8, name: 'y' },
+                    series: series
+                });
+            }
+            render();
+            document.getElementById('eigenStep').addEventListener('click', function() {
+                vectors = vectors.map(o => ({ ...o, v: applyA(o.v) }));
+                render();
+            });
+            document.getElementById('eigenReset').addEventListener('click', function() {
+                vectors = [
+                    { v: [1, 1], color: '#ef4444', name: '特征向量(1,1)' },
+                    { v: [1, -1], color: '#10b981', name: '特征向量(1,-1)' },
+                    { v: [1, 0], color: '#94a3b8', name: '普通向量' },
+                    { v: [0, 1], color: '#94a3b8', name: '普通向量' },
+                    { v: [-1, 0.5], color: '#94a3b8', name: '普通向量' }
+                ];
+                render();
+            });
+        })();
+
+        // ---------- ch8: 投影演示 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('projChart'));
+            const a = [3, 1];
+            const projBx = document.getElementById('projBx');
+            const projBy = document.getElementById('projBy');
+
+            function render() {
+                const b = [parseFloat(projBx.value), parseFloat(projBy.value)];
+                const dot_ab = a[0] * b[0] + a[1] * b[1];
+                const dot_aa = a[0] * a[0] + a[1] * a[1];
+                const scale = dot_ab / dot_aa;
+                const proj = [a[0] * scale, a[1] * scale];
+                chart.setOption({
+                    grid: { left: 40, right: 20, top: 20, bottom: 30 },
+                    xAxis: { type: 'value', min: -5, max: 5, name: 'x' },
+                    yAxis: { type: 'value', min: -5, max: 5, name: 'y' },
+                    series: [
+                        { type: 'lines', coordinateSystem: 'cartesian2d', data: [{ coords: [[0, 0], a] }], lineStyle: { color: '#94a3b8', width: 3 }, symbol: ['none', 'arrow'] },
+                        { type: 'lines', coordinateSystem: 'cartesian2d', data: [{ coords: [[0, 0], b] }], lineStyle: { color: '#3b82f6', width: 3 }, symbol: ['none', 'arrow'] },
+                        { type: 'lines', coordinateSystem: 'cartesian2d', data: [{ coords: [[0, 0], proj] }], lineStyle: { color: '#f59e0b', width: 3, type: 'dashed' }, symbol: ['none', 'arrow'] },
+                        { type: 'lines', coordinateSystem: 'cartesian2d', data: [{ coords: [proj, b] }], lineStyle: { color: '#8b5cf6', width: 2, type: 'dashed' } }
+                    ]
+                });
+            }
+            projBx.addEventListener('input', render);
+            projBy.addEventListener('input', render);
+            render();
+        })();
+
+        // ---------- ch9: SVD 三步分解 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('svdChart'));
+            // 用一个简单的 2x2 矩阵演示：旋转 theta1，拉伸 sigma1,sigma2，再旋转 theta2
+            const theta1 = Math.PI / 6, theta2 = Math.PI / 4;
+            const sigma1 = 2.2, sigma2 = 0.6;
+            const circle = [];
+            for (let i = 0; i <= 60; i++) {
+                const t = (i / 60) * 2 * Math.PI;
+                circle.push([Math.cos(t), Math.sin(t)]);
+            }
+            function rot(pts, th) {
+                const c = Math.cos(th), s = Math.sin(th);
+                return pts.map(p => [c * p[0] - s * p[1], s * p[0] + c * p[1]]);
+            }
+            function scaleXY(pts, sx, sy) { return pts.map(p => [p[0] * sx, p[1] * sy]); }
+
+            const stage0 = circle;
+            const stage1 = rot(circle, theta1);
+            const stage2 = scaleXY(stage1, sigma1, sigma2);
+            const stage3 = rot(stage2, theta2);
+            const stages = [
+                { data: stage0, label: '阶段 0/3：原始单位圆' },
+                { data: stage1, label: '阶段 1/3：经 Vᵀ 旋转' },
+                { data: stage2, label: '阶段 2/3：经 Σ 拉伸成椭圆' },
+                { data: stage3, label: '阶段 3/3：经 U 再次旋转（= A 直接作用结果）' }
+            ];
+            let idx = 0;
+            const label = document.getElementById('svdStepLabel');
+
+            function render() {
+                chart.setOption({
+                    grid: { left: 40, right: 20, top: 20, bottom: 30 },
+                    xAxis: { type: 'value', min: -3, max: 3, name: 'x' },
+                    yAxis: { type: 'value', min: -3, max: 3, name: 'y' },
+                    series: [
+                        { type: 'line', data: stage0, showSymbol: false, lineStyle: { color: '#cbd5e1', width: 1, type: 'dashed' } },
+                        { type: 'line', data: stages[idx].data, showSymbol: false, lineStyle: { color: '#3b82f6', width: 3 } }
+                    ]
+                });
+                label.textContent = stages[idx].label;
+            }
+            document.getElementById('svdNext').addEventListener('click', function() {
+                if (idx < stages.length - 1) idx++;
+                render();
+            });
+            document.getElementById('svdReset').addEventListener('click', function() {
+                idx = 0;
+                render();
+            });
+            render();
+        })();
+
+        // ---------- ch10: 批量计算 vs 逐样本循环 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('batchChart'));
+            const batchN = document.getElementById('batchN');
+            const batchNval = document.getElementById('batchNval');
+
+            function render(n) {
+                const loopTime = n * 1.0;           // 示意：线性增长
+                const batchTime = 8 + Math.log2(n) * 3; // 示意：近似对数增长（向量化/并行）
+                chart.setOption({
+                    grid: { left: 50, right: 20, top: 20, bottom: 40 },
+                    xAxis: { type: 'category', data: ['逐样本循环', '矩阵批量计算'] },
+                    yAxis: { type: 'value', name: '相对耗时（示意单位）' },
+                    series: [{
+                        type: 'bar',
+                        data: [
+                            { value: loopTime.toFixed(1), itemStyle: { color: '#ef4444' } },
+                            { value: batchTime.toFixed(1), itemStyle: { color: '#3b82f6' } }
+                        ],
+                        barWidth: '45%'
+                    }]
+                });
+                batchNval.textContent = n;
+            }
+            batchN.addEventListener('input', function() { render(parseInt(this.value)); });
+            render(parseInt(batchN.value));
+        })();
+
+    });
+
+    // ===== 目录高亮 =====
+    const sections = document.querySelectorAll('.section');
+    const tocLinks = document.querySelectorAll('.toc a');
+
+    function updateActiveToc() {
+        let current = '';
+        const scrollPos = window.scrollY + 120;
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            if (scrollPos >= sectionTop) {
+                current = section.getAttribute('id');
+            }
+        });
+        tocLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${current}`) {
+                link.classList.add('active');
+            }
+        });
+    }
+
+    window.addEventListener('scroll', updateActiveToc);
+    window.addEventListener('load', updateActiveToc);
+
+    // 平滑滚动
+    tocLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) {
+                targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // 手动更新高亮
+                setTimeout(updateActiveToc, 100);
+            }
+        });
+    });
+</script>
+</body>
+</html>

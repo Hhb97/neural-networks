@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>线性代数基础 · 初学者的直观指南</title>
+    <!-- 引入 KaTeX 用于数学公式渲染 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+            background: #fafbfd;
+            color: #1e293b;
+            line-height: 1.6;
+            padding: 2rem 1rem;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 2.4rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            border-left: 6px solid #3b82f6;
+            padding-left: 1.2rem;
+            margin-bottom: 0.75rem;
+            color: #0f172a;
+        }
+        .subtitle {
+            font-size: 1.15rem;
+            color: #475569;
+            margin-bottom: 2.5rem;
+            padding-left: 1.8rem;
+        }
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 2rem 2rem 2rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.02), 0 2px 6px rgba(0,0,0,0.03);
+            border: 1px solid #eef2f6;
+        }
+        .card h2 {
+            font-size: 1.7rem;
+            font-weight: 500;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: #0f172a;
+        }
+        .card h2 i {
+            font-size: 1.8rem;
+            color: #3b82f6;
+        }
+        .highlight {
+            background: #f0f7ff;
+            border-radius: 14px;
+            padding: 1.2rem 1.5rem;
+            margin: 1.2rem 0;
+            border-left: 5px solid #3b82f6;
+        }
+        .vector-grid, .matrix-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: center;
+            align-items: center;
+            margin: 1.5rem 0;
+        }
+        .vector-vis, .matrix-vis {
+            background: #f8fafc;
+            border-radius: 18px;
+            padding: 1.5rem 1.8rem;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+        .vector-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 2rem;
+            font-weight: 300;
+            color: #3b82f6;
+        }
+        .matrix-bracket {
+            display: inline-flex;
+            align-items: center;
+            font-size: 2.8rem;
+            font-weight: 200;
+            color: #64748b;
+        }
+        .matrix-inner {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.4rem 1.2rem;
+            font-size: 1.5rem;
+            font-weight: 400;
+            font-family: 'Courier New', monospace;
+            padding: 0 0.6rem;
+        }
+        .matrix-inner span {
+            text-align: right;
+        }
+        .eq {
+            font-size: 1.3rem;
+            text-align: center;
+            margin: 1rem 0;
+        }
+        .katex {
+            font-size: 1.25rem !important;
+        }
+        .note {
+            color: #475569;
+            background: #f1f5f9;
+            padding: 0.9rem 1.3rem;
+            border-radius: 12px;
+            font-size: 0.98rem;
+            margin-top: 1rem;
+        }
+        .btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.8rem;
+            border-radius: 40px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.15s;
+            box-shadow: 0 4px 12px rgba(59,130,246,0.25);
+            margin-top: 1rem;
+        }
+        .btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(59,130,246,0.35);
+        }
+        .btn:active {
+            transform: translateY(0);
+        }
+        .demo-box {
+            background: #f8fafc;
+            padding: 1.8rem;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+        .flex-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            align-items: center;
+            justify-content: center;
+        }
+        .kv {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .kv-item {
+            background: white;
+            padding: 0.8rem 1.4rem;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+            font-family: monospace;
+            font-size: 1.2rem;
+        }
+        .matrix-multiply-demo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            font-size: 1.8rem;
+            font-weight: 300;
+            color: #334155;
+        }
+        .matrix-multiply-demo .bracket {
+            font-size: 3rem;
+            color: #64748b;
+        }
+        .result-matrix {
+            background: #dbeafe;
+            padding: 0.6rem 1.2rem;
+            border-radius: 16px;
+            font-family: monospace;
+            font-size: 1.4rem;
+            font-weight: 500;
+            color: #1e3a8a;
+        }
+        footer {
+            text-align: center;
+            margin-top: 3.5rem;
+            color: #94a3b8;
+            font-size: 0.95rem;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #e2e8f0;
+            margin: 2rem 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>线性代数 · 基础</h1>
+    <div class="subtitle">给初学者的直观指南 —— 向量、矩阵、乘法与神经网络</div>
+
+    <!-- 1. 向量 -->
+    <div class="card">
+        <h2>📌 1. 向量 (Vector)</h2>
+        <p>向量就是一列数。可以表示一个点的坐标，也可以表示一个方向。</p>
+        <div class="eq">
+            \[
+            \mathbf{v} = \begin{bmatrix} 2 \\ 3 \end{bmatrix}
+            \]
+        </div>
+        <div class="flex-row">
+            <div class="vector-vis">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🧭 二维向量</div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; justify-content: center;">
+                    <span style="font-size: 2rem;">→</span>
+                    <span style="font-size: 1.8rem; color: #3b82f6;">(2, 3)</span>
+                </div>
+                <div style="margin-top: 0.5rem; color: #64748b;">从原点指向 (2,3)</div>
+            </div>
+            <div class="vector-vis">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📐 运算</div>
+                <div style="font-size: 1.5rem;">(2,3) + (1,4) = (3,7)</div>
+                <div style="font-size: 1.5rem;">2 × (2,3) = (4,6)</div>
+            </div>
+        </div>
+        <div class="highlight">
+            <strong>💡 神经网络中：</strong> 一个样本的特征就是一个向量，比如[年龄, 身高, 体重]。
+        </div>
+    </div>
+
+    <!-- 2. 矩阵 -->
+    <div class="card">
+        <h2>🧩 2. 矩阵 (Matrix)</h2>
+        <p>矩阵是二维数组，可以看作一组向量的集合。它表示一种线性变换。</p>
+        <div class="matrix-grid">
+            <div class="matrix-vis">
+                <div class="matrix-bracket">[</div>
+                <div class="matrix-inner">
+                    <span>1</span><span>2</span>
+                    <span>3</span><span>4</span>
+                </div>
+                <div class="matrix-bracket">]</div>
+                <div style="margin-top: 0.5rem; color: #475569;">2x2 矩阵</div>
+            </div>
+            <div class="matrix-vis">
+                <div class="matrix-bracket">[</div>
+                <div class="matrix-inner">
+                    <span>2</span><span>0</span><span>1</span>
+                    <span>1</span><span>3</span><span>0</span>
+                </div>
+                <div class="matrix-bracket">]</div>
+                <div style="margin-top: 0.5rem; color: #475569;">2x3 矩阵</div>
+            </div>
+        </div>
+        <div class="note">
+            <strong>行和列：</strong> 矩阵 \( A \in \mathbb{R}^{m \times n} \) 表示 m 行 n 列。上面的 2x3 矩阵有 2 行 3 列。
+        </div>
+    </div>
+
+    <!-- 3. 矩阵乘向量 -->
+    <div class="card">
+        <h2>⚙️ 3. 矩阵乘向量 — 线性变换的核心</h2>
+        <p>矩阵乘以向量，得到一个新的向量。每个输出元素是矩阵的一行与输入向量的点积。</p>
+        <div class="eq">
+            \[
+            \underbrace{\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}}_{A}
+            \underbrace{\begin{bmatrix} x \\ y \end{bmatrix}}_{\mathbf{v}}
+            =
+            \begin{bmatrix} 1\cdot x + 2\cdot y \\ 3\cdot x + 4\cdot y \end{bmatrix}
+            \]
+        </div>
+        <div class="demo-box" id="matVecDemo">
+            <div style="font-size: 1.2rem; margin-bottom: 1rem;">🎛️ 动手试一下</div>
+            <div class="kv">
+                <div class="kv-item">x = <span id="xVal">2</span></div>
+                <div class="kv-item">y = <span id="yVal">1</span></div>
+            </div>
+            <div style="margin: 1.5rem 0; display: flex; justify-content: center; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                <span style="font-size: 1.3rem;">A = [[1,2],[3,4]]</span>
+                <span style="font-size: 2rem;">×</span>
+                <span style="font-size: 1.3rem;" id="vecDisplay">[2, 1]</span>
+                <span style="font-size: 2rem;">=</span>
+                <span class="result-matrix" id="resultDisplay">[4, 10]</span>
+            </div>
+            <input type="range" id="xSlider" min="-5" max="5" value="2" step="1" style="width: 200px;">
+            <input type="range" id="ySlider" min="-5" max="5" value="1" step="1" style="width: 200px;">
+            <div style="margin-top: 0.8rem; color: #475569;">
+                拖动滑块改变向量，观察矩阵乘法结果
+            </div>
+        </div>
+        <div class="highlight" style="margin-top: 1.5rem;">
+            <strong>🔁 在神经网络中：</strong> 一层就是 \( \mathbf{z} = W\mathbf{x} + \mathbf{b} \)，其中 \( W \) 是权重矩阵，\( \mathbf{x} \) 是输入向量。
+        </div>
+    </div>
+
+    <!-- 4. 矩阵乘矩阵 -->
+    <div class="card">
+        <h2>🔗 4. 矩阵乘矩阵 — 复合变换</h2>
+        <p>矩阵相乘可以看作两个线性变换的复合。结果矩阵的每个元素是左矩阵的行与右矩阵的列的点积。</p>
+        <div class="eq">
+            \[
+            \begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}
+            \begin{bmatrix} 5 & 6 \\ 7 & 8 \end{bmatrix}
+            =
+            \begin{bmatrix} 1\cdot5+2\cdot7 & 1\cdot6+2\cdot8 \\ 3\cdot5+4\cdot7 & 3\cdot6+4\cdot8 \end{bmatrix}
+            =
+            \begin{bmatrix} 19 & 22 \\ 43 & 50 \end{bmatrix}
+            \]
+        </div>
+        <div class="flex-row" style="margin-top: 1.5rem;">
+            <div class="matrix-multiply-demo">
+                <span class="bracket">[</span>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem 1rem;">
+                    <span>1</span><span>2</span>
+                    <span>3</span><span>4</span>
+                </div>
+                <span class="bracket">]</span>
+            </div>
+            <div style="font-size: 2rem;">×</div>
+            <div class="matrix-multiply-demo">
+                <span class="bracket">[</span>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem 1rem;">
+                    <span>5</span><span>6</span>
+                    <span>7</span><span>8</span>
+                </div>
+                <span class="bracket">]</span>
+            </div>
+            <div style="font-size: 2rem;">=</div>
+            <div class="matrix-multiply-demo">
+                <span class="bracket">[</span>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem 1rem;">
+                    <span>19</span><span>22</span>
+                    <span>43</span><span>50</span>
+                </div>
+                <span class="bracket">]</span>
+            </div>
+        </div>
+        <div class="note">
+            <strong>⚠️ 注意：</strong> 矩阵乘法不满足交换律，\( AB \neq BA \) 是常事。
+        </div>
+    </div>
+
+    <!-- 5. 神经网络中的线性代数 -->
+    <div class="card">
+        <h2>🧠 5. 神经网络中的线性代数</h2>
+        <p>多层感知机 (MLP) 的前向传播，本质是一连串的矩阵乘法和激活函数。</p>
+        <div class="eq">
+            \[
+            \mathbf{a}^{[1]} = \sigma(W^{[1]}\mathbf{x} + \mathbf{b}^{[1]})
+            \]
+            \[
+            \mathbf{a}^{[2]} = \sigma(W^{[2]}\mathbf{a}^{[1]} + \mathbf{b}^{[2]})
+            \]
+            \[
+            \cdots
+            \]
+        </div>
+        <div class="highlight">
+            <strong>🎯 一句话总结：</strong> 线性代数提供了一套语言，把数据看成向量，把变换看成矩阵，把网络看成矩阵乘法与非线性激活的交替。
+        </div>
+        <div style="margin-top: 1.2rem; display: flex; gap: 0.8rem; flex-wrap: wrap;">
+            <span style="background: #eef2ff; padding: 0.3rem 1rem; border-radius: 30px; font-size: 0.95rem;">向量 = 数据点</span>
+            <span style="background: #eef2ff; padding: 0.3rem 1rem; border-radius: 30px; font-size: 0.95rem;">矩阵 = 权重</span>
+            <span style="background: #eef2ff; padding: 0.3rem 1rem; border-radius: 30px; font-size: 0.95rem;">矩阵乘 = 特征变换</span>
+            <span style="background: #eef2ff; padding: 0.3rem 1rem; border-radius: 30px; font-size: 0.95rem;">激活函数 = 非线性</span>
+        </div>
+    </div>
+
+    <!-- 6. 小测验 / 动手 -->
+    <div class="card">
+        <h2>✏️ 6. 快速理解检查</h2>
+        <p>点击按钮，随机生成一个矩阵乘法小例子，看看你是否能心算？</p>
+        <div class="demo-box" style="padding: 1.5rem;">
+            <div id="quizArea" style="font-size: 1.6rem; margin-bottom: 1rem; font-family: monospace;">
+                [2, 1] · [3, 4] = ?
+            </div>
+            <button class="btn" id="newQuizBtn">🔄 换一个</button>
+            <button class="btn" id="showAnswerBtn" style="background: #64748b; margin-left: 0.8rem;">👀 显示答案</button>
+            <div id="answerDisplay" style="margin-top: 1rem; font-size: 1.4rem; color: #2563eb; font-weight: 500;"></div>
+        </div>
+    </div>
+
+    <footer>
+        ⚡ 线性代数 · 从向量到神经网络 · 适合初学者
+    </footer>
+</div>
+
+<script>
+    // 渲染 KaTeX
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+            delimiters: [
+                {left: '\\[', right: '\\]', display: true},
+                {left: '\\(', right: '\\)', display: false}
+            ],
+            throwOnError: false
+        });
+    });
+
+    // 矩阵乘向量演示
+    const xSlider = document.getElementById('xSlider');
+    const ySlider = document.getElementById('ySlider');
+    const xVal = document.getElementById('xVal');
+    const yVal = document.getElementById('yVal');
+    const vecDisplay = document.getElementById('vecDisplay');
+    const resultDisplay = document.getElementById('resultDisplay');
+
+    function updateMatVec() {
+        const x = parseInt(xSlider.value);
+        const y = parseInt(ySlider.value);
+        xVal.textContent = x;
+        yVal.textContent = y;
+        vecDisplay.textContent = `[${x}, ${y}]`;
+        // 矩阵 [[1,2],[3,4]]
+        const r1 = 1 * x + 2 * y;
+        const r2 = 3 * x + 4 * y;
+        resultDisplay.textContent = `[${r1}, ${r2}]`;
+    }
+
+    xSlider.addEventListener('input', updateMatVec);
+    ySlider.addEventListener('input', updateMatVec);
+    updateMatVec();
+
+    // 小测验：随机点积
+    const quizArea = document.getElementById('quizArea');
+    const answerDisplay = document.getElementById('answerDisplay');
+
+    function randomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function generateQuiz() {
+        const a1 = randomInt(-5, 5);
+        const a2 = randomInt(-5, 5);
+        const b1 = randomInt(-5, 5);
+        const b2 = randomInt(-5, 5);
+        const question = `[${a1}, ${a2}] · [${b1}, ${b2}] = ?`;
+        const answer = a1 * b1 + a2 * b2;
+        quizArea.textContent = question;
+        answerDisplay.textContent = ''; // 清空答案
+        // 保存答案到 dataset
+        quizArea.dataset.answer = answer;
+    }
+
+    document.getElementById('newQuizBtn').addEventListener('click', generateQuiz);
+    document.getElementById('showAnswerBtn').addEventListener('click', function() {
+        const ans = quizArea.dataset.answer;
+        if (ans) {
+            answerDisplay.textContent = `= ${ans}`;
+        } else {
+            answerDisplay.textContent = '先点“换一个”生成题目吧';
+        }
+    });
+
+    // 初始化第一个测验
+    generateQuiz();
+</script>
+
+<!-- 确保 KaTeX 自动渲染在动态内容更新后也能工作（但此处无动态公式，安全） -->
+</body>
+</html>

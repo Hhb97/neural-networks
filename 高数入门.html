@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高等数学 · 导数与微积分 · 初学者指南</title>
+    <!-- KaTeX -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+    <!-- ECharts（不加 defer，保证底部内联脚本执行时已可用） -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', system-ui, -apple-system, sans-serif;
+            background: #f6f8fc;
+            color: #1e293b;
+            line-height: 1.65;
+            padding: 1.5rem 1rem;
+            display: flex;
+            gap: 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* 侧边目录 */
+        .toc {
+            width: 280px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 1.5rem;
+            height: calc(100vh - 3rem);
+            overflow-y: auto;
+            background: white;
+            border-radius: 24px;
+            padding: 1.5rem 1rem 1.5rem 1.5rem;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.02);
+            border: 1px solid #e9eef3;
+        }
+
+        .toc h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 1.2rem;
+            padding-left: 0.75rem;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .toc ul {
+            list-style: none;
+        }
+
+        .toc li {
+            margin-bottom: 0.35rem;
+        }
+
+        .toc a {
+            text-decoration: none;
+            color: #334155;
+            font-size: 0.94rem;
+            display: block;
+            padding: 0.5rem 0.75rem;
+            border-radius: 12px;
+            transition: 0.12s;
+            font-weight: 450;
+            border-left: 3px solid transparent;
+        }
+
+        .toc a:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        .toc a.active {
+            background: #eef6ff;
+            color: #2563eb;
+            font-weight: 500;
+            border-left-color: #3b82f6;
+        }
+
+        /* 主内容 */
+        .main {
+            flex: 1;
+            min-width: 0;
+            max-width: 1000px;
+        }
+
+        .main h1 {
+            font-size: 2.4rem;
+            font-weight: 650;
+            letter-spacing: -0.02em;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .main h1 small {
+            font-size: 1rem;
+            font-weight: 400;
+            color: #64748b;
+            margin-left: 1rem;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #475569;
+            margin-bottom: 2.5rem;
+            border-left: 4px solid #94a3b8;
+            padding-left: 1.2rem;
+        }
+
+        .section {
+            background: white;
+            border-radius: 24px;
+            padding: 2rem 2rem 2rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.015), 0 2px 6px rgba(0, 0, 0, 0.02);
+            border: 1px solid #eef2f6;
+            scroll-margin-top: 1.5rem;
+        }
+
+        .section h2 {
+            font-size: 1.8rem;
+            font-weight: 550;
+            margin-bottom: 1.5rem;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #e9eef3;
+        }
+
+        .section h2 .num {
+            background: #3b82f6;
+            color: white;
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .section h3 {
+            font-size: 1.3rem;
+            font-weight: 550;
+            margin: 1.5rem 0 0.8rem 0;
+            color: #1e293b;
+        }
+
+        .section h4 {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin: 1.2rem 0 0.6rem 0;
+            color: #334155;
+        }
+
+        .section p {
+            margin: 0.8rem 0;
+            color: #334155;
+        }
+
+        .section ul, .section ol {
+            margin: 0.8rem 0 0.8rem 1.5rem;
+            color: #334155;
+        }
+
+        .section li {
+            margin-bottom: 0.35rem;
+        }
+
+        .highlight {
+            background: #f0f7ff;
+            border-radius: 16px;
+            padding: 1.2rem 1.5rem;
+            margin: 1.2rem 0;
+            border-left: 5px solid #3b82f6;
+        }
+
+        .note {
+            background: #f8fafc;
+            border-radius: 14px;
+            padding: 1rem 1.3rem;
+            margin: 1rem 0;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            font-size: 0.98rem;
+        }
+
+        .eq {
+            text-align: center;
+            margin: 1.2rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+        }
+
+        .katex {
+            font-size: 1.15rem !important;
+        }
+
+        .btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.7rem 1.6rem;
+            border-radius: 40px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.15s;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+            margin: 0.3rem 0.3rem 0.3rem 0;
+        }
+
+        .btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn.secondary {
+            background: #64748b;
+            box-shadow: 0 4px 12px rgba(100, 116, 139, 0.2);
+        }
+
+        .btn.secondary:hover {
+            background: #475569;
+        }
+
+        .demo-box {
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+            margin: 1.2rem 0;
+        }
+
+        .flex-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .result-badge {
+            background: #dbeafe;
+            padding: 0.4rem 1rem;
+            border-radius: 30px;
+            font-family: monospace;
+            font-size: 1.2rem;
+            color: #1e3a8a;
+            font-weight: 500;
+        }
+
+        /* ===== 新增：ECharts / 动画演示通用样式 ===== */
+        .echart-box {
+            width: 100%;
+            max-width: 640px;
+            height: 340px;
+            margin: 0 auto;
+        }
+
+        .demo-caption {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .cg-pipeline {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            font-family: monospace;
+            font-size: 1.05rem;
+        }
+
+        .cg-node {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 0.7rem 1.1rem;
+            min-width: 90px;
+            transition: 0.25s;
+        }
+
+        .cg-node.lit {
+            background: #dbeafe;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+        }
+
+        .cg-arrow {
+            font-size: 1.3rem;
+            color: #94a3b8;
+            transition: 0.25s;
+        }
+
+        .cg-arrow.lit {
+            color: #3b82f6;
+            font-weight: bold;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 2.5rem;
+            color: #94a3b8;
+            font-size: 0.9rem;
+            padding: 1rem 0;
+        }
+
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column;
+                padding: 1rem;
+            }
+            .toc {
+                width: 100%;
+                height: auto;
+                position: static;
+                max-height: 300px;
+                margin-bottom: 1rem;
+            }
+        }
+
+        .toc::-webkit-scrollbar {
+            width: 5px;
+        }
+        .toc::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        .toc::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .toc::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ========= 侧边目录 ========= -->
+<nav class="toc" id="toc">
+    <h3>📚 高数 · 目录</h3>
+    <ul>
+        <li><a href="#ch1" class="active">1. 极限与连续</a></li>
+        <li><a href="#ch2">2. 导数与微分</a></li>
+        <li><a href="#ch3">3. 求导法则</a></li>
+        <li><a href="#ch4">4. 高阶导数与泰勒展开</a></li>
+        <li><a href="#ch5">5. 积分基础</a></li>
+        <li><a href="#ch6">6. 微积分基本定理</a></li>
+        <li><a href="#ch7">7. 多元函数与偏导数</a></li>
+        <li><a href="#ch8">8. 梯度与方向导数</a></li>
+        <li><a href="#ch9">9. 链式法则与自动微分</a></li>
+        <li><a href="#ch10">10. MLP 应用 —— 反向传播</a></li>
+    </ul>
+</nav>
+
+<!-- ========= 主内容 ========= -->
+<main class="main">
+    <h1>高等数学 <small>导数 · 微积分 · 初学者</small></h1>
+    <div class="subtitle">从极限到梯度下降，理解神经网络优化的数学基础</div>
+
+    <!-- 1. 极限与连续 -->
+    <section class="section" id="ch1">
+        <h2><span class="num">1</span> 极限与连续</h2>
+        <p>先说一个生活中的画面。想象你在墙边不断迈出更小的步子：每一步都离墙更近，却永远不真正碰到墙。</p>
+        <p><strong>极限</strong>说的就是这种"无限靠近但不一定到达"的趋势。术语：极限就是指"当自变量 \(x\) 越来越接近某个值时，函数值 \(f(x)\) 会越来越接近哪个固定的数"——这个"越来越接近的目标数"就叫这个极限。</p>
+        <p>这里出现了两个新词，先分别说清楚。<strong>自变量</strong>就是你自己去挑、去改变的那个输入，通常写成 \(x\)；<strong>函数值</strong>就是把这个 \(x\) 代入函数 \(f\) 之后算出来的输出，写成 \(f(x)\)。</p>
+        <p>为什么要专门学"极限"？因为这是整个微积分的地基：后面要学的导数、积分，说到底都是"某种极限"。先把这一节吃透，后面会轻松很多。</p>
+        <p>下面把"极限"写成数学符号的样子：</p>
+        <div class="eq">
+            \[
+            \lim_{x \to a} f(x) = L
+            \]
+        </div>
+        <p>这个式子读作：<strong>当 \(x\) 无限接近 \(a\) 时，\(f(x)\) 无限接近 \(L\)</strong>。</p>
+        <p>这里有一个容易被忽略、但很重要的细节：极限只关心"\(x\) 靠近 \(a\) 的过程中，\(f(x)\) 往哪个数靠近"，并不要求 \(x\) 真的等于 \(a\)。甚至 \(f\) 在 \(a\) 这一点本身可以完全没有定义——后面 1.3 节会看到一个具体的例子。</p>
+
+        <h3>1.1 极限的性质</h3>
+        <p>极限有几条符合直觉的基本规律。这里只需要记住结论、建立印象，不需要会证明，后面用到时再回来查也可以。</p>
+        <ul>
+            <li><strong>唯一性：</strong> 一个函数在某点的极限如果存在，就只有一个值，不会同时逼近两个不同的数。</li>
+            <li><strong>局部有界性：</strong> 如果极限存在，那么在这一点附近，函数值不会突然变得无穷大。</li>
+            <li><strong>四则运算：</strong> 极限可以像普通数字一样加减，例如 \(\lim (f \pm g) = \lim f \pm \lim g\)。</li>
+        </ul>
+
+        <h3>1.2 两个重要极限</h3>
+        <p>下面这两个极限，会在后续求导、求各种近似值时反复被用到，属于"直接记结论、不用每次重新推导"的那一类。先看它们长什么样：</p>
+        <div class="eq">
+            \[
+            \lim_{x \to 0} \frac{\sin x}{x} = 1, \qquad
+            \lim_{x \to \infty} \left(1 + \frac{1}{x}\right)^x = e
+            \]
+        </div>
+        <p>先看第一个。它说的是：当 \(x\) 是一个很接近 0、但还没到 0 的小数字时，\(\sin x\) 的值会几乎和 \(x\) 本身一样大。举个具体数字感受一下：当 \(x = 0.1\)（弧度）时，\(\sin(0.1) \approx 0.0998\)，两个数已经非常接近了。</p>
+        <p>再看第二个。这里的 \(e\) 不是一个变量，而是数学里一个固定不变的常数，约等于 2.718。术语：\(e\) 就是指"当 \(x\) 趋于无穷大时，\(\left(1+\frac1x\right)^x\) 这个式子逼近的那个固定数值"——它会在后面指数、对数运算中反复出现。</p>
+
+        <h3>1.3 连续</h3>
+        <p>再回到直觉图像上。用铅笔画一条曲线：如果笔尖全程不用抬起、一笔画到底，这条曲线在这一段就是"连续"的；如果中间必须把笔提起来、跳到另一个地方再落笔，就说明这里断开了，不连续。</p>
+        <p>把这个直觉翻译成数学语言：函数 \(f\) 在 \(a\) 处<strong>连续</strong>，术语上就是指"\(x\) 从旁边无限靠近 \(a\) 时，\(f(x)\) 逼近的那个极限值，恰好等于 \(f\) 在 \(a\) 这一点本身实际的值"，写成公式就是：</p>
+        <div class="eq">
+            \[
+            \lim_{x \to a} f(x) = f(a)
+            \]
+        </div>
+        <p>换句话说，连续要求两件事同时成立：第一，极限 \(\lim_{x\to a} f(x)\) 必须存在；第二，这个极限值必须正好等于 \(f(a)\)，不多也不少。只要这两条都满足，函数图像在这一点就没有断裂或跳跃。</p>
+
+        <div class="highlight">
+            <strong>💡 为什么重要？</strong> 神经网络中的激活函数需要连续（甚至可导），才能进行梯度下降。
+        </div>
+
+        <div class="demo-box">
+            <div class="demo-caption">📊 极限演示：\(f(x) = \dfrac{\sin x}{x}\) 在 \(x \to 0\) 处（\(x=0\) 处本身无定义，是可去间断点）</div>
+            <div class="flex-row">
+                <label>\(x \to 0\)，当前 \(x = \)</label>
+                <input type="range" id="limX" min="-2" max="2" value="2" step="0.01">
+                <span class="result-badge" id="limXval">x = 2.00</span>
+                <span class="result-badge" id="limFval">f(x) = 0.909</span>
+            </div>
+            <div id="limChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">拖动滑块让 \(x\) 越来越接近 0，观察折线图上的红色标记点始终逼近 \((0, 1)\)，但 \(x=0\) 处画的是空心圆——函数在该点没有定义，极限却存在且等于 1。</div>
+        </div>
+    </section>
+
+    <!-- 2. 导数与微分 -->
+    <section class="section" id="ch2">
+        <h2><span class="num">2</span> 导数与微分</h2>
+        <p>先想一个类比：汽车仪表盘上的时速表告诉你"此刻"开得有多快，而不是整段旅程的平均速度。</p>
+        <p><strong>导数</strong>就是这个道理。术语：导数就是指函数在某一点的<strong>瞬时变化率</strong>——也就是"某个量恰好在这一瞬间，正以多快的速度增加或减少"。放到几何图像上看，导数就是曲线在这一点的切线斜率（切线是"贴着曲线、只在这一点接触它"的那条直线）。</p>
+        <p>导数是怎么算出来的呢？思路是：先写出"平均变化率"这个式子，再让其中表示"变化量"的那部分，通过 1 节学过的极限，无限缩小到 0。下面先给出定义式，再逐字解释每个符号：</p>
+        <div class="eq">
+            \[
+            f'(x) = \lim_{\Delta x \to 0} \frac{f(x+\Delta x) - f(x)}{\Delta x}
+            \]
+        </div>
+        <p>这里 \(\Delta x\) 读作"delta x"，术语：它就是指自变量 \(x\) 的一个微小变化量，可以理解成"一个越来越小的时间间隔"或"一小步"。</p>
+        <p>整个式子读作：<strong>当 \(\Delta x\) 无限接近 0 时，\(\dfrac{f(x+\Delta x)-f(x)}{\Delta x}\) 这个"平均变化率"无限接近的那个值，就定义为 \(f'(x)\)</strong>，也就是函数 \(f\) 在 \(x\) 处的导数。</p>
+
+        <h3>2.1 导数的几何意义</h3>
+        <p>先把导数落到图像上看一眼，会更有感觉。画出函数图像后，导数 \(f'(a)\) 就是曲线 \(y=f(x)\) 在点 \((a, f(a))\) 处那条切线的斜率。斜率越大，说明曲线在这一点越陡；斜率为 0，说明曲线在这一点是"平"的。</p>
+
+        <h3>2.2 常见函数的导数</h3>
+        <p>知道了导数的定义，实际计算时并不需要每次都套用极限公式——很多常见函数的导数已经被提前算好，可以直接查表使用。下面这张表列出了几个最常用函数的导数，是需要记住的基本工具，后面求任何复杂函数的导数都会用到它们：</p>
+        <div class="eq">
+            \[
+            \begin{aligned}
+            (x^n)' &= n x^{n-1} \\
+            (e^x)' &= e^x \\
+            (\ln x)' &= \frac{1}{x} \\
+            (\sin x)' &= \cos x \\
+            (\cos x)' &= -\sin x
+            \end{aligned}
+            \]
+        </div>
+        <p>举一个具体数字感受一下第一行：若 \(f(x) = x^2\)（即 \(n=2\)），代入公式得 \(f'(x) = 2x^{1} = 2x\)。当 \(x=3\) 时，\(f'(3) = 6\)——也就是说曲线 \(y=x^2\) 在 \(x=3\) 处的切线斜率是 6。</p>
+
+        <h3>2.3 微分</h3>
+        <p>这一节引入一个和导数很像、但含义略有不同的词：微分。先建立直觉：如果把导数看作"变化的速度"，那么<strong>微分</strong>关心的是"给一个很小的输入变化，能不能顺势估算出输出大约会变化多少"。</p>
+        <p>术语：微分就是指 \(dy = f'(x)\, dx\) 这个量——给定一个很小的输入变化 \(dx\)，用它乘以这一点的导数 \(f'(x)\)，就得到输出的近似变化量 \(dy\)。做法上，它是用一条直线（切线）去近似曲线在附近的走势，只保留函数增量中"最主要、按比例变化"的那一部分，忽略掉更小的高阶误差。</p>
+
+        <div class="demo-box">
+            <div style="font-size: 1.1rem; margin-bottom: 1rem;">📈 导数演示：\(f(x) = x^2\)</div>
+            <div class="flex-row">
+                <div>
+                    <label>\(x = \)</label>
+                    <input type="range" id="derivX" min="-3" max="3" value="1" step="0.1">
+                    <span id="derivXval">1.0</span>
+                </div>
+                <div>
+                    <span>\(f(x) = \)</span> <span id="funcVal">1.00</span>
+                </div>
+                <div>
+                    <span>\(f'(x) = 2x = \)</span> <span id="derivVal">2.00</span>
+                </div>
+            </div>
+            <div id="tangentChart" class="echart-box" style="margin-top:1rem;"></div>
+            <div class="note" style="text-align:left;">📈 上方曲线是 \(y=x^2\)，红色直线是当前 \(x\) 处的切线，斜率就是 \(f'(x)=2x\)。拖动滑块可以看到切线随 \(x\) 转动。</div>
+        </div>
+    </section>
+
+    <!-- 3. 求导法则 -->
+    <section class="section" id="ch3">
+        <h2><span class="num">3</span> 求导法则</h2>
+        <p>如果每次求导都要老老实实套 2 节的极限定义，会非常慢。这一节给出几条"公式套路"：先看简单的加减乘除，再看更重要的链式法则，最后看一组后面会反复用到的具体函数。</p>
+
+        <h3>3.1 四则运算</h3>
+        <p>两个函数 \(u\) 和 \(v\)（都依赖同一个自变量）经过加减、相乘、相除后，它们的导数可以直接用 \(u\)、\(v\) 各自的导数拼出来，不需要重新回到定义：</p>
+        <div class="eq">
+            \[
+            \begin{aligned}
+            (u \pm v)' &= u' \pm v' \\
+            (uv)' &= u'v + uv' \\
+            \left(\frac{u}{v}\right)' &= \frac{u'v - uv'}{v^2}
+            \end{aligned}
+            \]
+        </div>
+
+        <h3>3.2 链式法则</h3>
+        <p>先看一个生活中的例子，再看公式。生活中很多变化是"一环套一环"的：比如气温影响冰淇淋销量，销量又影响进货量。想知道气温对进货量的最终影响，直觉上应该把"气温对销量"和"销量对进货量"这两段变化率"乘"起来。</p>
+        <p><strong>链式法则</strong>就是把这个直觉严格化：术语：链式法则就是指"对于一环套一环的复合函数，整体的变化率等于每一环各自变化率的连乘积"。这是微积分中最重要的法则之一，后面 9、10 节的反向传播算法的核心就是它。</p>
+        <p>先写出最简单的两层情形：</p>
+        <div class="eq">
+            \[
+            \frac{dy}{dx} = \frac{dy}{du} \cdot \frac{du}{dx}
+            \]
+        </div>
+        <p>这个式子读作：<strong>y 对 x 的变化率，等于 y 对 u 的变化率，乘以 u 对 x 的变化率</strong>。具体来说，若 \(y = f(u)\)，\(u = g(x)\)——也就是 \(x\) 先决定 \(u\)，\(u\) 再决定 \(y\)——则 \(\frac{d}{dx} f(g(x)) = f'(g(x)) \cdot g'(x)\)。</p>
+        <p>代入一个具体数字看看：设 \(y = u^3\)，\(u = 2x+1\)（这正是后面 3.2 节演示区用的例子）。当 \(x=1\) 时，\(u = 2\times1+1 = 3\)；\(\frac{du}{dx}=2\)（常数），\(\frac{dy}{du}=3u^2=27\)；两者相乘，\(\frac{dy}{dx}=27\times2=54\)。</p>
+
+        <h3>3.3 常见激活函数的导数</h3>
+        <p>这一小节引入一个后面会反复出现的词：激活函数。神经网络里每一层算完加权和之后，都会经过一个"激活函数"处理一下再往下传，目的是引入非线性（不这样做的话，无论叠多少层，整个网络本质上还是一个简单的线性变换）。</p>
+        <p>下面是三种最常用激活函数的导数。先记住名字和长相，训练网络时要靠这些导数才能算出梯度（"梯度"这个术语会在第 8 节详细解释）：</p>
+        <ul>
+            <li><strong>Sigmoid：</strong> \(\sigma(x) = \frac{1}{1+e^{-x}}\)，\(\sigma'(x) = \sigma(x)(1-\sigma(x))\)</li>
+            <li><strong>Tanh：</strong> \(\tanh'(x) = 1 - \tanh^2(x)\)</li>
+            <li><strong>ReLU：</strong> \(\text{ReLU}'(x) = \begin{cases}1 & x>0 \\ 0 & x<0\end{cases}\)</li>
+        </ul>
+
+        <div class="note">
+            💡 链式法则是反向传播算法能够逐层计算梯度的关键，这一点会在第 9、10 节反复看到。
+        </div>
+
+        <div class="demo-box">
+            <div class="demo-caption">🔗 链式法则流水线：\(y = (2x+1)^3\)，令 \(u = g(x) = 2x+1\)，\(y=f(u)=u^3\)</div>
+            <div class="flex-row">
+                <label>\(x = \)</label>
+                <input type="range" id="chainX" min="-2" max="2" value="1" step="0.1">
+                <span class="result-badge" id="chainXval">x = 1.0</span>
+            </div>
+            <div class="cg-pipeline" style="margin-top:1rem;">
+                <div class="cg-node" id="chainNodeX">x = 1.0</div>
+                <div class="cg-arrow">→</div>
+                <div class="cg-node" id="chainNodeU">u = 3.0</div>
+                <div class="cg-arrow">→</div>
+                <div class="cg-node" id="chainNodeY">y = 27.0</div>
+            </div>
+            <div class="flex-row" style="margin-top:1rem;">
+                <span class="result-badge">du/dx = <span id="chainDudx">2.00</span></span>
+                <span class="result-badge">dy/du = <span id="chainDydu">27.00</span></span>
+                <span class="result-badge">dy/dx = <span id="chainDydx">54.00</span></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. 高阶导数与泰勒展开 -->
+    <section class="section" id="ch4">
+        <h2><span class="num">4</span> 高阶导数与泰勒展开</h2>
+
+        <div class="note">
+            💡 <strong>为什么要学这个 / 直觉：</strong> 这一章的核心就一句话——如果知道一个函数在某一点附近"翻滚"的方式（增长、加速、转弯……），就能用几个简单的多项式项，把它在这一点附近的样子几乎完整地"复刻"出来。就算记不住公式，只要记住"用多项式凑出原函数在某点附近的样子"这句话，就抓住了本章的精髓。
+        </div>
+
+        <h3>4.1 高阶导数</h3>
+        <p>导数 \(f'(x)\) 描述函数变化得有多快。这一节要问一个更深一层的问题：那"变化的速度本身，又变化得有多快"呢？</p>
+        <p>这就是<strong>二阶导数</strong> \(f''(x)\)。术语：二阶导数就是指"对 \(f'(x)\) 再求一次导数"，也就是变化率的变化率。举个例子：开车时，速度是位置的一阶导数；而"踩油门让车加速"这个动作，对应的正是二阶导数——它衡量的是速度本身增长得有多快。</p>
+        <p>二阶导数还有一个常见用途：判断曲线的弯曲方向，专业说法叫"凹凸性"。三种情况分别是：</p>
+        <ul>
+            <li>\(f''(x) > 0\)：图像像碗一样向上弯（也叫"凹向上"或凸函数）。</li>
+            <li>\(f''(x) < 0\)：图像像倒扣的碗一样向下弯（也叫"凹向下"）。</li>
+            <li>\(f''(x) = 0\) 且前后变号：说明弯曲方向在这里发生了反转，这样的点称为拐点。</li>
+        </ul>
+
+        <h3>4.2 泰勒展开</h3>
+        <p>先想象一件事：只根据曲线在某一点的位置、这一点的斜率、以及斜率变化的快慢……不断往下补充信息，能不能画出一条几乎和原曲线重合的多项式曲线？</p>
+        <p>这就是<strong>泰勒展开</strong>要做的事。术语：泰勒展开就是指"用一个（可能无穷长的）多项式，去逼近函数在某一点附近的样子"。先看它的一般公式：</p>
+        <div class="eq">
+            \[
+            f(x) = \sum_{n=0}^{\infty} \frac{f^{(n)}(a)}{n!}(x-a)^n
+            \]
+        </div>
+        <p>这个式子读作：<strong>f(x) 等于把 f 在 a 点的各阶导数，依次乘上 \((x-a)\) 的幂次并除以阶乘，再全部加起来</strong>。不需要一次理解全部符号，先记住一句话：阶数越高、加的项越多，逼近就越准。</p>
+        <p>看一个具体的例子：指数函数 \(e^x\) 在 0 点附近的泰勒展开是：</p>
+        <div class="eq">
+            \[
+            e^x = 1 + x + \frac{x^2}{2!} + \frac{x^3}{3!} + \cdots
+            \]
+        </div>
+        <p>代入 \(x=1\) 只取前 4 项试一下：\(1 + 1 + \frac{1}{2} + \frac{1}{6} \approx 2.667\)，已经很接近真实值 \(e \approx 2.718\) 了——项数越多会越准，这正是本章要点的例子。</p>
+
+        <h3>4.3 泰勒展开与梯度下降</h3>
+        <p>泰勒展开还有一个特别重要的应用，直接通向后面第 7、8 节的"梯度下降"。做法是：只取泰勒展开的前两项（常数项 + 一次项），舍弃后面阶数更高的项，就得到函数在 \(x\) 附近最简单的一种近似，叫线性近似：</p>
+        <div class="eq">
+            \[
+            f(x + \Delta x) \approx f(x) + f'(x)\Delta x
+            \]
+        </div>
+        <p>这句话是说：只要走的步子 \(\Delta x\) 足够小，新位置的函数值大约等于"当前值 + 斜率 × 步长"。</p>
+        <p>现在故意选一个特殊的走法：令 \(\Delta x = -\eta f'(x)\)，也就是往斜率的反方向走一小步（\(\eta\) 是步子大小，是一个正数）。代入上面的近似式可以看到，这样走一步之后，\(f\) 的值一定会减小——这正是梯度下降"每一步都往下走一点"的数学依据，第 7、8 节会正式介绍这个方法。</p>
+
+        <div class="demo-box">
+            <div class="demo-caption">📐 泰勒展开逼近演示：\(e^x\) 的 \(n\) 阶泰勒多项式</div>
+            <div class="flex-row">
+                <label>展开阶数 \(n = \)</label>
+                <input type="range" id="taylorN" min="0" max="6" value="2" step="1">
+                <span class="result-badge" id="taylorNval">n = 2</span>
+            </div>
+            <div id="taylorChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">蓝色是真实的 \(e^x\)，橙色是当前阶数的泰勒多项式近似。随着 \(n\) 增大，橙色曲线在原点附近与蓝色曲线贴合得越来越好。</div>
+        </div>
+    </section>
+
+    <!-- 5. 积分基础 -->
+    <section class="section" id="ch5">
+        <h2><span class="num">5</span> 积分基础</h2>
+        <p>先做一个对比：如果说导数是"知道位置，求瞬时速度"，那<strong>积分</strong>反过来是"知道每一刻的速度，求走过的总路程"。</p>
+        <p>术语：积分就是指导数的逆运算——已知一个变化率函数，反过来求出"原来那个总量"。它也是求面积、求累积总量的通用工具。积分分两种：不定积分和定积分，下面分别看。</p>
+
+        <h3>5.1 不定积分</h3>
+        <p>先看不定积分要解决什么问题："不定积分"要找的是：有没有一个函数 \(F(x)\)，对它求导之后正好等于给定的 \(f(x)\)？</p>
+        <p>如果找到了这样的 \(F(x)\)，就把它叫做 \(f(x)\) 的一个<strong>原函数</strong>。这里有一个小细节：因为任何常数求导都是 0，所以给 \(F(x)\) 加上任意一个常数 \(C\)，求导结果都不变——因此原函数总是"差一个任意常数 \(C\)"，写成公式就是：</p>
+        <div class="eq">
+            \[
+            \int f(x) dx = F(x) + C, \quad \text{其中 } F'(x) = f(x)
+            \]
+        </div>
+
+        <h3>5.2 定积分</h3>
+        <p>再看"定积分"。它和不定积分的区别是：给出了具体的区间 \([a, b]\)，要计算的是这段区间上"累积"了多少，结果是一个确定的数字，不再带有任意常数 \(C\)。</p>
+        <p>它的计算方法是：先找到不定积分求出的原函数 \(F\)，再用区间两个端点的原函数值相减：</p>
+        <div class="eq">
+            \[
+            \int_a^b f(x) dx = F(b) - F(a)
+            \]
+        </div>
+        <p>这个结果的几何意义，是曲线 \(y=f(x)\) 与 \(x\) 轴之间，在 \([a,b]\) 这段区间围出来的面积。下面 5.3 节的演示会用具体数字展示这个"围面积"的过程。</p>
+
+        <h3>5.3 常见积分</h3>
+        <p>和 2.2 节的导数公式表类似，下面几个基本积分公式也是需要记住的常用工具，可以看作导数公式表"反过来查"：</p>
+        <div class="eq">
+            \[
+            \begin{aligned}
+            \int x^n dx &= \frac{x^{n+1}}{n+1} + C \quad (n \neq -1) \\
+            \int e^x dx &= e^x + C \\
+            \int \frac{1}{x} dx &= \ln|x| + C
+            \end{aligned}
+            \]
+        </div>
+        <p>代入一个具体例子：求 \(\int_0^2 x^2\,dx\)。先用第一行公式求原函数：\(F(x) = \frac{x^3}{3}\)。再代入端点相减：\(F(2)-F(0) = \frac{8}{3} - 0 = \frac{8}{3} \approx 2.667\)。这正是下方演示区里用到的例子。</p>
+
+        <div class="demo-box">
+            <div class="demo-caption">🧱 黎曼和演示：用矩形逼近 \(f(x)=x^2\) 在 \([0,2]\) 上的面积</div>
+            <div class="flex-row">
+                <label>矩形数量 \(n = \)</label>
+                <input type="range" id="riemannN" min="2" max="100" value="6" step="1">
+                <span class="result-badge" id="riemannNval">n = 6</span>
+                <span class="result-badge">近似和 ≈ <span id="riemannSum">2.59</span></span>
+                <span class="result-badge">真实值 = 8/3 ≈ 2.667</span>
+            </div>
+            <div id="riemannChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">拖动滑块增加矩形数量，近似和会越来越接近真实的定积分值 \(\int_0^2 x^2 dx = 8/3\)。</div>
+        </div>
+    </section>
+
+    <!-- 6. 微积分基本定理 -->
+    <section class="section" id="ch6">
+        <h2><span class="num">6</span> 微积分基本定理</h2>
+        <p>前两章看起来是两件独立的事：求斜率（导数），和求面积（积分）。这一节要揭示一个很意外的事实——这两件事其实互为逆运算，就像加法和减法互为逆运算一样：做完加法再做减法，能回到原来的数。</p>
+        <p>先看公式，再逐字拆解：</p>
+        <div class="eq">
+            \[
+            \frac{d}{dx} \int_a^x f(t) dt = f(x)
+            \]
+        </div>
+        <p>左边 \(\int_a^x f(t)dt\) 是"先对 f 从 a 累积到 x，求出一个随 x 变化的面积函数"；再对这整个面积函数求导（左边最外层的 \(\frac{d}{dx}\)）。这个式子说的是：这样算出来的结果，会精确地变回 \(f(x)\) 本身——积分和求导，在这里正好互相抵消了。</p>
+        <p>再看它的一个直接推论，也是实际计算定积分时最常用的公式，称为牛顿-莱布尼茨公式：</p>
+        <div class="eq">
+            \[
+            \int_a^b f(x) dx = F(b) - F(a), \quad F'(x) = f(x)
+            \]
+        </div>
+
+        <div class="highlight">
+            <strong>💡 意义：</strong> 把求面积问题转化为求原函数问题，大大简化了计算。
+        </div>
+
+        <div class="demo-box">
+            <div class="demo-caption">📐 微积分基本定理演示：\(f(x)=\cos x\) 与其累积函数 \(F(x)=\int_0^x \cos t\,dt = \sin x\)</div>
+            <div class="flex-row">
+                <label>\(x = \)</label>
+                <input type="range" id="ftcX" min="0" max="6.28" value="1.5" step="0.02">
+                <span class="result-badge">f(x) = <span id="ftcFval">0.071</span></span>
+                <span class="result-badge">F'(x) = <span id="ftcFprime">0.071</span></span>
+            </div>
+            <div id="ftcChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">拖动滑块，观察 F(x) 曲线在该点的切线斜率始终等于 f(x) 的值——这正是微积分基本定理 \(F'(x)=f(x)\) 的直观体现。</div>
+        </div>
+    </section>
+
+    <!-- 7. 多元函数与偏导数 -->
+    <section class="section" id="ch7">
+        <h2><span class="num">7</span> 多元函数与偏导数</h2>
+        <p>到目前为止，本文里的函数都只有一个输入 \(x\)。但现实中很多东西同时被好几个变量影响，比如房价同时取决于面积和地段。</p>
+        <p>术语：<strong>多元函数</strong>就是指有多个输入的函数，记作 \(f(x_1, x_2, \dots, x_n)\)（\(x_1\) 到 \(x_n\) 是 \(n\) 个独立的输入）。神经网络中的损失函数通常就是这样一个多元函数 \(L(w_1, w_2, \dots, w_n)\)，它同时依赖网络里成千上万个参数。</p>
+
+        <div class="note">
+            💡 <strong>为什么要学这个 / 直觉：</strong> 本节到 9 节的核心想法是：训练神经网络，就是站在一座由参数决定高度的"山"上，想找到山谷最低点。偏导数告诉你"往某一个坐标轴方向走，地面升高或降低的速度"；把所有方向的偏导数收集起来，就得到了"往哪个方向走地面升得最快"的完整指南——这就是梯度。这一节先讲偏导数，再讲梯度，最后讲梯度下降怎么用梯度来"下山"。
+        </div>
+
+        <h3>7.1 偏导数</h3>
+        <p>面对一个有多个变量的函数，如果只想知道"沿其中一个变量方向"变化得有多快，可以把其他所有变量都暂时当成不变的常数，只对这一个变量求导。</p>
+        <p>这样算出来的导数叫<strong>偏导数</strong>，记作 \(\partial f/\partial x\)（读作"偏 f 偏 x"）。术语：偏导数就是指"多元函数在其他变量都固定不变时，只对某一个变量求出的变化率"。定义式如下：</p>
+        <div class="eq">
+            \[
+            \frac{\partial f}{\partial x} = \lim_{h \to 0} \frac{f(x+h, y) - f(x, y)}{h}
+            \]
+        </div>
+        <p>把这个式子和 2.1 节导数的定义比较一下，会发现几乎一模一样，唯一区别是这里明确写出了 \(y\) 保持不动，只有 \(x\) 在变。</p>
+
+        <h3>7.2 梯度</h3>
+        <p>偏导数一次只看一个方向。如果想知道所有方向的信息、拼出一个完整的"指南针"，就需要把每一个变量各自的偏导数都算出来，再按顺序排成一列。</p>
+        <p>先说清楚"排成一列"的意思：这里用到的<strong>向量</strong>，术语上就是指"一串按顺序排列的数"（线性代数里会更严格地定义它，这里先这样理解就够了）。</p>
+        <p>把 \(n\) 个偏导数按顺序排成一个向量，就得到了<strong>梯度</strong>，记作 \(\nabla f\)（\(\nabla\) 这个符号读作"nabla"）。术语：梯度就是指"由函数对每一个变量的偏导数，按顺序排成的向量"：</p>
+        <div class="eq">
+            \[
+            \nabla f = \left( \frac{\partial f}{\partial x_1}, \frac{\partial f}{\partial x_2}, \dots, \frac{\partial f}{\partial x_n} \right)
+            \]
+        </div>
+        <p>梯度有一个非常重要的性质：它指向的方向，是函数增长最快的方向；它的反方向（负梯度方向），就是函数下降最快的方向——这正是"下山"时应该迈步的方向。</p>
+
+        <h3>7.3 梯度下降</h3>
+        <p>既然负梯度方向下降最快，训练神经网络时，就可以让每一个参数沿着这个方向小步挪动一点，再重新计算梯度、再挪动，如此反复迭代，直到损失不再明显下降为止。这整套做法就叫<strong>梯度下降</strong>。</p>
+        <p>每一步的更新规则写成公式是：</p>
+        <div class="eq">
+            \[
+            w_i \leftarrow w_i - \eta \frac{\partial L}{\partial w_i}
+            \]
+        </div>
+        <p>这个式子读作：<strong>新的 \(w_i\) 等于旧的 \(w_i\)，减去学习率 \(\eta\) 乘以损失对 \(w_i\) 的偏导数</strong>。这里 \(\eta\)（读作 eta）叫学习率，它控制每一步迈多大——迈太大容易一步跨过山谷、来回震荡，迈太小则每步移动太少、收敛很慢。</p>
+        <p>代入下方演示里的具体数字感受一下：设 \(L(w_1,w_2)=w_1^2+w_2^2\)，当前 \(w_1=2\) 时，\(\partial L/\partial w_1 = 2w_1 = 4\)。若学习率 \(\eta=0.1\)，更新一步后 \(w_1 \leftarrow 2 - 0.1\times4 = 1.6\)——离山谷最低点（原点）更近了一点。</p>
+
+        <div class="demo-box">
+            <div class="demo-caption">🗻 损失曲面演示：\(L(w_1,w_2)=w_1^2+w_2^2\) 的等高线与梯度方向</div>
+            <div class="flex-row">
+                <label>\(w_1 = \)</label>
+                <input type="range" id="lw1" min="-3" max="3" value="2" step="0.1">
+                <label>\(w_2 = \)</label>
+                <input type="range" id="lw2" min="-3" max="3" value="1.5" step="0.1">
+            </div>
+            <div class="flex-row">
+                <span class="result-badge">∂L/∂w₁ = <span id="lpartial1">4.00</span></span>
+                <span class="result-badge">∂L/∂w₂ = <span id="lpartial2">3.00</span></span>
+            </div>
+            <div id="lossContour" class="echart-box"></div>
+            <div class="note" style="text-align:left;">红色箭头是当前点的梯度方向（最陡上升方向），沿其反方向（负梯度）就是梯度下降更新参数的方向。</div>
+        </div>
+    </section>
+
+    <!-- 8. 梯度与方向导数 -->
+    <section class="section" id="ch8">
+        <h2><span class="num">8</span> 梯度与方向导数</h2>
+        <p>7 节的偏导数只回答了"沿坐标轴方向"变化多快。但站在山坡上，你完全可以往任意方向迈步，不只是正东或正北这两个特殊方向。</p>
+        <p><strong>方向导数</strong>回答的正是这个更一般的问题。术语：方向导数就是指"函数沿任意指定方向、变化得有多快"这个数值。</p>
+
+        <h3>8.1 方向导数</h3>
+        <p>要描述"任意指定方向"，需要先引入一个新词：单位向量。术语：单位向量就是指"长度恰好为 1 的向量"，它只用来表示方向，不表示走多远。下面用 \(\mathbf{u}\) 表示这样一个方向向量。</p>
+        <p>函数沿方向 \(\mathbf{u}\) 的方向导数，等于梯度 \(\nabla f\)（7.2 节介绍过）与 \(\mathbf{u}\) 做点积。这里先说清楚"点积"：术语：点积就是指把两个向量对应位置的数相乘、再全部加起来得到的一个普通数字，可以先理解为衡量两个方向"有多一致"的一种乘法。公式是：</p>
+        <div class="eq">
+            \[
+            D_{\mathbf{u}} f = \nabla f \cdot \mathbf{u}
+            \]
+        </div>
+        <p>这个式子有一个直观的推论：当 \(\mathbf{u}\) 与梯度方向完全一致时，方向导数取到最大值。这再次印证了 7.2 节的结论——梯度方向就是"上升最快"的方向。</p>
+
+        <h3>8.2 梯度下降的几何解释</h3>
+        <p>最后把整个画面串起来。把损失函数想象成一座连绵起伏的山（专业说法叫损失曲面），你站在山上的某一点。梯度指向最陡的上坡方向，负梯度就指向最陡的下坡方向。沿着负梯度小步小步地走，反复重复，就是 7.3 节梯度下降在做的事情——下方演示区可以亲手拖动滑块体验这个过程。</p>
+
+        <div class="demo-box">
+            <div style="font-size: 1.1rem; margin-bottom: 1rem;">📉 一维梯度下降演示：\(f(x) = x^2\)</div>
+            <div class="flex-row">
+                <div>
+                    <label>初始 \(x = \)</label>
+                    <input type="range" id="gdX" min="-3" max="3" value="2.5" step="0.1">
+                    <span id="gdXval">2.5</span>
+                </div>
+                <div>
+                    <label>学习率 \(\eta = \)</label>
+                    <input type="range" id="gdLR" min="0.01" max="0.9" value="0.3" step="0.01">
+                    <span id="gdLRval">0.30</span>
+                </div>
+                <button class="btn" id="gdStep">走一步</button>
+                <button class="btn secondary" id="gdReset">重置</button>
+            </div>
+            <div style="margin-top: 1rem; font-family: monospace; font-size: 1.1rem;">
+                <span>当前 \(x = \)</span> <span id="gdCurX">2.50</span><br>
+                <span>当前 \(f(x) = x^2 = \)</span> <span id="gdCurF">6.25</span>
+            </div>
+            <div id="gdChart" class="echart-box" style="margin-top:1rem;"></div>
+            <div class="note" style="text-align:left;">点击「走一步」，标记点会沿抛物线向最小值移动，浅色轨迹线记录走过的每一步，展示梯度下降逐步收敛的过程。「重置」会清空轨迹。</div>
+        </div>
+    </section>
+
+    <!-- 9. 链式法则与自动微分 -->
+    <section class="section" id="ch9">
+        <h2><span class="num">9</span> 链式法则与自动微分</h2>
+
+        <div class="note">
+            💡 <strong>为什么要学这个 / 直觉：</strong> 神经网络其实就是成千上万个简单函数一层层套起来的"大号复合函数"。反向传播看起来复杂，本质只是 3.2 节的链式法则，从输出往输入反复应用而已——把这句话记住，公式细节可以慢慢补。
+        </div>
+
+        <h3>9.1 多元链式法则</h3>
+        <p>3.2 节的链式法则只处理"一条线"套一条线的情况——一个变量只通过唯一一条路径影响最终结果。但神经网络里，一个变量往往同时通过好几条路径影响最终结果。</p>
+        <p>多元链式法则告诉我们：遇到这种情况，只需要把每条路径各自的贡献分别算出来，再把它们加在一起即可。设 \(z = f(u, v)\)，\(u = g(x, y)\)，\(v = h(x, y)\)——也就是说，\(x\) 同时通过 \(u\) 和 \(v\) 两条路影响最终的 \(z\)。这时 \(z\) 对 \(x\) 的偏导数是：</p>
+        <div class="eq">
+            \[
+            \frac{\partial z}{\partial x} = \frac{\partial z}{\partial u}\frac{\partial u}{\partial x} + \frac{\partial z}{\partial v}\frac{\partial v}{\partial x}
+            \]
+        </div>
+        <p>右边两项分别对应"经过 \(u\) 这条路"和"经过 \(v\) 这条路"各自的贡献，最后相加。</p>
+
+        <h3>9.2 计算图与反向传播</h3>
+        <p>为了更清楚地看清"哪个变量通过哪条路径影响了谁"，可以把一个复杂的复合函数画成一张图：输入在最左边，中间结果一步步往右算，最终输出在最右边，每一步用箭头连起来。这样的图就叫<strong>计算图</strong>。</p>
+        <p>沿着箭头正向、从输入一路算到输出，叫"前向传播"。</p>
+        <p>而<strong>反向传播</strong>做的是相反的事：术语：反向传播就是指"从最终损失 \(L\) 出发，沿着计算图的箭头反着走，每经过一步就用链式法则乘上这一步的局部导数，最终算出每个参数对损失的影响"。写成公式（对应下图里的一步）：</p>
+        <div class="eq">
+            \[
+            \frac{\partial L}{\partial w} = \frac{\partial L}{\partial z} \cdot \frac{\partial z}{\partial w}
+            \]
+        </div>
+        <p>下方演示区就是一个具体的四步计算图，可以分别点击"前向传播"和"反向传播"，逐段观察数值是怎么算出来的。</p>
+
+        <h3>9.3 自动微分</h3>
+        <p>手动对每一层求偏导数、再逐层相乘，工作量太大，人工推导也容易出错。于是现代深度学习框架（比如 PyTorch、TensorFlow）提供了一种自动化的解决办法。</p>
+        <p>术语：<strong>自动微分</strong>就是指这样一种技术——框架在做前向计算的同时，自动在后台记录下完整的计算图；等到需要求梯度时，再自动沿着这张图反向应用链式法则，把所有梯度都算出来，全程不需要人工手动推导公式。</p>
+
+        <div class="note">
+            💡 自动微分的数学基础就是链式法则。
+        </div>
+
+        <div class="demo-box">
+            <div class="demo-caption">🖧 计算图演示：\(x \to a=2x \to b=a+1 \to L=b^2\)（\(x=2\)）</div>
+            <div class="cg-pipeline">
+                <div class="cg-node" id="adNodeX">x=2</div>
+                <div class="cg-arrow" id="adArrow1">→</div>
+                <div class="cg-node" id="adNodeA">a=4</div>
+                <div class="cg-arrow" id="adArrow2">→</div>
+                <div class="cg-node" id="adNodeB">b=5</div>
+                <div class="cg-arrow" id="adArrow3">→</div>
+                <div class="cg-node" id="adNodeL">L=25</div>
+            </div>
+            <div class="flex-row" style="margin-top:1rem;">
+                <button class="btn" id="adForward">前向传播</button>
+                <button class="btn secondary" id="adBackward">反向传播</button>
+            </div>
+            <div id="adLocalDerivs" class="note" style="text-align:left; display:none;">
+                局部导数：\(\partial a/\partial x = 2\)，\(\partial b/\partial a = 1\)，\(\partial L/\partial b = 2b = 10\)。<br>
+                链式法则：\(\partial L/\partial x = \partial L/\partial b \cdot \partial b/\partial a \cdot \partial a/\partial x = 10 \times 1 \times 2 = 20\)。
+            </div>
+        </div>
+    </section>
+
+    <!-- 10. MLP 应用 —— 反向传播 -->
+    <section class="section" id="ch10">
+        <h2><span class="num">10</span> MLP 应用 —— 反向传播</h2>
+        <p>现在把前面九章的工具串起来，看看它们如何撑起一个真正在用的神经网络。这里先解释一个新名词：多层感知机（缩写 MLP）就是指一种最基础的神经网络结构，由若干层堆叠而成。它的训练，靠的正是微积分中的<strong>链式法则</strong>（3.2、9.1 节）和<strong>梯度下降</strong>（7.3 节）。</p>
+
+        <h3>10.1 MLP 前向传播</h3>
+        <p>MLP 由一层一层堆叠的计算组成。数据从输入层出发，一层算完再送进下一层，逐层往前算，这个过程就叫"前向传播"。第 \(l\) 层具体做的计算是：</p>
+        <div class="eq">
+            \[
+            \mathbf{z}^{[l]} = W^{[l]}\mathbf{a}^{[l-1]} + \mathbf{b}^{[l]}, \quad
+            \mathbf{a}^{[l]} = \sigma(\mathbf{z}^{[l]})
+            \]
+        </div>
+        <p>其中 \(W^{[l]}\)、\(\mathbf{b}^{[l]}\) 是这一层的参数，\(\sigma\) 是 3.3 节介绍过的激活函数。数据这样一层层往前传完之后，最终网络输出会和真实答案比较，用一个叫"损失" \(L\) 的数值衡量两者差了多少——训练的目标就是不断调整参数，让 \(L\) 尽可能小。</p>
+
+        <h3>10.2 反向传播：链式法则的应用</h3>
+        <p>想知道每一层的参数该怎么调整才能让 \(L\) 变小，需要先算出 \(L\) 对每一个参数的偏导数（7.1 节介绍过偏导数）。</p>
+        <p>为了避免同样的计算被重复做很多遍，这里先定义一个中间量，叫"误差项"：\(\delta^{[l]} = \frac{\partial L}{\partial \mathbf{z}^{[l]}}\)，它表示损失对这一层"加权求和的结果" \(\mathbf{z}^{[l]}\) 有多敏感。</p>
+        <p>反向传播的做法是：先算出最后一层（输出层）的误差，再靠 9.2 节的链式法则，一层一层往回推出更前面层的误差。先看输出层：</p>
+        <div class="eq">
+            \[
+            \delta^{[L]} = \nabla_{\mathbf{a}^{[L]}} L \odot \sigma'(\mathbf{z}^{[L]})
+            \]
+        </div>
+        <p>再往前，每一层的误差，都可以由紧挨着它后面一层的误差推出来，公式是：</p>
+        <div class="eq">
+            \[
+            \delta^{[l]} = \left( W^{[l+1]\top} \delta^{[l+1]} \right) \odot \sigma'(\mathbf{z}^{[l]})
+            \]
+        </div>
+        <p>这样从最后一层开始，一层一层往回传，正是"反向"传播这个名字的由来——数据前向流过网络，误差信息则反向流回去。</p>
+        <p>有了每一层的误差项 \(\delta^{[l]}\)，最后一步就很直接了：可以直接算出这一层权重和偏置该往哪个方向调整，也就是损失对它们的梯度：</p>
+        <div class="eq">
+            \[
+            \frac{\partial L}{\partial W^{[l]}} = \delta^{[l]} \mathbf{a}^{[l-1]\top}, \quad
+            \frac{\partial L}{\partial \mathbf{b}^{[l]}} = \delta^{[l]}
+            \]
+        </div>
+
+        <h3>10.3 一个具体例子：1 → 1h → 2h → 1</h3>
+        <div class="demo-box">
+            <div style="font-size: 1.1rem; margin-bottom: 1rem;">🧪 前向传播（ReLU 激活）</div>
+            <div style="text-align: left; max-width: 600px; margin: 0 auto; font-family: monospace; font-size: 1.05rem;">
+                <div><strong>输入：</strong> \(x = 2\)</div>
+                <div style="margin-top: 0.6rem;"><strong>第1层 (1h)：</strong></div>
+                <div>\(W^{[1]} = [3],\ b^{[1]} = [-1]\)</div>
+                <div>\(z^{[1]} = 3\times2 -1 = 5\)</div>
+                <div>\(a^{[1]} = \text{ReLU}(5) = 5\)</div>
+                <div style="margin-top: 0.6rem;"><strong>第2层 (2h)：</strong></div>
+                <div>\(W^{[2]} = \begin{bmatrix}1\\-2\end{bmatrix},\ b^{[2]} = \begin{bmatrix}0\\1\end{bmatrix}\)</div>
+                <div>\(z^{[2]} = \begin{bmatrix}5\\-9\end{bmatrix}\)</div>
+                <div>\(a^{[2]} = \text{ReLU}\!\left(\begin{bmatrix}5\\-9\end{bmatrix}\right) = \begin{bmatrix}5\\0\end{bmatrix}\)</div>
+                <div style="margin-top: 0.6rem;"><strong>第3层 (输出)：</strong></div>
+                <div>\(W^{[3]} = [2, 1],\ b^{[3]} = [0.5]\)</div>
+                <div>\(z^{[3]} = 2\times5 + 1\times0 + 0.5 = 10.5\)</div>
+                <div>\(y = 10.5\)</div>
+            </div>
+        </div>
+
+        <h3>10.4 反向传播的微积分视角</h3>
+        <p>回顾一下：本章其实没有引入任何新概念，只是把前面九章学到的工具组装了起来：</p>
+        <ul>
+            <li><strong>链式法则：</strong> 逐层计算梯度</li>
+            <li><strong>偏导数：</strong> 每个权重对损失的贡献</li>
+            <li><strong>梯度：</strong> 指示参数更新方向</li>
+            <li><strong>梯度下降：</strong> 沿负梯度方向更新参数</li>
+        </ul>
+
+        <div class="highlight">
+            <strong>🎯 一句话总结：</strong> MLP 的训练 = 前向传播（矩阵乘法）+ 反向传播（链式法则）+ 梯度下降（微积分优化）。微积分是神经网络学习的数学引擎。
+        </div>
+
+        <div class="demo-box">
+            <div class="demo-caption">📉 训练损失曲线：在一个简化的二次损失上模拟梯度下降训练过程</div>
+            <div class="flex-row">
+                <button class="btn" id="trainStart">开始训练</button>
+                <span class="result-badge">当前损失 = <span id="trainLossVal">--</span></span>
+            </div>
+            <div id="trainChart" class="echart-box"></div>
+            <div class="note" style="text-align:left;">每次点击「开始训练」，都会模拟若干轮反向传播 + 梯度下降，损失曲线逐点画出并持续下降，直观展示"训练=反复用梯度更新参数、降低损失"。</div>
+        </div>
+
+        <h3>10.5 激活函数导数速查</h3>
+        <p>反向传播每一步都要用到激活函数的导数，这里把 3.3 节出现过的三个激活函数及其导数汇总在一起，方便查阅：</p>
+        <div class="eq">
+            \[
+            \begin{aligned}
+            \sigma(x) &= \frac{1}{1+e^{-x}}, & \sigma'(x) &= \sigma(x)(1-\sigma(x)) \\
+            \tanh(x) &= \frac{e^x - e^{-x}}{e^x + e^{-x}}, & \tanh'(x) &= 1 - \tanh^2(x) \\
+            \text{ReLU}(x) &= \max(0, x), & \text{ReLU}'(x) &= \begin{cases}1 & x>0 \\ 0 & x<0\end{cases}
+            \end{aligned}
+            \]
+        </div>
+
+        <div class="note">
+            💡 进一步学习：softmax + 交叉熵的梯度、批量归一化的导数、Adam 优化器的数学推导。
+        </div>
+    </section>
+
+    <footer>
+        ⚡ 高等数学 · 导数与微积分 · 初学者指南
+    </footer>
+</main>
+
+<script>
+    // ===== KaTeX 渲染 =====
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+            delimiters: [
+                {left: '\\[', right: '\\]', display: true},
+                {left: '\\(', right: '\\)', display: false}
+            ],
+            throwOnError: false
+        });
+    });
+
+    // ===== 导数演示 =====
+    const derivX = document.getElementById('derivX');
+    const derivXval = document.getElementById('derivXval');
+    const funcVal = document.getElementById('funcVal');
+    const derivVal = document.getElementById('derivVal');
+
+    function updateDeriv() {
+        const x = parseFloat(derivX.value);
+        derivXval.textContent = x.toFixed(1);
+        funcVal.textContent = (x * x).toFixed(2);
+        derivVal.textContent = (2 * x).toFixed(2);
+    }
+    derivX.addEventListener('input', updateDeriv);
+    updateDeriv();
+
+    // ===== 梯度下降演示 =====
+    const gdX = document.getElementById('gdX');
+    const gdLR = document.getElementById('gdLR');
+    const gdXval = document.getElementById('gdXval');
+    const gdLRval = document.getElementById('gdLRval');
+    const gdCurX = document.getElementById('gdCurX');
+    const gdCurF = document.getElementById('gdCurF');
+
+    let currentX = parseFloat(gdX.value);
+    let learningRate = parseFloat(gdLR.value);
+
+    function updateGDDisplay() {
+        gdXval.textContent = currentX.toFixed(1);
+        gdLRval.textContent = learningRate.toFixed(2);
+        gdCurX.textContent = currentX.toFixed(2);
+        gdCurF.textContent = (currentX * currentX).toFixed(2);
+    }
+
+    gdX.addEventListener('input', function() {
+        currentX = parseFloat(this.value);
+        updateGDDisplay();
+    });
+
+    gdLR.addEventListener('input', function() {
+        learningRate = parseFloat(this.value);
+        updateGDDisplay();
+    });
+
+    document.getElementById('gdStep').addEventListener('click', function() {
+        // f(x) = x^2, f'(x) = 2x
+        const grad = 2 * currentX;
+        currentX = currentX - learningRate * grad;
+        // 限制范围
+        if (currentX > 5) currentX = 5;
+        if (currentX < -5) currentX = -5;
+        gdX.value = currentX;
+        updateGDDisplay();
+    });
+
+    document.getElementById('gdReset').addEventListener('click', function() {
+        currentX = 2.5;
+        learningRate = 0.3;
+        gdX.value = currentX;
+        gdLR.value = learningRate;
+        updateGDDisplay();
+    });
+
+    updateGDDisplay();
+
+    // ================= 以下为新增 ECharts / 动画演示 =================
+    window.addEventListener('load', function() {
+
+        // ---------- ch1: 极限演示 sin(x)/x ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('limChart'));
+            const sinc = x => x === 0 ? 1 : Math.sin(x) / x;
+            const xs = [];
+            for (let i = -200; i <= 200; i++) xs.push(i / 100 * 2); // -4..4
+            const data = xs.map(x => [x, sinc(x)]);
+            const limX = document.getElementById('limX');
+            const limXval = document.getElementById('limXval');
+            const limFval = document.getElementById('limFval');
+
+            function render(x) {
+                const fx = sinc(x);
+                chart.setOption({
+                    grid: { left: 40, right: 20, top: 20, bottom: 30 },
+                    xAxis: { type: 'value', min: -2, max: 2, name: 'x' },
+                    yAxis: { type: 'value', min: -0.3, max: 1.2, name: 'f(x)' },
+                    series: [
+                        {
+                            type: 'line', data: data, showSymbol: false,
+                            lineStyle: { color: '#3b82f6', width: 2 }, smooth: true,
+                            markPoint: {
+                                symbolSize: 14,
+                                data: [
+                                    { name: '当前x', coord: [x, fx], itemStyle: { color: '#ef4444' } },
+                                    { name: '空心点(无定义)', coord: [0, 1], symbol: 'circle', symbolSize: 12,
+                                      itemStyle: { color: '#fff', borderColor: '#3b82f6', borderWidth: 2 } }
+                                ]
+                            }
+                        }
+                    ]
+                });
+                limXval.textContent = 'x = ' + x.toFixed(2);
+                limFval.textContent = 'f(x) = ' + fx.toFixed(3);
+            }
+            limX.addEventListener('input', function() { render(parseFloat(this.value)); });
+            render(parseFloat(limX.value));
+        })();
+
+        // ---------- ch2: 切线动态图（增强原有导数演示） ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('tangentChart'));
+            const xs = [];
+            for (let i = -30; i <= 30; i++) xs.push(i / 10);
+            const curveData = xs.map(x => [x, x * x]);
+
+            function render(x) {
+                const y0 = x * x;
+                const k = 2 * x;
+                const tangentData = xs.map(t => [t, y0 + k * (t - x)]);
+                chart.setOption({
+                    grid: { left: 40, right: 20, top: 20, bottom: 30 },
+                    xAxis: { type: 'value', min: -3, max: 3, name: 'x' },
+                    yAxis: { type: 'value', min: -1, max: 9, name: 'y' },
+                    series: [
+                        { type: 'line', data: curveData, showSymbol: false, lineStyle: { color: '#3b82f6', width: 2 } },
+                        { type: 'line', data: tangentData, showSymbol: false, lineStyle: { color: '#ef4444', width: 2, type: 'dashed' } },
+                        { type: 'scatter', data: [[x, y0]], symbolSize: 10, itemStyle: { color: '#ef4444' } }
+                    ]
+                });
+            }
+            derivX.addEventListener('input', function() { render(parseFloat(this.value)); });
+            render(parseFloat(derivX.value));
+        })();
+
+        // ---------- ch3: 链式法则流水线 ----------
+        (function() {
+            const chainX = document.getElementById('chainX');
+            const chainXval = document.getElementById('chainXval');
+            const nodeX = document.getElementById('chainNodeX');
+            const nodeU = document.getElementById('chainNodeU');
+            const nodeY = document.getElementById('chainNodeY');
+            const dudx = document.getElementById('chainDudx');
+            const dydu = document.getElementById('chainDydu');
+            const dydx = document.getElementById('chainDydx');
+
+            function render(x) {
+                const u = 2 * x + 1;
+                const y = Math.pow(u, 3);
+                const du_dx = 2;
+                const dy_du = 3 * u * u;
+                chainXval.textContent = 'x = ' + x.toFixed(1);
+                nodeX.textContent = 'x = ' + x.toFixed(2);
+                nodeU.textContent = 'u = ' + u.toFixed(2);
+                nodeY.textContent = 'y = ' + y.toFixed(2);
+                dudx.textContent = du_dx.toFixed(2);
+                dydu.textContent = dy_du.toFixed(2);
+                dydx.textContent = (dy_du * du_dx).toFixed(2);
+            }
+            chainX.addEventListener('input', function() { render(parseFloat(this.value)); });
+            render(parseFloat(chainX.value));
+        })();
+
+        // ---------- ch4: 泰勒展开逼近 e^x ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('taylorChart'));
+            const xs = [];
+            for (let i = -30; i <= 20; i++) xs.push(i / 10); // -3..2
+            const trueData = xs.map(x => [x, Math.exp(x)]);
+            const taylorN = document.getElementById('taylorN');
+            const taylorNval = document.getElementById('taylorNval');
+
+            function factorial(n) { let f = 1; for (let i = 2; i <= n; i++) f *= i; return f; }
+            function taylorExp(x, n) {
+                let s = 0;
+                for (let k = 0; k <= n; k++) s += Math.pow(x, k) / factorial(k);
+                return s;
+            }
+
+            function render(n) {
+                const approxData = xs.map(x => [x, taylorExp(x, n)]);
+                chart.setOption({
+                    grid: { left: 40, right: 20, top: 20, bottom: 30 },
+                    xAxis: { type: 'value', min: -3, max: 2, name: 'x' },
+                    yAxis: { type: 'value', min: -2, max: 8, name: 'y' },
+                    series: [
+                        { name: 'e^x', type: 'line', data: trueData, showSymbol: false, lineStyle: { color: '#3b82f6', width: 2 } },
+                        { name: '泰勒近似', type: 'line', data: approxData, showSymbol: false, lineStyle: { color: '#f59e0b', width: 2 } }
+                    ]
+                });
+                taylorNval.textContent = 'n = ' + n;
+            }
+            taylorN.addEventListener('input', function() { render(parseInt(this.value)); });
+            render(parseInt(taylorN.value));
+        })();
+
+        // ---------- ch5: 黎曼和 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('riemannChart'));
+            const f = x => x * x;
+            const trueXs = [];
+            for (let i = 0; i <= 100; i++) trueXs.push(i / 50); // 0..2
+            const curveData = trueXs.map(x => [x, f(x)]);
+            const riemannN = document.getElementById('riemannN');
+            const riemannNval = document.getElementById('riemannNval');
+            const riemannSum = document.getElementById('riemannSum');
+
+            function render(n) {
+                const a = 0, b = 2;
+                const dx = (b - a) / n;
+                let sum = 0;
+                const bars = [];
+                for (let i = 0; i < n; i++) {
+                    const xi = a + i * dx;
+                    const h = f(xi); // 左端点矩形
+                    sum += h * dx;
+                    bars.push({ xi, h });
+                }
+                const barData = bars.map(o => [o.xi + dx / 2, o.h]);
+                chart.setOption({
+                    grid: { left: 40, right: 20, top: 20, bottom: 30 },
+                    xAxis: { type: 'value', min: 0, max: 2, name: 'x' },
+                    yAxis: { type: 'value', min: 0, max: 4.5, name: 'y' },
+                    series: [
+                        {
+                            type: 'bar', data: barData, barWidth: (dx / 2 / (b - a)) * 100 + '%',
+                            itemStyle: { color: 'rgba(59,130,246,0.35)', borderColor: '#3b82f6' },
+                            barGap: '0%'
+                        },
+                        { type: 'line', data: curveData, showSymbol: false, lineStyle: { color: '#1e3a8a', width: 2 } }
+                    ]
+                });
+                riemannNval.textContent = 'n = ' + n;
+                riemannSum.textContent = sum.toFixed(3);
+            }
+            riemannN.addEventListener('input', function() { render(parseInt(this.value)); });
+            render(parseInt(riemannN.value));
+        })();
+
+        // ---------- ch6: 微积分基本定理 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('ftcChart'));
+            const xs = [];
+            for (let i = 0; i <= 200; i++) xs.push(i / 200 * 6.28);
+            const fData = xs.map(x => [x, Math.cos(x)]);
+            const FData = xs.map(x => [x, Math.sin(x)]);
+            const ftcX = document.getElementById('ftcX');
+            const ftcFval = document.getElementById('ftcFval');
+            const ftcFprime = document.getElementById('ftcFprime');
+
+            function render(x) {
+                const fx = Math.cos(x);
+                chart.setOption({
+                    grid: { left: 40, right: 20, top: 20, bottom: 30 },
+                    xAxis: { type: 'value', min: 0, max: 6.28, name: 'x' },
+                    yAxis: { type: 'value', min: -1.2, max: 1.2 },
+                    series: [
+                        { name: 'f(x)=cos x', type: 'line', data: fData, showSymbol: false, lineStyle: { color: '#94a3b8', width: 2 } },
+                        { name: 'F(x)=sin x', type: 'line', data: FData, showSymbol: false, lineStyle: { color: '#3b82f6', width: 2 },
+                          markPoint: { symbolSize: 12, data: [{ coord: [x, Math.sin(x)], itemStyle: { color: '#ef4444' } }] } }
+                    ]
+                });
+                ftcFval.textContent = fx.toFixed(3);
+                ftcFprime.textContent = fx.toFixed(3);
+            }
+            ftcX.addEventListener('input', function() { render(parseFloat(this.value)); });
+            render(parseFloat(ftcX.value));
+        })();
+
+        // ---------- ch7: 损失曲面等高线 + 梯度箭头 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('lossContour'));
+            const lw1 = document.getElementById('lw1');
+            const lw2 = document.getElementById('lw2');
+            const lp1 = document.getElementById('lpartial1');
+            const lp2 = document.getElementById('lpartial2');
+
+            // 生成等高线用的散点热力数据 L = w1^2 + w2^2
+            const pts = [];
+            for (let i = -30; i <= 30; i += 2) {
+                for (let j = -30; j <= 30; j += 2) {
+                    const w1 = i / 10, w2 = j / 10;
+                    pts.push([w1, w2, w1 * w1 + w2 * w2]);
+                }
+            }
+
+            function render(w1, w2) {
+                const g1 = 2 * w1, g2 = 2 * w2;
+                const scale = 0.5;
+                chart.setOption({
+                    grid: { left: 40, right: 20, top: 20, bottom: 30 },
+                    xAxis: { type: 'value', min: -3, max: 3, name: 'w1' },
+                    yAxis: { type: 'value', min: -3, max: 3, name: 'w2' },
+                    visualMap: {
+                        min: 0, max: 18, show: false,
+                        inRange: { color: ['#eff6ff', '#93c5fd', '#3b82f6', '#1e3a8a'] }
+                    },
+                    series: [
+                        { type: 'scatter', data: pts.map(p => [p[0], p[1], p[2]]), symbolSize: 10,
+                          itemStyle: { opacity: 0.55 } },
+                        { type: 'scatter', data: [[w1, w2]], symbolSize: 14, itemStyle: { color: '#ef4444' } },
+                        { type: 'lines', coordinateSystem: 'cartesian2d',
+                          data: [{ coords: [[w1, w2], [w1 + g1 * scale, w2 + g2 * scale]] }],
+                          lineStyle: { color: '#ef4444', width: 3 }, symbol: ['none', 'arrow'], symbolSize: 10 }
+                    ]
+                });
+                lp1.textContent = g1.toFixed(2);
+                lp2.textContent = g2.toFixed(2);
+            }
+            function update() { render(parseFloat(lw1.value), parseFloat(lw2.value)); }
+            lw1.addEventListener('input', update);
+            lw2.addEventListener('input', update);
+            update();
+        })();
+
+        // ---------- ch8: 梯度下降轨迹图（增强） ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('gdChart'));
+            const xs = [];
+            for (let i = -50; i <= 50; i++) xs.push(i / 10);
+            const curveData = xs.map(x => [x, x * x]);
+            let history = [[currentX, currentX * currentX]];
+
+            function render() {
+                chart.setOption({
+                    grid: { left: 40, right: 20, top: 20, bottom: 30 },
+                    xAxis: { type: 'value', min: -5, max: 5, name: 'x' },
+                    yAxis: { type: 'value', min: 0, max: 26, name: 'f(x)' },
+                    series: [
+                        { type: 'line', data: curveData, showSymbol: false, lineStyle: { color: '#94a3b8', width: 2 } },
+                        { type: 'line', data: history, showSymbol: true, symbolSize: 8,
+                          lineStyle: { color: '#f59e0b', width: 2, type: 'dashed' }, itemStyle: { color: '#f59e0b' } },
+                        { type: 'scatter', data: [history[history.length - 1]], symbolSize: 16, itemStyle: { color: '#ef4444' } }
+                    ]
+                });
+            }
+            render();
+
+            document.getElementById('gdStep').addEventListener('click', function() {
+                history.push([currentX, currentX * currentX]);
+                render();
+            });
+            document.getElementById('gdReset').addEventListener('click', function() {
+                history = [[currentX, currentX * currentX]];
+                render();
+            });
+        })();
+
+        // ---------- ch9: 前向/反向传播动画 ----------
+        (function() {
+            const x = 2, a = 2 * x, b = a + 1, L = b * b;
+            document.getElementById('adNodeX').textContent = 'x=' + x;
+            document.getElementById('adNodeA').textContent = 'a=' + a;
+            document.getElementById('adNodeB').textContent = 'b=' + b;
+            document.getElementById('adNodeL').textContent = 'L=' + L;
+
+            const nodes = ['adNodeX', 'adNodeA', 'adNodeB', 'adNodeL'].map(id => document.getElementById(id));
+            const arrows = ['adArrow1', 'adArrow2', 'adArrow3'].map(id => document.getElementById(id));
+            const localDerivs = document.getElementById('adLocalDerivs');
+
+            function clearLit() {
+                nodes.forEach(n => n.classList.remove('lit'));
+                arrows.forEach(a => { a.classList.remove('lit'); a.textContent = '→'; });
+            }
+
+            document.getElementById('adForward').addEventListener('click', function() {
+                clearLit();
+                localDerivs.style.display = 'none';
+                let i = 0;
+                nodes[0].classList.add('lit');
+                const timer = setInterval(function() {
+                    if (i < arrows.length) {
+                        arrows[i].classList.add('lit');
+                        nodes[i + 1].classList.add('lit');
+                        i++;
+                    } else {
+                        clearInterval(timer);
+                    }
+                }, 400);
+            });
+
+            document.getElementById('adBackward').addEventListener('click', function() {
+                clearLit();
+                nodes[3].classList.add('lit');
+                let i = arrows.length - 1;
+                const timer = setInterval(function() {
+                    if (i >= 0) {
+                        arrows[i].classList.add('lit');
+                        arrows[i].textContent = '←';
+                        nodes[i].classList.add('lit');
+                        i--;
+                    } else {
+                        clearInterval(timer);
+                        localDerivs.style.display = 'block';
+                    }
+                }, 400);
+            });
+        })();
+
+        // ---------- ch10: 训练损失曲线 ----------
+        (function() {
+            const chart = echarts.init(document.getElementById('trainChart'));
+            const lossVal = document.getElementById('trainLossVal');
+            chart.setOption({
+                grid: { left: 50, right: 20, top: 20, bottom: 30 },
+                xAxis: { type: 'value', name: '迭代次数', min: 0, max: 30 },
+                yAxis: { type: 'value', name: 'Loss', min: 0, max: 10 },
+                series: [{ type: 'line', data: [], showSymbol: false, lineStyle: { color: '#3b82f6', width: 2 } }]
+            });
+
+            document.getElementById('trainStart').addEventListener('click', function() {
+                // 模拟在简单二次损失 L(w) = (w-3)^2 上做梯度下降，记录损失轨迹
+                let w = 0, lr = 0.15;
+                const data = [];
+                for (let t = 0; t <= 30; t++) {
+                    const loss = Math.pow(w - 3, 2);
+                    data.push([t, loss]);
+                    const grad = 2 * (w - 3);
+                    w = w - lr * grad;
+                }
+                // 逐点动画绘制
+                let i = 0;
+                const partial = [];
+                const timer = setInterval(function() {
+                    if (i < data.length) {
+                        partial.push(data[i]);
+                        chart.setOption({ series: [{ data: partial.slice() }] });
+                        lossVal.textContent = data[i][1].toFixed(3);
+                        i++;
+                    } else {
+                        clearInterval(timer);
+                    }
+                }, 80);
+            });
+        })();
+
+    });
+
+    // ===== 目录高亮 =====
+    const sections = document.querySelectorAll('.section');
+    const tocLinks = document.querySelectorAll('.toc a');
+
+    function updateActiveToc() {
+        let current = '';
+        const scrollPos = window.scrollY + 120;
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            if (scrollPos >= sectionTop) {
+                current = section.getAttribute('id');
+            }
+        });
+        tocLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${current}`) {
+                link.classList.add('active');
+            }
+        });
+    }
+
+    window.addEventListener('scroll', updateActiveToc);
+    window.addEventListener('load', updateActiveToc);
+
+    tocLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) {
+                targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                setTimeout(updateActiveToc, 100);
+            }
+        });
+    });
+</script>
+</body>
+</html>
